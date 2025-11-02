@@ -194,9 +194,22 @@ jobs:
         run: |
           flutter pub run msix:create --certificate-path ${{ env.CERT_PATH }} --certificate-password ${{ env.CERT_PASSWORD }} --install-certificate false --version ${{ inputs.version }}.${{ inputs.build_number }}
 
-      - name: Install NSIS
+      - name: Install NSIS and ImageMagick
         run: |
-          choco install nsis -y
+          choco install nsis imagemagick -y
+        shell: powershell
+
+      - name: Convert logo to NSIS format
+        run: |
+          # NSIS header image: 150x57 pixels BMP format
+          # NSIS icon: ICO format (we'll use PNG as NSIS supports it)
+          if (Test-Path "logo.png") {
+            # Resize and convert to BMP for header image (NSIS recommended size: 150x57)
+            magick convert logo.png -resize 150x57^ -gravity center -extent 150x57 -format BMP installer-header.bmp
+            Write-Host "Created installer header image (150x57 BMP)"
+          } else {
+            Write-Host "Warning: logo.png not found, installer will use default logo"
+          }
         shell: powershell
 
       - name: Create NSIS installer script
@@ -210,12 +223,34 @@ jobs:
           InstallDir "`$PROGRAMFILES\XibeChat"
           InstallDirRegKey HKCU "Software\XibeChat" "Install_Dir"
           
+          # Set installer icon/logo
+          !define MUI_HEADERIMAGE
+          !define MUI_HEADERIMAGE_BITMAP "installer-header.bmp"
+          !define MUI_WELCOMEFINISHPAGE_BITMAP "installer-header.bmp"
+          !define MUI_ICON "logo.png"
+          !define MUI_UNICON "logo.png"
+          
+          # Custom welcome page text with credits
+          !define MUI_WELCOMEPAGE_TEXT "Welcome to Xibe Chat Setup!$\r$\n$\r$\nThis will install Xibe Chat v${{ inputs.version }} on your computer.$\r$\n$\r$\n$\r$\nBuilt by: R3AP3Reditz (Anish Kumar)$\r$\nPowered by: xibe.app for AI$\r$\n$\r$\nPortfolio: anishkumar.tech$\r$\nGitHub: github.com/iotserver24$\r$\n$\r$\nClick Next to continue."
+          
+          # Enable finish page run option
+          !define MUI_FINISHPAGE_RUN
+          !define MUI_FINISHPAGE_RUN_TEXT "Launch Xibe Chat"
+          !define MUI_FINISHPAGE_RUN_FUNCTION "LaunchApp"
+          
+          # Custom finish page text with credits
+          !define MUI_FINISHPAGE_TEXT "Xibe Chat has been installed on your computer!$\r$\n$\r$\nBuilt by: R3AP3Reditz (Anish Kumar)$\r$\nPowered by: xibe.app for AI$\r$\n$\r$\nVisit us:$\r$\n  Portfolio: anishkumar.tech$\r$\n  GitHub: github.com/iotserver24"
+          
           !insertmacro MUI_PAGE_WELCOME
           !insertmacro MUI_PAGE_DIRECTORY
           !insertmacro MUI_PAGE_INSTFILES
           !insertmacro MUI_PAGE_FINISH
           
           !insertmacro MUI_LANGUAGE "English"
+          
+          Function LaunchApp
+            Exec "`$INSTDIR\xibe_chat.exe"
+          FunctionEnd
           
           Section "Install"
             SetOutPath "`$INSTDIR"
@@ -238,6 +273,16 @@ jobs:
 
       - name: Build NSIS installer
         run: |
+          # Ensure logo file exists for NSIS
+          if (-not (Test-Path "installer-header.bmp")) {
+            if (Test-Path "logo.png") {
+              Copy-Item logo.png installer-header.bmp
+              Write-Host "Using logo.png as header image"
+            } else {
+              Write-Host "Warning: No logo file found, NSIS will use default"
+            }
+          }
+          
           $nsisPath = "C:\Program Files (x86)\NSIS\makensis.exe"
           if (Test-Path $nsisPath) {
             & $nsisPath xibe-chat-installer.nsi
