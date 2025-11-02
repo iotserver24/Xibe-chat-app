@@ -4,8 +4,10 @@ import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/atom-one-dark.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
+import '../services/e2b_service.dart';
 
 class CodeBlock extends StatefulWidget {
   final String code;
@@ -25,24 +27,39 @@ class _CodeBlockState extends State<CodeBlock> {
   bool _isRunning = false;
   String? _output;
   String? _error;
+  List<Map<String, dynamic>>? _results; // Store all result types
 
-  // Constants for timeouts
-  static const int _sandboxCreateTimeoutSeconds = 10;
-  static const int _codeExecutionTimeoutSeconds = 65;
-  static const int _sandboxCleanupTimeoutSeconds = 5;
-  static const int _sandboxLifetimeSeconds = 300;
-
+  /// Check if the code can be executed based on language support
   bool get _canRun {
     final lang = widget.language?.toLowerCase();
     return lang == 'python' || 
+           lang == 'py' ||
            lang == 'javascript' || 
            lang == 'js' || 
            lang == 'jsx' ||
            lang == 'typescript' ||
            lang == 'ts' ||
            lang == 'tsx' ||
-           lang == 'react';
+           lang == 'react' ||
+           lang == 'r' ||
+           lang == 'java' ||
+           lang == 'bash' ||
+           lang == 'sh';
   }
+
+  /// Map language to E2B language code
+  String? get _e2bLanguageCode {
+    final lang = widget.language?.toLowerCase();
+    if (lang == 'python' || lang == 'py') return 'python';
+    if (lang == 'javascript' || lang == 'js' || lang == 'jsx') return 'js';
+    if (lang == 'typescript' || lang == 'ts' || lang == 'tsx') return 'ts';
+    if (lang == 'react') return 'js'; // React uses JavaScript
+    if (lang == 'r') return 'r';
+    if (lang == 'java') return 'java';
+    if (lang == 'bash' || lang == 'sh') return 'bash';
+    return 'python'; // Default to Python
+  }
+
 
   String get _displayLanguage {
     final lang = widget.language?.toLowerCase() ?? '';
@@ -50,6 +67,9 @@ class _CodeBlockState extends State<CodeBlock> {
     if (lang == 'js' || lang == 'javascript') return 'JavaScript';
     if (lang == 'ts' || lang == 'typescript') return 'TypeScript';
     if (lang == 'python' || lang == 'py') return 'Python';
+    if (lang == 'r') return 'R';
+    if (lang == 'java') return 'Java';
+    if (lang == 'bash' || lang == 'sh') return 'Bash';
     return widget.language ?? 'Code';
   }
 
@@ -68,107 +88,88 @@ class _CodeBlockState extends State<CodeBlock> {
       _isRunning = true;
       _output = null;
       _error = null;
+      _results = null;
     });
 
     try {
-      // Determine the sandbox template based on language
-      String template = 'base';
-      final lang = widget.language?.toLowerCase() ?? '';
+      // Execute code using the backend wrapper
+      // The backend handles sandbox creation and cleanup automatically
+      final e2bService = E2bService(apiKey: e2bApiKey);
+      final languageCode = _e2bLanguageCode ?? 'python';
+      final executionResult = await e2bService.executeCode(
+        code: widget.code,
+        language: languageCode,
+      );
+
+      // Parse the execution results
+      // E2B API returns: { "execution": { "results": [...] } }
+      final execution = executionResult['execution'] as Map<String, dynamic>?;
+      final results = execution?['results'] as List<dynamic>? ?? [];
       
-      if (lang == 'python' || lang == 'py') {
-        template = 'Python3';
-      } else if (lang == 'jsx' || lang == 'tsx' || lang == 'react') {
-        template = 'Node';
-      } else if (lang == 'javascript' || lang == 'js' || lang == 'typescript' || lang == 'ts') {
-        template = 'Node';
-      }
+      // Process different result types: stdout, stderr, png, chart, text, error
+      final List<Map<String, dynamic>> processedResults = [];
+      String? combinedOutput;
+      String? combinedError;
 
-      // Create sandbox
-      final createResponse = await http.post(
-        Uri.parse('https://api.e2b.dev/sandboxes'),
-        headers: {
-          'Authorization': 'Bearer $e2bApiKey',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'template': template,
-          'timeout': _sandboxLifetimeSeconds,
-        }),
-      ).timeout(const Duration(seconds: _sandboxCreateTimeoutSeconds));
-
-      if (createResponse.statusCode == 401) {
-        throw Exception('Invalid E2B API key. Please check your settings.');
-      } else if (createResponse.statusCode == 429) {
-        throw Exception('Rate limit exceeded. Please try again later.');
-      } else if (createResponse.statusCode != 201) {
-        throw Exception('Failed to create sandbox (${createResponse.statusCode})');
-      }
-
-      final sandboxData = jsonDecode(createResponse.body);
-      final sandboxId = sandboxData['sandboxID'] ?? sandboxData['id'];
-
-      if (sandboxId == null) {
-        throw Exception('No sandbox ID returned');
-      }
-
-      // Execute code - write to file and execute to avoid shell injection
-      String command;
-      
-      if (lang == 'python' || lang == 'py') {
-        // Write Python code to file and execute
-        command = 'cat > /tmp/code.py << \'EOFMARKER\'\n${widget.code}\nEOFMARKER\n && python3 /tmp/code.py';
-      } else {
-        // Write JS/Node code to file and execute
-        command = 'cat > /tmp/code.js << \'EOFMARKER\'\n${widget.code}\nEOFMARKER\n && node /tmp/code.js';
-      }
-
-      final execResponse = await http.post(
-        Uri.parse('https://api.e2b.dev/sandboxes/$sandboxId/commands'),
-        headers: {
-          'Authorization': 'Bearer $e2bApiKey',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'command': command,
-          'timeout': 60000,
-        }),
-      ).timeout(const Duration(seconds: _codeExecutionTimeoutSeconds));
-
-      if (execResponse.statusCode == 200) {
-        final result = jsonDecode(execResponse.body);
-        final stdout = result['stdout'] ?? result['output'] ?? '';
-        final stderr = result['stderr'] ?? '';
+      for (final result in results) {
+        final resultMap = result as Map<String, dynamic>;
+        final type = resultMap['type'] as String?;
         
-        setState(() {
-          _output = stdout.isNotEmpty ? stdout : 'Code executed successfully';
-          if (stderr.isNotEmpty) {
-            _error = stderr;
-          }
-        });
-      } else if (execResponse.statusCode == 408) {
-        throw Exception('Code execution timed out after 60 seconds');
-      } else {
-        throw Exception('Execution failed (${execResponse.statusCode})');
+        switch (type) {
+          case 'stdout':
+          case 'text':
+            final text = resultMap['text'] as String? ?? resultMap['content'] as String? ?? '';
+            if (text.isNotEmpty) {
+              processedResults.add({'type': type, 'content': text});
+              combinedOutput = (combinedOutput ?? '') + text + '\n';
+            }
+            break;
+          case 'stderr':
+          case 'error':
+            final text = resultMap['text'] as String? ?? resultMap['content'] as String? ?? resultMap['error'] as String? ?? '';
+            if (text.isNotEmpty) {
+              processedResults.add({'type': type, 'content': text});
+              combinedError = (combinedError ?? '') + text + '\n';
+            }
+            break;
+          case 'png':
+            // Handle image outputs (charts, plots)
+            final base64 = resultMap['base64'] as String? ?? resultMap['content'] as String?;
+            if (base64 != null) {
+              processedResults.add({'type': 'png', 'base64': base64});
+              if (combinedOutput == null) {
+                combinedOutput = '[Chart/Image generated]';
+              }
+            }
+            break;
+          case 'chart':
+            // Handle interactive chart data
+            final chartData = resultMap['chart'] as Map<String, dynamic>? ?? resultMap;
+            processedResults.add({'type': 'chart', 'data': chartData});
+            if (combinedOutput == null) {
+              combinedOutput = '[Interactive chart generated]';
+            }
+            break;
+        }
       }
 
-      // Cleanup: delete sandbox
-      try {
-        await http.delete(
-          Uri.parse('https://api.e2b.dev/sandboxes/$sandboxId'),
-          headers: {
-            'Authorization': 'Bearer $e2bApiKey',
-          },
-        ).timeout(const Duration(seconds: _sandboxCleanupTimeoutSeconds));
-      } catch (e) {
-        // Ignore cleanup errors - sandbox will auto-expire
-      }
+      setState(() {
+        _results = processedResults;
+        _output = combinedOutput?.trim();
+        _error = combinedError?.trim();
+        
+        // If no output and no error, show success message
+        if (_output == null && _error == null) {
+          _output = 'Code executed successfully';
+        }
+      });
     } on FormatException catch (e) {
       setState(() {
-        _error = 'Invalid response from E2B API: ${e.message}';
+        _error = 'Invalid response from backend: ${e.message}';
       });
     } on http.ClientException catch (e) {
       setState(() {
-        _error = 'Network error: ${e.message}';
+        _error = 'Network error: ${e.message}\n\nPlease check your internet connection and ensure the backend server is accessible.';
       });
     } catch (e) {
       setState(() {
@@ -274,7 +275,7 @@ class _CodeBlockState extends State<CodeBlock> {
             ),
           ),
           // Output/Error display
-          if (_output != null || _error != null)
+          if (_output != null || _error != null || (_results != null && _results!.isNotEmpty))
             Container(
               margin: const EdgeInsets.only(top: 8),
               padding: const EdgeInsets.all(12),
@@ -313,14 +314,79 @@ class _CodeBlockState extends State<CodeBlock> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  SelectableText(
-                    _error ?? _output ?? '',
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 12,
-                      color: Colors.white70,
+                  // Display different result types
+                  if (_results != null && _results!.isNotEmpty)
+                    ...(_results!.map((result) {
+                      final type = result['type'] as String?;
+                      
+                      if (type == 'png' && result['base64'] != null) {
+                        // Display image/chart
+                        try {
+                          final base64 = result['base64'] as String;
+                          // Remove data URL prefix if present
+                          final base64Data = base64.contains(',') 
+                              ? base64.split(',').last 
+                              : base64;
+                          final imageBytes = base64Decode(base64Data);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Image.memory(
+                              Uint8List.fromList(imageBytes),
+                              fit: BoxFit.contain,
+                            ),
+                          );
+                        } catch (e) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              '[Unable to display image: $e]',
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 12,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          );
+                        }
+                      } else if (type == 'chart' && result['data'] != null) {
+                        // Display chart info (could be enhanced with a chart widget)
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.bar_chart, size: 16, color: Colors.blue),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Interactive chart generated',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }).toList()),
+                  // Display text output/error
+                  if ((_output != null && _output!.isNotEmpty) || 
+                      (_error != null && _error!.isNotEmpty))
+                    SelectableText(
+                      _error ?? _output ?? '',
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
