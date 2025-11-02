@@ -437,8 +437,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(),
           _buildSection(
             context,
-            'AI Memory',
+            'AI Behavior',
             [
+              ListTile(
+                title: const Text('AI Profiles'),
+                subtitle: Consumer<SettingsProvider>(
+                  builder: (context, settings, child) {
+                    final selectedProfile = settings.getSelectedAiProfile();
+                    final profileName = selectedProfile?.name ?? 'None';
+                    return Text('Current: $profileName');
+                  },
+                ),
+                leading: const Icon(Icons.face),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  Navigator.pushNamed(context, '/ai-profiles');
+                },
+              ),
               ListTile(
                 title: const Text('Long-Term Memory'),
                 subtitle: Consumer<SettingsProvider>(

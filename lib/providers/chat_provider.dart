@@ -245,6 +245,9 @@ class ChatProvider extends ChangeNotifier {
     _isLoading = true;
     _isStreaming = true;
     _streamingContent = '';
+    
+    // Track response start time
+    final responseStartTime = DateTime.now();
     notifyListeners();
 
     try {
@@ -483,6 +486,10 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         await _loadChats();
       }
 
+      // Calculate response time
+      final responseEndTime = DateTime.now();
+      final responseTimeMs = responseEndTime.difference(responseStartTime).inMilliseconds;
+      
       // Save the response with cleaned content (without chat name JSON)
       final assistantMessage = Message(
         role: 'assistant',
@@ -490,6 +497,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         timestamp: DateTime.now(),
         webSearchUsed: webSearch,
         chatId: _currentChat!.id!,
+        responseTimeMs: responseTimeMs,
       );
 
       final assistantInsertedId = await _databaseService.insertMessage(assistantMessage);
@@ -500,6 +508,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         timestamp: assistantMessage.timestamp,
         webSearchUsed: assistantMessage.webSearchUsed,
         chatId: assistantMessage.chatId,
+        responseTimeMs: assistantMessage.responseTimeMs,
       );
       _messages.add(assistantMessageWithId);
 
@@ -563,5 +572,29 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  Future<void> setMessageReaction(int messageId, String? reaction) async {
+    await _databaseService.updateMessageReaction(messageId, reaction);
+    // Update in memory
+    final index = _messages.indexWhere((m) => m.id == messageId);
+    if (index != -1) {
+      final message = _messages[index];
+      _messages[index] = Message(
+        id: message.id,
+        role: message.role,
+        content: message.content,
+        timestamp: message.timestamp,
+        webSearchUsed: message.webSearchUsed,
+        chatId: message.chatId,
+        imageBase64: message.imageBase64,
+        imagePath: message.imagePath,
+        thinkingContent: message.thinkingContent,
+        isThinking: message.isThinking,
+        responseTimeMs: message.responseTimeMs,
+        reaction: reaction,
+      );
+      notifyListeners();
+    }
   }
 }

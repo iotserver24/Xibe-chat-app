@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/message.dart';
+import '../providers/chat_provider.dart';
 import 'code_block.dart';
 
 class MessageBubble extends StatefulWidget {
@@ -235,7 +237,7 @@ class _MessageBubbleState extends State<MessageBubble>
                         ),
                       ),
                   ],
-                  // Footer with time and copy
+                  // Footer with time, response time, reactions, and copy
                   const SizedBox(height: 6),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -260,7 +262,44 @@ class _MessageBubbleState extends State<MessageBubble>
                             fontWeight: FontWeight.w400,
                           ),
                         ),
+                        // Show response time for assistant messages
+                        if (!isUser && widget.message.responseTimeMs != null) ...[
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.speed,
+                            size: 11,
+                            color: Colors.white.withOpacity(0.4),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${(widget.message.responseTimeMs! / 1000).toStringAsFixed(1)}s',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withOpacity(0.4),
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
                         const SizedBox(width: 8),
+                        // Reactions for assistant messages
+                        if (!isUser && widget.message.id != null) ...[
+                          _buildReactionButton(
+                            context: context,
+                            isSelected: widget.message.reaction == 'thumbs_up',
+                            icon: Icons.thumb_up_outlined,
+                            selectedIcon: Icons.thumb_up,
+                            onTap: () => _handleReaction(context, 'thumbs_up'),
+                          ),
+                          const SizedBox(width: 4),
+                          _buildReactionButton(
+                            context: context,
+                            isSelected: widget.message.reaction == 'thumbs_down',
+                            icon: Icons.thumb_down_outlined,
+                            selectedIcon: Icons.thumb_down,
+                            onTap: () => _handleReaction(context, 'thumbs_down'),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
                         GestureDetector(
                           onTap: () {
                             Clipboard.setData(ClipboardData(text: widget.message.content));
@@ -292,6 +331,41 @@ class _MessageBubbleState extends State<MessageBubble>
         ],
       ),
     );
+  }
+
+  Widget _buildReactionButton({
+    required BuildContext context,
+    required bool isSelected,
+    required IconData icon,
+    required IconData selectedIcon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Icon(
+          isSelected ? selectedIcon : icon,
+          size: 14,
+          color: isSelected 
+              ? const Color(0xFF10B981)
+              : Colors.white.withOpacity(0.5),
+        ),
+      ),
+    );
+  }
+
+  void _handleReaction(BuildContext context, String reaction) {
+    if (widget.message.id == null) return;
+    
+    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    final isCurrentlySelected = widget.message.reaction == reaction;
+    final newReaction = isCurrentlySelected ? null : reaction;
+    chatProvider.setMessageReaction(widget.message.id!, newReaction);
   }
 }
 

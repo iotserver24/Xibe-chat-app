@@ -7,7 +7,7 @@ import '../models/message.dart';
 import '../models/memory.dart';
 
 class DatabaseService {
-  static const int _databaseVersion = 4;
+  static const int _databaseVersion = 5;
   static Database? _database;
   static bool _initialized = false;
 
@@ -72,6 +72,8 @@ class DatabaseService {
             imagePath TEXT,
             thinkingContent TEXT,
             isThinking INTEGER NOT NULL DEFAULT 0,
+            responseTimeMs INTEGER,
+            reaction TEXT,
             FOREIGN KEY (chatId) REFERENCES chats (id) ON DELETE CASCADE
           )
         ''');
@@ -108,6 +110,11 @@ class DatabaseService {
               updatedAt TEXT NOT NULL
             )
           ''');
+        }
+        if (oldVersion < 5) {
+          // Add UI enhancements: response time and reactions for version 5
+          await db.execute('ALTER TABLE messages ADD COLUMN responseTimeMs INTEGER');
+          await db.execute('ALTER TABLE messages ADD COLUMN reaction TEXT');
         }
       },
     );
@@ -204,5 +211,16 @@ class DatabaseService {
   Future<void> deleteAllMemories() async {
     final db = await database;
     await db.delete('memories');
+  }
+
+  // Message reaction operations
+  Future<void> updateMessageReaction(int messageId, String? reaction) async {
+    final db = await database;
+    await db.update(
+      'messages',
+      {'reaction': reaction},
+      where: 'id = ?',
+      whereArgs: [messageId],
+    );
   }
 }

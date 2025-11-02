@@ -9,6 +9,8 @@ class Message {
   final String? imagePath; // Local file path for displaying image
   final String? thinkingContent; // Content of AI thinking process
   final bool isThinking; // Whether AI is in thinking mode
+  final int? responseTimeMs; // Response time in milliseconds
+  final String? reaction; // User reaction: 'thumbs_up' or 'thumbs_down'
 
   Message({
     this.id,
@@ -21,6 +23,8 @@ class Message {
     this.imagePath,
     this.thinkingContent,
     this.isThinking = false,
+    this.responseTimeMs,
+    this.reaction,
   });
 
   Map<String, dynamic> toMap() {
@@ -35,6 +39,8 @@ class Message {
       'imagePath': imagePath,
       'thinkingContent': thinkingContent,
       'isThinking': isThinking ? 1 : 0,
+      'responseTimeMs': responseTimeMs,
+      'reaction': reaction,
     };
   }
 
@@ -50,6 +56,8 @@ class Message {
       imagePath: map['imagePath'],
       thinkingContent: map['thinkingContent'],
       isThinking: map['isThinking'] != null && map['isThinking'] == 1,
+      responseTimeMs: map['responseTimeMs'] as int?,
+      reaction: map['reaction'] as String?,
     );
   }
 

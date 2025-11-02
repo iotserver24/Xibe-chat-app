@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/memory.dart';
+import '../models/ai_profile.dart';
 import '../services/database_service.dart';
 
 class SettingsProvider extends ChangeNotifier {
@@ -20,6 +22,8 @@ class SettingsProvider extends ChangeNotifier {
   String _updateChannel = 'stable'; // 'stable' or 'beta'
   List<Memory> _memories = [];
   int _cachedTotalMemoryCharacters = 0;
+  List<AiProfile> _aiProfiles = [];
+  String? _selectedAiProfileId;
 
   String? get apiKey => _apiKey;
   String? get systemPrompt => _systemPrompt;
@@ -31,10 +35,13 @@ class SettingsProvider extends ChangeNotifier {
   double get presencePenalty => _presencePenalty;
   String get updateChannel => _updateChannel;
   List<Memory> get memories => _memories;
+  List<AiProfile> get aiProfiles => _aiProfiles;
+  String? get selectedAiProfileId => _selectedAiProfileId;
 
   SettingsProvider() {
     _loadSettings();
     _loadMemories();
+    _loadAiProfiles();
   }
 
   Future<void> _loadSettings() async {
@@ -165,5 +172,80 @@ class SettingsProvider extends ChangeNotifier {
     
     final memoryPoints = _memories.map((m) => '- ${m.content}').join('\n');
     return 'User Memory (Important context about the user):\n$memoryPoints';
+  }
+
+  // AI Profile management
+  Future<void> _loadAiProfiles() async {
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      final profilesJson = _prefs?.getStringList('ai_profiles') ?? [];
+      
+      if (profilesJson.isEmpty) {
+        // Initialize with default profiles
+        final defaultProfiles = AiProfile.getDefaultProfiles();
+        _aiProfiles = defaultProfiles;
+        await _saveAiProfiles();
+        _selectedAiProfileId = defaultProfiles.first.id;
+        await _prefs?.setString('selected_ai_profile_id', _selectedAiProfileId!);
+      } else {
+        _aiProfiles = profilesJson.map((json) => AiProfile.fromJson(jsonDecode(json))).toList();
+        _selectedAiProfileId = _prefs?.getString('selected_ai_profile_id');
+      }
+      notifyListeners();
+    } catch (e) {
+      print('Error loading AI profiles: $e');
+      _aiProfiles = [];
+    }
+  }
+
+  Future<void> _saveAiProfiles() async {
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      final profilesJson = _aiProfiles.map((p) => jsonEncode(p.toJson())).toList();
+      await _prefs?.setStringList('ai_profiles', profilesJson);
+    } catch (e) {
+      print('Error saving AI profiles: $e');
+    }
+  }
+
+  Future<void> addAiProfile(AiProfile profile) async {
+    _aiProfiles.add(profile);
+    await _saveAiProfiles();
+    notifyListeners();
+  }
+
+  Future<void> deleteAiProfile(String profileId) async {
+    _aiProfiles.removeWhere((p) => p.id == profileId);
+    if (_selectedAiProfileId == profileId) {
+      _selectedAiProfileId = _aiProfiles.isNotEmpty ? _aiProfiles.first.id : null;
+      await _prefs?.setString('selected_ai_profile_id', _selectedAiProfileId ?? '');
+    }
+    await _saveAiProfiles();
+    notifyListeners();
+  }
+
+  Future<void> setSelectedAiProfileId(String? profileId) async {
+    _selectedAiProfileId = profileId;
+    await _prefs?.setString('selected_ai_profile_id', profileId ?? '');
+    notifyListeners();
+  }
+
+  AiProfile? getSelectedAiProfile() {
+    if (_selectedAiProfileId == null) return null;
+    try {
+      return _aiProfiles.firstWhere((p) => p.id == _selectedAiProfileId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  String? getCombinedSystemPrompt() {
+    final selectedProfile = getSelectedAiProfile();
+    if (selectedProfile != null && _systemPrompt != null && _systemPrompt!.isNotEmpty) {
+      return '${selectedProfile.systemPrompt}\n\n$_systemPrompt';
+    } else if (selectedProfile != null) {
+      return selectedProfile.systemPrompt;
+    }
+    return _systemPrompt;
   }
 }
