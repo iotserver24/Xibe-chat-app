@@ -14,7 +14,7 @@ The Flutter app uses the E2B backend URL from environment variables during build
 4. Click **New repository variable**
 5. Add:
    - **Name**: `E2B_BACKEND_URL`
-   - **Value**: `https://e2b.n92dev.us.kg` (or your custom backend URL)
+   - **Value**: `https://youre2brunner.dev` (or your custom backend URL)
 6. Click **Add variable**
 
 The workflow will automatically use this variable during builds.
@@ -27,7 +27,7 @@ The workflow will automatically use this variable during builds.
 4. Click **New repository secret**
 5. Add:
    - **Name**: `E2B_BACKEND_URL`
-   - **Value**: `https://e2b.n92dev.us.kg`
+   - **Value**: `https://youre2brunner.dev`
 6. Click **Add secret**
 
 Then update the workflow file to use `secrets.E2B_BACKEND_URL` instead of `vars.E2B_BACKEND_URL`.
@@ -35,7 +35,7 @@ Then update the workflow file to use `secrets.E2B_BACKEND_URL` instead of `vars.
 ## Default Behavior
 
 If `E2B_BACKEND_URL` is not set in GitHub variables or secrets, the workflow defaults to:
-- `https://e2b.n92dev.us.kg`
+- `https://youre2brunner.dev`
 
 This is also the default hardcoded in the Flutter app code.
 
@@ -44,7 +44,7 @@ This is also the default hardcoded in the Flutter app code.
 For local development, you can:
 
 1. **Use the default** (no configuration needed):
-   - The app will use `https://e2b.n92dev.us.kg` automatically
+   - The app will use `https://youre2brunner.dev` automatically
 
 2. **Override in Settings**:
    - Go to Settings in the app
@@ -61,7 +61,7 @@ For local development, you can:
 1. **Build time**: The `--dart-define=E2B_BACKEND_URL=...` flag sets the `String.fromEnvironment('E2B_BACKEND_URL')` value
 2. **Runtime**: The app checks Settings for a user-configured URL first
 3. **Fallback**: If no user URL is set, it uses the build-time environment variable
-4. **Final fallback**: If no env var is set, uses the hardcoded default: `https://e2b.n92dev.us.kg`
+4. **Final fallback**: If no env var is set, uses the hardcoded default: `https://youre2brunner.dev`
 
 ## Testing
 
@@ -70,12 +70,12 @@ After setting up the variable, test a build:
 ```bash
 # The workflow will automatically use the variable
 # Or test locally:
-flutter build apk --release --dart-define=E2B_BACKEND_URL=https://e2b.n92dev.us.kg
+flutter build apk --release --dart-define=E2B_BACKEND_URL=https://youre2brunner.dev
 ```
 
 ## Important Notes
 
 - **E2B API Key is NO LONGER REQUIRED** - The backend handles authentication
 - The backend URL can be overridden in app Settings if needed
-- The default backend URL (`https://e2b.n92dev.us.kg`) is hardcoded as a fallback
+- The default backend URL (`https://youre2brunner.dev`) is hardcoded as a fallback
 - GitHub Actions variables are case-sensitive: `E2B_BACKEND_URL` must match exactly
