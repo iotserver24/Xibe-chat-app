@@ -2,22 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/chat_provider.dart';
 import '../screens/settings_screen.dart';
+import '../models/chat.dart';
+import 'chat_side_panel.dart';
 
-class ChatDrawer extends StatelessWidget {
+class ChatDrawer extends StatefulWidget {
   const ChatDrawer({super.key});
+
+  @override
+  State<ChatDrawer> createState() => _ChatDrawerState();
+}
+
+class _ChatDrawerState extends State<ChatDrawer> {
+  Chat? _selectedChatForSidePanel;
+
+  void _showSidePanel(Chat chat) {
+    setState(() {
+      _selectedChatForSidePanel = chat;
+    });
+  }
+
+  void _hideSidePanel() {
+    setState(() {
+      _selectedChatForSidePanel = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final drawerWidth = screenWidth > 600 ? 320.0 : 280.0;
     
-    return SizedBox(
-      width: drawerWidth,
-      child: Drawer(
-        backgroundColor: Colors.black,
-        child: SafeArea(
-          child: Column(
-            children: [
+    return Stack(
+      children: [
+        SizedBox(
+          width: drawerWidth,
+          child: Drawer(
+            backgroundColor: Colors.black,
+            child: SafeArea(
+              child: Column(
+                children: [
               Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: const BoxDecoration(
@@ -184,48 +207,9 @@ class ChatDrawer extends StatelessWidget {
                             ],
                           ),
                           onTap: () {
+                            // Select the chat and show side panel (keep drawer open)
                             chatProvider.selectChat(chat);
-                            if (Navigator.canPop(context)) {
-                              Navigator.pop(context);
-                            }
-                          },
-                          onLongPress: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                backgroundColor: const Color(0xFF343541),
-                                title: const Text(
-                                  'Delete Chat',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                content: const Text(
-                                  'Are you sure you want to delete this chat?',
-                                  style: TextStyle(color: Colors.white70),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      if (Navigator.canPop(context)) {
-                                        Navigator.pop(context);
-                                      }
-                                    },
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      chatProvider.deleteChat(chat.id!);
-                                      if (Navigator.canPop(context)) {
-                                        Navigator.pop(context);
-                                      }
-                                    },
-                                    child: const Text(
-                                      'Delete',
-                                      style: TextStyle(color: Colors.red),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
+                            _showSidePanel(chat);
                           },
                         ),
                       );
@@ -237,6 +221,19 @@ class ChatDrawer extends StatelessWidget {
           ],
         ),
       ),
-    ));
+    )),
+        // Side panel overlay - positioned to cover drawer area
+        if (_selectedChatForSidePanel != null)
+          Positioned.fill(
+            child: IgnorePointer(
+              ignoring: false,
+              child: ChatSidePanel(
+                chat: _selectedChatForSidePanel!,
+                onClose: _hideSidePanel,
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }

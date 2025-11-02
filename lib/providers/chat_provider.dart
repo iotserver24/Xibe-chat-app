@@ -526,6 +526,22 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
     }
   }
 
+  Future<void> renameChat(int chatId, String newTitle) async {
+    final chat = _chats.firstWhere((c) => c.id == chatId);
+    final updatedChat = Chat(
+      id: chat.id,
+      title: newTitle,
+      createdAt: chat.createdAt,
+      updatedAt: DateTime.now(),
+    );
+    await _databaseService.updateChat(updatedChat);
+    if (_currentChat?.id == chatId) {
+      _currentChat = updatedChat;
+    }
+    await _loadChats();
+    notifyListeners();
+  }
+
   Future<void> deleteChat(int chatId) async {
     await _databaseService.deleteChat(chatId);
     if (_currentChat?.id == chatId) {
