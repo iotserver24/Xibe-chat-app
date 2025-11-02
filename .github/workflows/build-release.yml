@@ -13,6 +13,15 @@ on:
         required: true
         type: string
         default: '1'
+      release_type:
+        description: 'Release type (draft: testing, beta: beta version, latest: stable release)'
+        required: true
+        type: choice
+        options:
+          - draft
+          - beta
+          - latest
+        default: 'draft'
 
 env:
   FLUTTER_VERSION: 'stable'
@@ -653,9 +662,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version }}-${{ inputs.build_number }}
-          name: Xibe Chat v${{ inputs.version }}-${{ inputs.build_number }}
-          draft: false
-          prerelease: false
+          name: Xibe Chat v${{ inputs.version }}-${{ inputs.build_number }} (${{ inputs.release_type }})
+          draft: ${{ inputs.release_type == 'draft' }}
+          prerelease: ${{ inputs.release_type == 'beta' }}
           files: release-files/*
           fail_on_unmatched_files: false
           body: |

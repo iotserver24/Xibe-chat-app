@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/theme_provider.dart' show ThemeProvider, AppTheme;
 import '../providers/chat_provider.dart';
 import '../providers/settings_provider.dart';
+import '../services/update_service.dart';
+import '../widgets/update_dialog.dart';
 import 'mcp_servers_screen.dart';
 import 'memory_screen.dart';
 
@@ -514,6 +516,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 leading: const Icon(Icons.info_outline),
               ),
               ListTile(
+                title: const Text('Check for Updates'),
+                subtitle: const Text('Check if a new version is available'),
+                leading: const Icon(Icons.system_update),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _checkForUpdates(),
+              ),
+              ListTile(
                 title: const Text('Xibe Chat'),
                 subtitle: const Text('AI Chat Application'),
                 leading: const Icon(Icons.chat_bubble_outline),
@@ -641,5 +650,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _checkForUpdates() async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      final updateService = UpdateService();
+      final updateInfo = await updateService.checkForUpdate();
+
+      if (!mounted) return;
+
+      // Close loading indicator
+      Navigator.of(context).pop();
+
+      if (updateInfo['available'] == true) {
+        // Show update dialog
+        await showUpdateDialog(context, updateInfo, updateService);
+      } else {
+        // Show "no updates available" message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text('You are using the latest version!'),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      // Close loading indicator
+      Navigator.of(context).pop();
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text('Failed to check for updates: $e'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
   }
 }

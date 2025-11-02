@@ -10,6 +10,8 @@ import 'screens/settings_screen.dart';
 import 'screens/mcp_servers_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/mcp_config_service.dart';
+import 'services/update_service.dart';
+import 'widgets/update_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -110,6 +112,39 @@ class SplashWrapper extends StatefulWidget {
 
 class _SplashWrapperState extends State<SplashWrapper> {
   bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Check for updates after the splash screen is shown
+    _checkForUpdatesAfterDelay();
+  }
+
+  Future<void> _checkForUpdatesAfterDelay() async {
+    // Wait for splash screen to complete
+    await Future.delayed(const Duration(seconds: 3));
+    
+    if (!mounted) return;
+    
+    _checkForUpdates();
+  }
+
+  Future<void> _checkForUpdates() async {
+    try {
+      final updateService = UpdateService();
+      final updateInfo = await updateService.checkForUpdate();
+      
+      if (!mounted) return;
+      
+      if (updateInfo['available'] == true) {
+        // Show update dialog
+        showUpdateDialog(context, updateInfo, updateService);
+      }
+    } catch (e) {
+      // Silently fail - don't interrupt user experience
+      debugPrint('Update check failed: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
