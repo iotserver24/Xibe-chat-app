@@ -20,9 +20,9 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _apiKeyController = TextEditingController();
   final TextEditingController _systemPromptController = TextEditingController();
-  final TextEditingController _e2bApiKeyController = TextEditingController();
+  final TextEditingController _e2bApiKeyController = TextEditingController(); // Deprecated
+  final TextEditingController _e2bBackendUrlController = TextEditingController();
   bool _isObscured = true;
-  bool _isE2bObscured = true;
   String _appVersion = '1.0.0';
 
   @override
@@ -33,7 +33,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
       _apiKeyController.text = settingsProvider.apiKey ?? '';
       _systemPromptController.text = settingsProvider.systemPrompt ?? '';
-      _e2bApiKeyController.text = settingsProvider.e2bApiKey ?? '';
+      _e2bApiKeyController.text = settingsProvider.e2bApiKey ?? ''; // Deprecated
+      _e2bBackendUrlController.text = settingsProvider.e2bBackendUrl ?? '';
     });
   }
 
@@ -48,7 +49,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void dispose() {
     _apiKeyController.dispose();
     _systemPromptController.dispose();
-    _e2bApiKeyController.dispose();
+    _e2bApiKeyController.dispose(); // Deprecated
+    _e2bBackendUrlController.dispose();
     super.dispose();
   }
 
@@ -218,7 +220,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'E2B API Key',
+                      'E2B Backend URL',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -226,7 +228,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Enter your E2B API key to enable code execution sandbox. Get your key from https://e2b.dev',
+                      'Enter the E2B backend URL for code execution. Leave empty to use default (from build environment).',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
@@ -234,45 +236,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 12),
                     TextField(
-                      controller: _e2bApiKeyController,
-                      obscureText: _isE2bObscured,
+                      controller: _e2bBackendUrlController,
                       decoration: InputDecoration(
-                        hintText: 'Enter E2B API key (optional)',
-                        suffixIcon: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                _isE2bObscured ? Icons.visibility : Icons.visibility_off,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _isE2bObscured = !_isE2bObscured;
-                                });
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.save, color: Colors.green),
-                              onPressed: () async {
-                                final apiKey = _e2bApiKeyController.text.trim();
-                                final settingsProvider =
-                                    Provider.of<SettingsProvider>(context, listen: false);
-                                
-                                await settingsProvider.setE2bApiKey(
-                                  apiKey.isEmpty ? null : apiKey,
-                                );
-                                
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('E2B API key saved successfully'),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                          ],
+                        hintText: 'https://e2b.n92dev.us.kg (leave empty for default)',
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.save, color: Colors.green),
+                          onPressed: () async {
+                            final backendUrl = _e2bBackendUrlController.text.trim();
+                            final settingsProvider =
+                                Provider.of<SettingsProvider>(context, listen: false);
+                            
+                            await settingsProvider.setE2bBackendUrl(
+                              backendUrl.isEmpty ? null : backendUrl,
+                            );
+                            
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('E2B Backend URL saved successfully'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
                         ),
                       ),
                     ),
@@ -504,14 +490,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: const Text('Code Execution (E2B)'),
                 subtitle: Consumer<SettingsProvider>(
                   builder: (context, settings, child) {
-                    final hasKey = settings.e2bApiKey != null && 
-                                   settings.e2bApiKey!.isNotEmpty;
+                    final backendUrl = settings.e2bBackendUrl;
+                    final displayUrl = backendUrl ?? 'Default (from build)';
                     return Text(
-                      hasKey 
-                          ? 'Configured - Code execution enabled'
-                          : 'Not configured - Add E2B API key above',
-                      style: TextStyle(
-                        color: hasKey ? Colors.green : Colors.orange,
+                      'Backend: $displayUrl',
+                      style: const TextStyle(
+                        color: Colors.green,
                       ),
                     );
                   },

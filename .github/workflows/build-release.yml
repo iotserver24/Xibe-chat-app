@@ -25,6 +25,9 @@ on:
 
 env:
   FLUTTER_VERSION: 'stable'
+  # E2B Backend URL - can be set in GitHub repository variables (Settings > Secrets and variables > Actions > Variables)
+  # If not set, defaults to: https://e2b.n92dev.us.kg
+  E2B_BACKEND_URL: ${{ vars.E2B_BACKEND_URL || 'https://e2b.n92dev.us.kg' }}
 
 jobs:
   # Android builds - APK and AAB
@@ -105,10 +108,10 @@ jobs:
           fi
 
       - name: Build Universal APK
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
 
       - name: Build App Bundle (AAB)
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
 
       - name: Rename artifacts
         run: |
@@ -173,10 +176,12 @@ jobs:
         shell: powershell
 
       - name: Build Windows Release (${{ matrix.arch }})
+        env:
+          E2B_BACKEND_URL: ${{ env.E2B_BACKEND_URL }}
         run: |
           # Note: ARM64 support is experimental. On x64 runners, Flutter builds x64 by default.
           # For ARM64, Flutter may still output to x64 folder but the binary targets ARM64.
-          flutter build windows --release
+          flutter build windows --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
         shell: powershell
 
       - name: Create self-signed certificate for MSIX
@@ -436,7 +441,7 @@ jobs:
         run: |
           # Flutter builds universal binaries by default for macOS (both Intel and Apple Silicon)
           # The --target-platform flag is not supported for macOS builds
-          flutter build macos --release
+          flutter build macos --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
 
       - name: Install create-dmg
         run: brew install create-dmg
@@ -523,7 +528,7 @@ jobs:
           echo "✅ App icons generated"
 
       - name: Build Linux Release
-        run: flutter build linux --release
+        run: flutter build linux --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
 
       - name: Install AppImage and DEB creation tools
         run: |
@@ -682,7 +687,7 @@ jobs:
 
       - name: Build iOS (unsigned)
         run: |
-          flutter build ios --release --no-codesign
+          flutter build ios --release --no-codesign --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
 
       - name: Create unsigned IPA
         run: |

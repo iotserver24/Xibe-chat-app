@@ -3,9 +3,13 @@ import 'package:http/http.dart' as http;
 
 class E2bService {
   static const String baseUrl = 'https://api.e2b.dev';
-  static const String productionBackendUrl = 'https://e2b.n92dev.us.kg';
-  static const String localBackendUrl = 'http://localhost:3000';
-  final String? apiKey;
+  // Get backend URL from environment variable (for builds) or use default
+  // Can be set via: dart define=E2B_BACKEND_URL=https://e2b.n92dev.us.kg
+  static const String defaultBackendUrl = String.fromEnvironment(
+    'E2B_BACKEND_URL',
+    defaultValue: 'https://e2b.n92dev.us.kg',
+  );
+  final String? apiKey; // Not required anymore - kept for backward compatibility
   final String? backendUrl; // Allow override for custom backend URL
 
   E2bService({this.apiKey, this.backendUrl});
@@ -46,8 +50,8 @@ class E2bService {
     String language = 'python',
     String? sandboxId, // Not needed when using backend, kept for backward compatibility
   }) async {
-    // Use custom backend URL if provided, otherwise use production URL
-    final backendBaseUrl = backendUrl ?? productionBackendUrl;
+    // Use custom backend URL if provided, otherwise use environment variable default
+    final backendBaseUrl = backendUrl ?? defaultBackendUrl;
     
     try {
       final requestBody = <String, dynamic>{

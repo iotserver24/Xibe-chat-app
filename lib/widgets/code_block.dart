@@ -75,14 +75,7 @@ class _CodeBlockState extends State<CodeBlock> {
 
   Future<void> _runCode() async {
     final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-    final e2bApiKey = settingsProvider.e2bApiKey;
-
-    if (e2bApiKey == null || e2bApiKey.isEmpty) {
-      setState(() {
-        _error = 'E2B API key not configured. Please add it in Settings.';
-      });
-      return;
-    }
+    final backendUrl = settingsProvider.e2bBackendUrl;
 
     setState(() {
       _isRunning = true;
@@ -94,7 +87,8 @@ class _CodeBlockState extends State<CodeBlock> {
     try {
       // Execute code using the backend wrapper
       // The backend handles sandbox creation and cleanup automatically
-      final e2bService = E2bService(apiKey: e2bApiKey);
+      // No API key needed - backend handles it
+      final e2bService = E2bService(backendUrl: backendUrl);
       final languageCode = _e2bLanguageCode ?? 'python';
       final executionResult = await e2bService.executeCode(
         code: widget.code,

@@ -13,7 +13,8 @@ class SettingsProvider extends ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService();
   String? _apiKey;
   String? _systemPrompt;
-  String? _e2bApiKey;
+  String? _e2bApiKey; // Kept for backward compatibility, not required anymore
+  String? _e2bBackendUrl; // Backend URL (optional - can use env var)
   double _temperature = 0.7;
   int _maxTokens = 2048;
   double _topP = 1.0;
@@ -27,7 +28,8 @@ class SettingsProvider extends ChangeNotifier {
 
   String? get apiKey => _apiKey;
   String? get systemPrompt => _systemPrompt;
-  String? get e2bApiKey => _e2bApiKey;
+  String? get e2bApiKey => _e2bApiKey; // Deprecated - kept for backward compatibility
+  String? get e2bBackendUrl => _e2bBackendUrl;
   double get temperature => _temperature;
   int get maxTokens => _maxTokens;
   double get topP => _topP;
@@ -48,7 +50,8 @@ class SettingsProvider extends ChangeNotifier {
     _prefs = await SharedPreferences.getInstance();
     _apiKey = _prefs?.getString('xibe_api_key');
     _systemPrompt = _prefs?.getString('system_prompt');
-    _e2bApiKey = _prefs?.getString('e2b_api_key');
+    _e2bApiKey = _prefs?.getString('e2b_api_key'); // Deprecated
+    _e2bBackendUrl = _prefs?.getString('e2b_backend_url');
     _temperature = _prefs?.getDouble('temperature') ?? 0.7;
     _maxTokens = _prefs?.getInt('max_tokens') ?? 2048;
     _topP = _prefs?.getDouble('top_p') ?? 1.0;
@@ -84,6 +87,16 @@ class SettingsProvider extends ChangeNotifier {
       await _prefs?.setString('e2b_api_key', key);
     } else {
       await _prefs?.remove('e2b_api_key');
+    }
+    notifyListeners();
+  }
+
+  Future<void> setE2bBackendUrl(String? url) async {
+    _e2bBackendUrl = url;
+    if (url != null && url.isNotEmpty) {
+      await _prefs?.setString('e2b_backend_url', url);
+    } else {
+      await _prefs?.remove('e2b_backend_url');
     }
     notifyListeners();
   }
