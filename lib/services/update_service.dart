@@ -40,8 +40,8 @@ class UpdateService {
       final isNewer = _isVersionNewer(
         currentVersion,
         currentBuildNumber,
-        versionInfo['version'],
-        versionInfo['buildNumber'],
+        versionInfo['version'] ?? '0.0.0',
+        versionInfo['buildNumber'] ?? '0',
       );
       
       if (!isNewer) {
