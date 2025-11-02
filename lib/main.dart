@@ -142,7 +142,7 @@ class _SplashWrapperState extends State<SplashWrapper> {
       }
     } catch (e) {
       // Silently fail - don't interrupt user experience
-      print('Update check failed: $e');
+      debugPrint('Update check failed: $e');
     }
   }
 

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -63,7 +64,7 @@ class UpdateService {
         'isPrerelease': latestRelease['prerelease'] as bool? ?? false,
       };
     } catch (e) {
-      print('Error checking for update: $e');
+      debugPrint('Error checking for update: $e');
       return {'available': false};
     }
   }
@@ -94,7 +95,7 @@ class UpdateService {
       
       return null;
     } catch (e) {
-      print('Error fetching releases: $e');
+      debugPrint('Error fetching releases: $e');
       return null;
     }
   }
@@ -204,7 +205,7 @@ class UpdateService {
       
       return null;
     } catch (e) {
-      print('Error getting download URL: $e');
+      debugPrint('Error getting download URL: $e');
       return null;
     }
   }
@@ -249,7 +250,7 @@ class UpdateService {
       
       return false;
     } catch (e) {
-      print('Error downloading update: $e');
+      debugPrint('Error downloading update: $e');
       return false;
     }
   }
@@ -287,7 +288,7 @@ class UpdateService {
       
       return false;
     } catch (e) {
-      print('Error in desktop download: $e');
+      debugPrint('Error in desktop download: $e');
       return false;
     }
   }
@@ -301,7 +302,7 @@ class UpdateService {
       }
       return false;
     } catch (e) {
-      print('Error opening download page: $e');
+      debugPrint('Error opening download page: $e');
       return false;
     }
   }
