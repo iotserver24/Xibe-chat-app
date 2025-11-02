@@ -146,9 +146,9 @@ jobs:
 
       - name: Update app version in pubspec.yaml
         run: |
-          Write-Host "📝 Updating version in pubspec.yaml to ${{ inputs.version }}+${{ inputs.build_number }}"
+          Write-Host "Updating version in pubspec.yaml to ${{ inputs.version }}+${{ inputs.build_number }}"
           (Get-Content pubspec.yaml) -replace '^version: .*', "version: ${{ inputs.version }}+${{ inputs.build_number }}" | Set-Content pubspec.yaml
-          Write-Host "✅ Updated version in pubspec.yaml"
+          Write-Host "Updated version in pubspec.yaml"
           Select-String -Path pubspec.yaml -Pattern '^version:'
         shell: powershell
 
@@ -167,9 +167,9 @@ jobs:
 
       - name: Generate app icons
         run: |
-          Write-Host "🎨 Generating app icons..."
+          Write-Host "Generating app icons..."
           flutter pub run flutter_launcher_icons
-          Write-Host "✅ App icons generated"
+          Write-Host "App icons generated"
         shell: powershell
 
       - name: Build Windows Release (${{ matrix.arch }})
@@ -241,9 +241,9 @@ jobs:
           $nsisPath = "C:\Program Files (x86)\NSIS\makensis.exe"
           if (Test-Path $nsisPath) {
             & $nsisPath xibe-chat-installer.nsi
-            Write-Host "✅ NSIS installer created"
+            Write-Host "NSIS installer created"
           } else {
-            Write-Host "❌ NSIS not found at $nsisPath"
+            Write-Host "NSIS not found at $nsisPath"
             exit 1
           }
         shell: powershell
@@ -281,30 +281,30 @@ jobs:
             # Create ZIP of EXE
             Compress-Archive -Path "artifacts\windows-${{ matrix.arch }}\xibe-chat-windows-${{ matrix.arch }}\*" -DestinationPath "artifacts\windows-${{ matrix.arch }}\xibe-chat-windows-${{ matrix.arch }}-v${{ inputs.version }}-${{ inputs.build_number }}.zip" -Force
             
-            Write-Host "✅ Created Windows executable ZIP"
+            Write-Host "Created Windows executable ZIP"
             
             # Remove unzipped folder to save space
             Remove-Item -Path "artifacts\windows-${{ matrix.arch }}\xibe-chat-windows-${{ matrix.arch }}" -Recurse -Force
           } else {
-            Write-Host "❌ Build path not found, skipping EXE packaging"
+            Write-Host "Build path not found, skipping EXE packaging"
           }
           
           # Copy MSIX
           $msixFile = Get-ChildItem -Path . -Filter "*.msix" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($msixFile) {
             Copy-Item -Path $msixFile.FullName -Destination "artifacts\windows-${{ matrix.arch }}\xibe-chat-windows-${{ matrix.arch }}-v${{ inputs.version }}-${{ inputs.build_number }}.msix" -Force
-            Write-Host "✅ Copied MSIX installer"
+            Write-Host "Copied MSIX installer"
           } else {
-            Write-Host "⚠️  MSIX file not found"
+            Write-Host "MSIX file not found"
           }
           
           # Copy NSIS installer
           $nsisInstaller = "xibe-chat-installer-v${{ inputs.version }}-${{ inputs.build_number }}.exe"
           if (Test-Path $nsisInstaller) {
             Copy-Item -Path $nsisInstaller -Destination "artifacts\windows-${{ matrix.arch }}\xibe-chat-installer-${{ matrix.arch }}-v${{ inputs.version }}-${{ inputs.build_number }}.exe" -Force
-            Write-Host "✅ Copied NSIS installer"
+            Write-Host "Copied NSIS installer"
           } else {
-            Write-Host "⚠️  NSIS installer not found"
+            Write-Host "NSIS installer not found"
           }
         shell: powershell
 
