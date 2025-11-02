@@ -17,6 +17,7 @@ class SettingsProvider extends ChangeNotifier {
   double _topP = 1.0;
   double _frequencyPenalty = 0.0;
   double _presencePenalty = 0.0;
+  String _updateChannel = 'stable'; // 'stable' or 'beta'
   List<Memory> _memories = [];
   int _cachedTotalMemoryCharacters = 0;
 
@@ -28,6 +29,7 @@ class SettingsProvider extends ChangeNotifier {
   double get topP => _topP;
   double get frequencyPenalty => _frequencyPenalty;
   double get presencePenalty => _presencePenalty;
+  String get updateChannel => _updateChannel;
   List<Memory> get memories => _memories;
 
   SettingsProvider() {
@@ -45,6 +47,7 @@ class SettingsProvider extends ChangeNotifier {
     _topP = _prefs?.getDouble('top_p') ?? 1.0;
     _frequencyPenalty = _prefs?.getDouble('frequency_penalty') ?? 0.0;
     _presencePenalty = _prefs?.getDouble('presence_penalty') ?? 0.0;
+    _updateChannel = _prefs?.getString('update_channel') ?? 'stable';
     notifyListeners();
   }
 
@@ -106,6 +109,14 @@ class SettingsProvider extends ChangeNotifier {
     _presencePenalty = value;
     await _prefs?.setDouble('presence_penalty', value);
     notifyListeners();
+  }
+
+  Future<void> setUpdateChannel(String channel) async {
+    if (channel == 'stable' || channel == 'beta') {
+      _updateChannel = channel;
+      await _prefs?.setString('update_channel', channel);
+      notifyListeners();
+    }
   }
 
   // Memory management

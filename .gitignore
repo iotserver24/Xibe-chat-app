@@ -46,6 +46,13 @@ android/.externalNativeBuild/
 android/gradlew
 android/gradlew.bat
 android/gradle/wrapper/gradle-wrapper.jar
+android/key.properties
+
+# Keystore files (created from GitHub Secrets in CI/CD)
+*.jks
+*.keystore
+keystore_base64.txt
+keystore_base64_clean.txt
 
 # APK files
 *.apk

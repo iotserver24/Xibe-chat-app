@@ -515,6 +515,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: Text(_appVersion),
                 leading: const Icon(Icons.info_outline),
               ),
+              Consumer<SettingsProvider>(
+                builder: (context, settingsProvider, child) {
+                  return ListTile(
+                    title: const Text('Update Channel'),
+                    subtitle: Text(settingsProvider.updateChannel == 'stable' 
+                        ? 'Stable (Latest)' 
+                        : 'Beta'),
+                    leading: const Icon(Icons.tune),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _showUpdateChannelDialog(context, settingsProvider),
+                  );
+                },
+              ),
               ListTile(
                 title: const Text('Check for Updates'),
                 subtitle: const Text('Check if a new version is available'),
@@ -652,6 +665,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _showUpdateChannelDialog(BuildContext context, SettingsProvider settingsProvider) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Update Channel'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<String>(
+                  title: const Text('Stable (Latest)'),
+                  subtitle: const Text('Recommended for most users'),
+                  value: 'stable',
+                  groupValue: settingsProvider.updateChannel,
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      settingsProvider.setUpdateChannel(value);
+                      Navigator.pop(dialogContext);
+                    }
+                  },
+                  activeColor: Theme.of(context).colorScheme.primary,
+                ),
+                RadioListTile<String>(
+                  title: const Text('Beta'),
+                  subtitle: const Text('Early access to new features'),
+                  value: 'beta',
+                  groupValue: settingsProvider.updateChannel,
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      settingsProvider.setUpdateChannel(value);
+                      Navigator.pop(dialogContext);
+                    }
+                  },
+                  activeColor: Theme.of(context).colorScheme.primary,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _checkForUpdates() async {
     // Show loading indicator
     showDialog(
@@ -663,8 +726,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
       final updateService = UpdateService();
-      final updateInfo = await updateService.checkForUpdate();
+      final updateInfo = await updateService.checkForUpdate(channel: settingsProvider.updateChannel);
 
       if (!mounted) return;
 

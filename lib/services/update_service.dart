@@ -13,16 +13,17 @@ class UpdateService {
   static const String githubApiUrl = 'https://api.github.com/repos/$githubOwner/$githubRepo/releases';
 
   /// Check if an update is available
+  /// [channel] can be 'stable' (default) or 'beta'
   /// Returns a map with 'available' (bool), 'version' (String), 'downloadUrl' (String), and 'releaseType' (String)
-  Future<Map<String, dynamic>> checkForUpdate() async {
+  Future<Map<String, dynamic>> checkForUpdate({String channel = 'stable'}) async {
     try {
       // Get current app version
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
       final currentBuildNumber = packageInfo.buildNumber;
       
-      // Fetch latest release from GitHub (excluding drafts and prereleases)
-      final latestRelease = await _fetchLatestRelease();
+      // Fetch latest release from GitHub based on channel preference
+      final latestRelease = await _fetchLatestRelease(channel: channel);
       
       if (latestRelease == null) {
         return {'available': false};
@@ -69,8 +70,11 @@ class UpdateService {
     }
   }
 
-  /// Fetch the latest release from GitHub (excludes drafts, includes latest stable or beta)
-  Future<Map<String, dynamic>?> _fetchLatestRelease() async {
+  /// Fetch the latest release from GitHub
+  /// [channel] can be 'stable' (default) or 'beta'
+  /// - 'stable': Returns only non-prerelease releases (excludes drafts and prereleases)
+  /// - 'beta': Returns only prerelease releases (excludes drafts)
+  Future<Map<String, dynamic>?> _fetchLatestRelease({String channel = 'stable'}) async {
     try {
       final response = await http.get(Uri.parse(githubApiUrl));
       
@@ -84,15 +88,28 @@ class UpdateService {
         return null;
       }
       
-      // Find the first release that is not a draft
-      // This will return the latest stable release (not prerelease) if available,
-      // or the latest beta (prerelease) if no stable release exists
+      // Filter releases based on channel preference
       for (var release in releases) {
-        if (release['draft'] == false) {
-          return release as Map<String, dynamic>;
+        final isDraft = release['draft'] == true;
+        final isPrerelease = release['prerelease'] == true;
+        
+        // Skip drafts
+        if (isDraft) continue;
+        
+        if (channel == 'stable') {
+          // For stable channel, only return non-prerelease releases
+          if (!isPrerelease) {
+            return release as Map<String, dynamic>;
+          }
+        } else if (channel == 'beta') {
+          // For beta channel, only return prerelease releases
+          if (isPrerelease) {
+            return release as Map<String, dynamic>;
+          }
         }
       }
       
+      // If no release found for the selected channel, return null
       return null;
     } catch (e) {
       debugPrint('Error fetching releases: $e');

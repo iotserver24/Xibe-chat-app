@@ -149,7 +149,7 @@ jobs:
           Write-Host "📝 Updating version in pubspec.yaml to ${{ inputs.version }}+${{ inputs.build_number }}"
           (Get-Content pubspec.yaml) -replace '^version: .*', "version: ${{ inputs.version }}+${{ inputs.build_number }}" | Set-Content pubspec.yaml
           Write-Host "✅ Updated version in pubspec.yaml"
-          Select-String -Path pubspec.yaml -Pattern "^version:"
+          Select-String -Path pubspec.yaml -Pattern '^version:'
         shell: powershell
 
       - name: Enable Windows Desktop
