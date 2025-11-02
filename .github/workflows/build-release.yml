@@ -202,11 +202,20 @@ jobs:
       - name: Convert logo to NSIS format
         run: |
           # NSIS header image: 150x57 pixels BMP format
-          # NSIS icon: ICO format (we'll use PNG as NSIS supports it)
+          # NSIS icon: ICO format
           if (Test-Path "logo.png") {
             # Resize and convert to BMP for header image (NSIS recommended size: 150x57)
             magick convert logo.png -resize 150x57^ -gravity center -extent 150x57 -format BMP installer-header.bmp
             Write-Host "Created installer header image (150x57 BMP)"
+            
+            # Convert to ICO format for installer icon (NSIS requires ICO, not PNG)
+            # Create multi-resolution ICO file with common sizes
+            magick convert logo.png -define icon:auto-resize=256,128,64,48,32,16 logo.ico
+            Write-Host "Created installer icon (ICO format)"
+          } elseif (Test-Path "windows\runner\resources\app_icon.ico") {
+            # Use existing Windows app icon as fallback
+            Copy-Item "windows\runner\resources\app_icon.ico" "logo.ico"
+            Write-Host "Using existing app_icon.ico as installer icon"
           } else {
             Write-Host "Warning: logo.png not found, installer will use default logo"
           }
@@ -227,8 +236,8 @@ jobs:
           !define MUI_HEADERIMAGE
           !define MUI_HEADERIMAGE_BITMAP "installer-header.bmp"
           !define MUI_WELCOMEFINISHPAGE_BITMAP "installer-header.bmp"
-          !define MUI_ICON "logo.png"
-          !define MUI_UNICON "logo.png"
+          !define MUI_ICON "logo.ico"
+          !define MUI_UNICON "logo.ico"
           
           # Custom welcome page text with credits
           !define MUI_WELCOMEPAGE_TEXT "Welcome to Xibe Chat Setup!$\r$\n$\r$\nThis will install Xibe Chat v${{ inputs.version }} on your computer.$\r$\n$\r$\n$\r$\nBuilt by: R3AP3Reditz (Anish Kumar)$\r$\nPowered by: xibe.app for AI$\r$\n$\r$\nPortfolio: anishkumar.tech$\r$\nGitHub: github.com/iotserver24$\r$\n$\r$\nClick Next to continue."
@@ -273,20 +282,34 @@ jobs:
 
       - name: Build NSIS installer
         run: |
-          # Ensure logo file exists for NSIS
+          # Verify required files exist for NSIS
+          $missingFiles = @()
+          
           if (-not (Test-Path "installer-header.bmp")) {
-            if (Test-Path "logo.png") {
-              Copy-Item logo.png installer-header.bmp
-              Write-Host "Using logo.png as header image"
+            $missingFiles += "installer-header.bmp"
+          }
+          
+          if (-not (Test-Path "logo.ico")) {
+            # Try to use existing app_icon.ico as fallback
+            if (Test-Path "windows\runner\resources\app_icon.ico") {
+              Copy-Item "windows\runner\resources\app_icon.ico" "logo.ico"
+              Write-Host "Using app_icon.ico as installer icon"
             } else {
-              Write-Host "Warning: No logo file found, NSIS will use default"
+              $missingFiles += "logo.ico"
             }
+          }
+          
+          if ($missingFiles.Count -gt 0) {
+            Write-Host "Warning: Missing files for NSIS: $($missingFiles -join ', ')"
+            Write-Host "NSIS may use default images"
+          } else {
+            Write-Host "All required files present for NSIS installer"
           }
           
           $nsisPath = "C:\Program Files (x86)\NSIS\makensis.exe"
           if (Test-Path $nsisPath) {
             & $nsisPath xibe-chat-installer.nsi
-            Write-Host "NSIS installer created"
+            Write-Host "NSIS installer created successfully"
           } else {
             Write-Host "NSIS not found at $nsisPath"
             exit 1
