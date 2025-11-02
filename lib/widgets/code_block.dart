@@ -5,8 +5,6 @@ import 'package:flutter_highlight/themes/atom-one-dark.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:provider/provider.dart';
-import '../providers/settings_provider.dart';
 import '../services/e2b_service.dart';
 
 class CodeBlock extends StatefulWidget {
@@ -74,9 +72,6 @@ class _CodeBlockState extends State<CodeBlock> {
   }
 
   Future<void> _runCode() async {
-    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-    final backendUrl = settingsProvider.e2bBackendUrl;
-
     setState(() {
       _isRunning = true;
       _output = null;
@@ -88,7 +83,8 @@ class _CodeBlockState extends State<CodeBlock> {
       // Execute code using the backend wrapper
       // The backend handles sandbox creation and cleanup automatically
       // No API key needed - backend handles it
-      final e2bService = E2bService(backendUrl: backendUrl);
+      // Backend URL comes from build environment variable or default
+      final e2bService = E2bService();
       final languageCode = _e2bLanguageCode ?? 'python';
       final executionResult = await e2bService.executeCode(
         code: widget.code,

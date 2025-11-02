@@ -21,7 +21,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _apiKeyController = TextEditingController();
   final TextEditingController _systemPromptController = TextEditingController();
   final TextEditingController _e2bApiKeyController = TextEditingController(); // Deprecated
-  final TextEditingController _e2bBackendUrlController = TextEditingController();
   bool _isObscured = true;
   String _appVersion = '1.0.0';
 
@@ -34,7 +33,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _apiKeyController.text = settingsProvider.apiKey ?? '';
       _systemPromptController.text = settingsProvider.systemPrompt ?? '';
       _e2bApiKeyController.text = settingsProvider.e2bApiKey ?? ''; // Deprecated
-      _e2bBackendUrlController.text = settingsProvider.e2bBackendUrl ?? '';
     });
   }
 
@@ -50,7 +48,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _apiKeyController.dispose();
     _systemPromptController.dispose();
     _e2bApiKeyController.dispose(); // Deprecated
-    _e2bBackendUrlController.dispose();
     super.dispose();
   }
 
@@ -210,57 +207,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         // Trigger rebuild to update the character counter display
                         setState(() {});
                       },
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'E2B Backend URL',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Enter the E2B backend URL for code execution. Leave empty to use default (from build environment).',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _e2bBackendUrlController,
-                      decoration: InputDecoration(
-                        hintText: 'https://e2b.n92dev.us.kg (leave empty for default)',
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.save, color: Colors.green),
-                          onPressed: () async {
-                            final backendUrl = _e2bBackendUrlController.text.trim();
-                            final settingsProvider =
-                                Provider.of<SettingsProvider>(context, listen: false);
-                            
-                            await settingsProvider.setE2bBackendUrl(
-                              backendUrl.isEmpty ? null : backendUrl,
-                            );
-                            
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('E2B Backend URL saved successfully'),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -488,17 +434,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               ListTile(
                 title: const Text('Code Execution (E2B)'),
-                subtitle: Consumer<SettingsProvider>(
-                  builder: (context, settings, child) {
-                    final backendUrl = settings.e2bBackendUrl;
-                    final displayUrl = backendUrl ?? 'Default (from build)';
-                    return Text(
-                      'Backend: $displayUrl',
-                      style: const TextStyle(
-                        color: Colors.green,
-                      ),
-                    );
-                  },
+                subtitle: const Text(
+                  'Backend: Default (from build environment)',
+                  style: TextStyle(
+                    color: Colors.green,
+                  ),
                 ),
                 leading: const Icon(Icons.code),
               ),
