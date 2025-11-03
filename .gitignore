@@ -58,4 +58,13 @@ keystore_base64_clean.txt
 *.apk
 *.aab
 
+# Website (Nuxt.js in /site)
+site/node_modules/
+site/.nuxt/
+site/.output/
+site/dist/
+site/.env
+site/.env.*
+site/!.env.example
+site/package-lock.json
 

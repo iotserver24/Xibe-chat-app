@@ -8,12 +8,14 @@ class ChatInput extends StatefulWidget {
   final Function(String, {String? imageBase64, String? imagePath, bool webSearch, bool reasoning}) onSendMessage;
   final bool isLoading;
   final bool supportsVision;
+  final String? initialText;
 
   const ChatInput({
     super.key,
     required this.onSendMessage,
     this.isLoading = false,
     this.supportsVision = false,
+    this.initialText,
   });
 
   @override
@@ -38,6 +40,11 @@ class _ChatInputState extends State<ChatInput> {
   @override
   void initState() {
     super.initState();
+    // Set initial text if provided
+    if (widget.initialText != null && widget.initialText!.isNotEmpty) {
+      _controller.text = widget.initialText!;
+      _hasText = true;
+    }
     _controller.addListener(() {
       setState(() {
         _hasText = _controller.text.trim().isNotEmpty;

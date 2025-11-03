@@ -198,11 +198,15 @@ class SettingsProvider extends ChangeNotifier {
         final defaultProfiles = AiProfile.getDefaultProfiles();
         _aiProfiles = defaultProfiles;
         await _saveAiProfiles();
-        _selectedAiProfileId = defaultProfiles.first.id;
-        await _prefs?.setString('selected_ai_profile_id', _selectedAiProfileId!);
+        // Don't auto-select a profile on first load - make it optional
+        _selectedAiProfileId = null;
       } else {
         _aiProfiles = profilesJson.map((json) => AiProfile.fromJson(jsonDecode(json))).toList();
         _selectedAiProfileId = _prefs?.getString('selected_ai_profile_id');
+        // If empty string was stored, treat as null
+        if (_selectedAiProfileId != null && _selectedAiProfileId!.isEmpty) {
+          _selectedAiProfileId = null;
+        }
       }
       notifyListeners();
     } catch (e) {

@@ -142,7 +142,7 @@ class _AiProfilesScreenState extends State<AiProfilesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Personality Selection',
+                      'Personality Selection (Optional)',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -150,7 +150,7 @@ class _AiProfilesScreenState extends State<AiProfilesScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Choose how your AI assistant behaves. Each profile has a unique personality and communication style.',
+                      'Optionally choose how your AI assistant behaves. If no profile is selected, each AI model will use its own default system prompt.',
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
@@ -180,9 +180,95 @@ class _AiProfilesScreenState extends State<AiProfilesScreen> {
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount: profiles.length,
+                        itemCount: profiles.length + 1, // +1 for "None" option
                         itemBuilder: (context, index) {
-                          final profile = profiles[index];
+                          // First item is "None" option
+                          if (index == 0) {
+                            final isSelected = selectedProfileId == null;
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              elevation: isSelected ? 4 : 1,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.primaryContainer
+                                  : null,
+                              child: InkWell(
+                                onTap: () async {
+                                  await settingsProvider.setSelectedAiProfileId(null);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('No profile selected - using model defaults'),
+                                        duration: Duration(seconds: 2),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 48,
+                                        height: 48,
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? Theme.of(context).colorScheme.primary
+                                              : Colors.grey[300],
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.block,
+                                          color: isSelected ? Colors.white : Colors.grey[700],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    'None',
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: isSelected
+                                                          ? Theme.of(context).colorScheme.primary
+                                                          : null,
+                                                    ),
+                                                  ),
+                                                ),
+                                                if (isSelected)
+                                                  Icon(
+                                                    Icons.check_circle,
+                                                    color: Theme.of(context).colorScheme.primary,
+                                                    size: 20,
+                                                  ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Use each AI model\'s default behavior',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          
+                          final profile = profiles[index - 1]; // -1 because first item is "None"
                           final isSelected = profile.id == selectedProfileId;
 
                           return Card(
