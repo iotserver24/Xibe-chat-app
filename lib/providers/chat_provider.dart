@@ -307,6 +307,31 @@ class ChatProvider extends ChangeNotifier {
         }
       }
       
+      // Add web search instruction if web search is enabled
+      if (webSearch) {
+        const webSearchInstruction = '''
+WEB SEARCH MODE:
+You have access to real-time web search. When you use web sources to answer the user's question, you must list all the URLs you referenced at the very end of your response in this XML format:
+<sources>
+https://example.com/page1
+https://example.com/page2
+https://example.com/page3
+</sources>
+
+Important:
+- List each URL on a separate line within the <sources> tags
+- Only include URLs that you actually referenced in your response
+- The <sources> section should be the last thing in your response
+- Do not mention the <sources> tag in your visible response text
+''';
+        
+        if (enhancedSystemPrompt != null && enhancedSystemPrompt.isNotEmpty) {
+          enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$webSearchInstruction';
+        } else {
+          enhancedSystemPrompt = webSearchInstruction;
+        }
+      }
+      
       // Add memory management instruction
       const memoryInstruction = '''
 MEMORY MANAGEMENT:
@@ -344,13 +369,19 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$chatNameInstruction';
       }
       
+      // Determine which model to use - use gemini-search if web search is enabled
+      String modelToUse = _selectedModel;
+      if (webSearch) {
+        modelToUse = 'gemini-search';
+      }
+      
       // Stream the response
       String fullResponseContent = '';
       String streamingDisplayContent = '';
       await for (final chunk in _apiService.sendMessageStream(
         message: content,
         history: historyForApi,
-        model: _selectedModel,
+        model: modelToUse,
         systemPrompt: enhancedSystemPrompt,
         reasoning: reasoning,
         mcpTools: _mcpClientService.getAllTools(),
@@ -395,6 +426,34 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         notifyListeners();
       }
 
+      // Extract sources from web search if present using XML-style tags
+      List<String> extractedSources = [];
+      if (webSearch) {
+        final sourcesPattern = RegExp(r'<sources>(.*?)</sources>', caseSensitive: false, dotAll: true);
+        final sourcesMatch = sourcesPattern.firstMatch(fullResponseContent);
+        
+        if (sourcesMatch != null) {
+          final sourcesContent = sourcesMatch.group(1)?.trim();
+          if (sourcesContent != null && sourcesContent.isNotEmpty) {
+            // Extract URLs from the sources content (one per line)
+            extractedSources = sourcesContent
+                .split('\n')
+                .map((line) => line.trim())
+                .where((line) => line.isNotEmpty && (line.startsWith('http://') || line.startsWith('https://')))
+                .toList();
+            
+            // Remove the sources tag from the response
+            fullResponseContent = fullResponseContent.replaceFirst(sourcesPattern, '').trim();
+            
+            // Add formatted sources to the end of the response
+            if (extractedSources.isNotEmpty) {
+              final sourcesFormatted = '\n\n**Sources:**\n${extractedSources.map((url) => '• $url').join('\n')}';
+              fullResponseContent = '$fullResponseContent$sourcesFormatted';
+            }
+          }
+        }
+      }
+      
       // Extract memory from full response if present using XML-style tags
       String? extractedMemory;
       // Try to find memory tag - look for the first occurrence
