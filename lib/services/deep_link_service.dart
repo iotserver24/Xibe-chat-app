@@ -29,7 +29,7 @@ class DeepLinkService {
 
     // Also try app_links for initial link
     try {
-      final initialUri = await _appLinks.getInitialLink();
+      final initialUri = await _appLinks.getInitialAppLink();
       if (initialUri != null) {
         _handleDeepLink(initialUri);
       }
