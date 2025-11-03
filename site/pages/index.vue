@@ -129,13 +129,13 @@
           <div class="group relative p-6 sm:p-7 md:p-8 rounded-xl sm:rounded-2xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-1">
             <div class="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-blue-600/0 to-purple-600/0 group-hover:from-blue-600/10 group-hover:to-purple-600/10 transition-all duration-300"></div>
             <div class="relative">
-              <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4 sm:mb-5 md:mb-4 sm:mb-5 md:mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4 sm:mb-5 md:mb-6 group-hover:scale-110 transition-transform duration-300">
                 <svg class="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
               <h3 class="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 text-slate-100">Multiple AI Models</h3>
-              <p class="text-sm sm:text-base text-sm sm:text-base text-slate-400 leading-relaxed">
+              <p class="text-sm sm:text-base text-slate-400 leading-relaxed">
                 Switch seamlessly between Gemini, OpenAI, DeepSeek, Claude, and more. Find the perfect model for every task.
               </p>
             </div>
