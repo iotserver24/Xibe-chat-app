@@ -112,9 +112,9 @@ window.location.href = 'xibechat://mes/Hello%20World';
 | Platform | Status | Notes |
 |----------|--------|-------|
 | Android  | ✅ Ready | Full deep link support |
-| Windows  | ✅ Ready | Via uni_links package |
-| Linux    | ✅ Ready | Via uni_links package |
-| macOS    | ✅ Ready | Via uni_links package |
+| Windows  | ✅ Ready | Via app_links package |
+| Linux    | ✅ Ready | Via app_links package |
+| macOS    | ✅ Ready | Via app_links package |
 | iOS      | ⚠️ Config needed | Documentation provided |
 | Web      | ✅ Ready | Website handles redirects |
 

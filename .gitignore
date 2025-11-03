@@ -66,4 +66,5 @@ site/dist/
 site/.env
 site/.env.*
 site/!.env.example
+site/package-lock.json
 

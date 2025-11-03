@@ -33,7 +33,7 @@ This PR successfully implements all 7 requirements from the issue:
 - `lib/screens/chat_screen.dart` - Integrated pending prompt display
 - `lib/widgets/chat_input.dart` - Support for initial text from deep links
 - `android/app/src/main/AndroidManifest.xml` - Added intent filters for deep links
-- `pubspec.yaml` - Added uni_links and app_links packages
+- `pubspec.yaml` - Added app_links packages
 
 #### New Files
 - `lib/services/deep_link_service.dart` - Core deep link handling service
@@ -92,9 +92,9 @@ https://xibechat.app/app/settings
 | Platform | Deep Links | Status |
 |----------|-----------|--------|
 | Android  | ✅ Full support | Configured |
-| Windows  | ✅ Via uni_links | Ready |
-| Linux    | ✅ Via uni_links | Ready |
-| macOS    | ✅ Via uni_links | Ready |
+| Windows  | ✅ Via app_links | Ready |
+| Linux    | ✅ Via app_links | Ready |
+| macOS    | ✅ Via app_links | Ready |
 | iOS      | ⚠️ Needs Info.plist | Documented |
 | Web      | ✅ Via website | Ready |
 

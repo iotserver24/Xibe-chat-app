@@ -40,7 +40,7 @@ This implementation addresses all requirements from the issue:
 - `lib/screens/chat_screen.dart` - Handle pending prompts in UI
 - `lib/widgets/chat_input.dart` - Support initial text from deep links
 - `android/app/src/main/AndroidManifest.xml` - Android deep link configuration
-- `pubspec.yaml` - Added uni_links and app_links packages
+- `pubspec.yaml` - Added app_links packages
 
 **Features:**
 - Custom URI scheme: `xibechat://`
@@ -140,15 +140,15 @@ site/
 
 - **Android**: ✅ Fully configured with intent filters
 - **iOS**: ⚠️  Requires iOS platform setup (Info.plist)
-- **Windows**: ✅ Supported via uni_links
-- **Linux**: ✅ Supported via uni_links
-- **macOS**: ✅ Supported via uni_links
+- **Windows**: ✅ Supported via app_links
+- **Linux**: ✅ Supported via app_links
+- **macOS**: ✅ Supported via app_links
 - **Web**: ✅ Website handles redirects
 
 ## Dependencies Added
 
 ```yaml
-uni_links: ^0.5.1        # Universal deep link handling
+app_links: ^3.5.0        # Enhanced deep link support
 app_links: ^3.5.0        # Enhanced deep link support
 ```
 

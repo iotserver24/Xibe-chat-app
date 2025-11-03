@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:uni_links/uni_links.dart';
 import 'package:app_links/app_links.dart';
 
 class DeepLinkService {
@@ -18,17 +17,6 @@ class DeepLinkService {
   Future<void> initialize() async {
     // Handle initial deep link if app was launched from one
     try {
-      final initialLink = await getInitialLink();
-      if (initialLink != null) {
-        final uri = Uri.parse(initialLink);
-        _handleDeepLink(uri);
-      }
-    } catch (e) {
-      debugPrint('Error handling initial deep link: $e');
-    }
-
-    // Also try app_links for initial link
-    try {
       final initialUri = await _appLinks.getInitialAppLink();
       if (initialUri != null) {
         _handleDeepLink(initialUri);
@@ -38,16 +26,7 @@ class DeepLinkService {
     }
 
     // Listen for deep links while app is running
-    _linkSubscription = uriLinkStream.listen((Uri? uri) {
-      if (uri != null) {
-        _handleDeepLink(uri);
-      }
-    }, onError: (err) {
-      debugPrint('Deep link error: $err');
-    });
-
-    // Also listen via app_links
-    _appLinks.uriLinkStream.listen((Uri uri) {
+    _linkSubscription = _appLinks.uriLinkStream.listen((Uri uri) {
       _handleDeepLink(uri);
     }, onError: (err) {
       debugPrint('App link error: $err');

@@ -97,7 +97,7 @@ For iOS support, add to `ios/Runner/Info.plist`:
 
 ### Windows & Linux
 
-Deep links work automatically through the `uni_links` and `app_links` packages on desktop platforms.
+Deep links work automatically through the `app_links` package on desktop platforms.
 
 ## Website Integration
 
