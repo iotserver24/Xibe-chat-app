@@ -13,6 +13,7 @@ import 'screens/ai_profiles_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/mcp_config_service.dart';
 import 'services/update_service.dart';
+import 'services/deep_link_service.dart';
 import 'widgets/update_dialog.dart';
 
 void main() async {
@@ -116,12 +117,82 @@ class SplashWrapper extends StatefulWidget {
 
 class _SplashWrapperState extends State<SplashWrapper> {
   bool _showSplash = true;
+  final DeepLinkService _deepLinkService = DeepLinkService();
+  String? _pendingPrompt;
 
   @override
   void initState() {
     super.initState();
+    _initializeDeepLinks();
     // Check for updates after the splash screen is shown
     _checkForUpdatesAfterDelay();
+  }
+
+  Future<void> _initializeDeepLinks() async {
+    try {
+      // Set up deep link callback
+      _deepLinkService.onDeepLinkReceived = (Uri uri) {
+        _handleDeepLink(uri);
+      };
+      
+      // Initialize the service
+      await _deepLinkService.initialize();
+    } catch (e) {
+      debugPrint('Error initializing deep links: $e');
+    }
+  }
+
+  void _handleDeepLink(Uri uri) {
+    final deepLinkData = _deepLinkService.parseDeepLink(uri);
+    
+    if (deepLinkData == null) {
+      debugPrint('Could not parse deep link: $uri');
+      return;
+    }
+
+    debugPrint('Handling deep link: $deepLinkData');
+
+    // If splash is still showing, store the data for later
+    if (_showSplash) {
+      if (deepLinkData.type == DeepLinkType.message && 
+          deepLinkData.messagePrompt != null) {
+        _pendingPrompt = deepLinkData.messagePrompt;
+      }
+      return;
+    }
+
+    // Handle different deep link types
+    switch (deepLinkData.type) {
+      case DeepLinkType.newChat:
+        _navigateToNewChat();
+        break;
+      case DeepLinkType.message:
+        if (deepLinkData.messagePrompt != null) {
+          _navigateToNewChatWithPrompt(deepLinkData.messagePrompt!);
+        }
+        break;
+      case DeepLinkType.settings:
+        Navigator.of(context).pushNamed('/settings');
+        break;
+      case DeepLinkType.chat:
+        // TODO: Implement chat navigation by ID
+        _navigateToNewChat();
+        break;
+    }
+  }
+
+  void _navigateToNewChat() {
+    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    chatProvider.createNewChat();
+  }
+
+  void _navigateToNewChatWithPrompt(String prompt) {
+    // Create a new chat and set the prompt
+    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+    chatProvider.createNewChat().then((_) {
+      // The prompt will be set in ChatScreen via the provider
+      chatProvider.setPendingPrompt(prompt);
+    });
   }
 
   Future<void> _checkForUpdatesAfterDelay() async {
@@ -151,6 +222,12 @@ class _SplashWrapperState extends State<SplashWrapper> {
   }
 
   @override
+  void dispose() {
+    _deepLinkService.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (_showSplash) {
       return SplashScreen(
@@ -158,6 +235,23 @@ class _SplashWrapperState extends State<SplashWrapper> {
           setState(() {
             _showSplash = false;
           });
+          
+          // Handle any pending deep link after splash
+          if (_pendingPrompt != null) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                _navigateToNewChatWithPrompt(_pendingPrompt!);
+                _pendingPrompt = null;
+              }
+            });
+          } else {
+            // Always create a new chat when opening the app
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                _navigateToNewChat();
+              }
+            });
+          }
         },
       );
     }

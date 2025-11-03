@@ -23,6 +23,7 @@ class ChatProvider extends ChangeNotifier {
   String? _systemPrompt;
   String Function()? _memoryContextGetter;
   Future<void> Function(String)? _onMemoryExtracted;
+  String? _pendingPrompt;
 
   List<Chat> get chats => _chats;
   Chat? get currentChat => _currentChat;
@@ -34,6 +35,7 @@ class ChatProvider extends ChangeNotifier {
   List<AiModel> get availableModels => _availableModels;
   String get selectedModel => _selectedModel;
   String? get systemPrompt => _systemPrompt;
+  String? get pendingPrompt => _pendingPrompt;
   
   bool get selectedModelSupportsVision {
     final model = _availableModels.firstWhere(
@@ -147,6 +149,16 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPendingPrompt(String? prompt) {
+    _pendingPrompt = prompt;
+    notifyListeners();
+  }
+
+  void clearPendingPrompt() {
+    _pendingPrompt = null;
+    notifyListeners();
+  }
+
   String getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
@@ -161,11 +173,8 @@ class ChatProvider extends ChangeNotifier {
   Future<void> _loadChats() async {
     final chats = await _databaseService.getAllChats();
     _chats = chats;
-    // Only auto-select first chat if no current chat is selected
-    // This helps on initial load, but won't interfere with newly created chats
-    if (_chats.isNotEmpty && _currentChat == null) {
-      await selectChat(_chats.first);
-    }
+    // Don't auto-select any chat - let user or deep link choose
+    // This allows app to always open to a new chat state
     notifyListeners();
   }
 

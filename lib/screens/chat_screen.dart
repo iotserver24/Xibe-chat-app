@@ -368,6 +368,13 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           Consumer<ChatProvider>(
             builder: (context, chatProvider, child) {
+              // Get pending prompt and clear it
+              final pendingPrompt = chatProvider.pendingPrompt;
+              if (pendingPrompt != null) {
+                // Clear it after reading to avoid reusing
+                Future.microtask(() => chatProvider.clearPendingPrompt());
+              }
+              
               return ChatInput(
                 onSendMessage: (message, {String? imageBase64, String? imagePath, bool webSearch = false, bool reasoning = false}) {
                   chatProvider.sendMessage(
@@ -380,6 +387,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
                 isLoading: chatProvider.isLoading,
                 supportsVision: chatProvider.selectedModelSupportsVision,
+                initialText: pendingPrompt,
               );
             },
           ),
@@ -796,6 +804,13 @@ class _ChatScreenState extends State<ChatScreen> {
                 // Input area
                 Consumer<ChatProvider>(
                   builder: (context, chatProvider, child) {
+                    // Get pending prompt and clear it
+                    final pendingPrompt = chatProvider.pendingPrompt;
+                    if (pendingPrompt != null) {
+                      // Clear it after reading to avoid reusing
+                      Future.microtask(() => chatProvider.clearPendingPrompt());
+                    }
+                    
                     return ChatInput(
                       onSendMessage: (message, {String? imageBase64, String? imagePath, bool webSearch = false, bool reasoning = false}) {
                         chatProvider.sendMessage(
@@ -808,6 +823,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       },
                       isLoading: chatProvider.isLoading,
                       supportsVision: chatProvider.selectedModelSupportsVision,
+                      initialText: pendingPrompt,
                     );
                   },
                 ),
