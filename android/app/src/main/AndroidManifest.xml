@@ -1,5 +1,29 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    
+    <!-- Queries declaration for Android 11+ to allow launching external apps -->
+    <queries>
+        <!-- Browser intent for opening URLs -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <!-- File viewing intent for APK installation -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="file" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="content" />
+        </intent>
+    </queries>
+    
     <application
         android:label="Xibe Chat"
         android:name="${applicationName}"

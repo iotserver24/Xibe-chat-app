@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../services/update_service.dart';
+import 'dart:io';
 
 /// Dialog widget to display update information and prompt user to update
 class UpdateDialog extends StatefulWidget {
@@ -158,10 +159,15 @@ class _UpdateDialogState extends State<UpdateDialog> {
           onPressed: _isDownloading ? null : () => Navigator.of(context).pop(false),
           child: const Text('Later'),
         ),
+        TextButton.icon(
+          onPressed: _isDownloading ? null : _handleOpenDownloadPage,
+          icon: const Icon(Icons.open_in_browser),
+          label: const Text('Open Download Page'),
+        ),
         FilledButton.icon(
           onPressed: _isDownloading ? null : _handleUpdate,
           icon: const Icon(Icons.download),
-          label: const Text('Update Now'),
+          label: Text(Platform.isAndroid ? 'Download APK' : 'Update Now'),
         ),
       ],
     );
@@ -174,7 +180,16 @@ class _UpdateDialogState extends State<UpdateDialog> {
     });
 
     try {
-      final downloadUrl = widget.updateInfo['downloadUrl'] as String;
+      final downloadUrl = widget.updateInfo['downloadUrl'] as String?;
+      
+      if (downloadUrl == null || downloadUrl.isEmpty) {
+        setState(() {
+          _errorMessage = 'Download URL not available. Please try "Open Download Page" to download manually.';
+          _isDownloading = false;
+        });
+        return;
+      }
+      
       final success = await widget.updateService.downloadAndInstall(downloadUrl);
 
       if (!mounted) return;
@@ -184,25 +199,43 @@ class _UpdateDialogState extends State<UpdateDialog> {
         Navigator.of(context).pop(true);
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text('Update downloaded! Please install it to complete the update.'),
-                  ),
-                ],
+          if (Platform.isAndroid) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.info, color: Colors.white),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text('Opening browser to download APK. After download completes, tap the APK file to install.'),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.blue,
+                duration: Duration(seconds: 6),
               ),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 5),
-            ),
-          );
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text('Update downloaded! Please install it to complete the update.'),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 5),
+              ),
+            );
+          }
         }
       } else {
         setState(() {
-          _errorMessage = 'Failed to download update. Please try downloading manually.';
+          _errorMessage = 'Failed to open browser. Please check your browser settings or try "Open Download Page" button.';
           _isDownloading = false;
         });
       }
@@ -210,7 +243,54 @@ class _UpdateDialogState extends State<UpdateDialog> {
       if (!mounted) return;
       
       setState(() {
-        _errorMessage = 'An error occurred: $e';
+        _errorMessage = 'Error: ${e.toString()}. Try "Open Download Page" button instead.';
+        _isDownloading = false;
+      });
+    }
+  }
+
+  Future<void> _handleOpenDownloadPage() async {
+    setState(() {
+      _isDownloading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final success = await widget.updateService.openDownloadPage(UpdateService.githubReleasesUrl);
+
+      if (!mounted) return;
+
+      if (success) {
+        Navigator.of(context).pop(true);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.open_in_browser, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text('Opening GitHub releases page in browser. Find and download the latest APK file.'),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 6),
+            ),
+          );
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to open browser. Please check your browser settings and try again.';
+          _isDownloading = false;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _errorMessage = 'Error opening browser: ${e.toString()}';
         _isDownloading = false;
       });
     }

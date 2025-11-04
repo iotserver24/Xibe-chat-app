@@ -25,14 +25,15 @@ The Xibe Chat app now includes an automatic update system that checks for new re
   - Full release notes with markdown rendering
   - Download and installation options
 - Options:
-  - **Update Now**: Downloads and opens the installer
+  - **Update Now** / **Download APK** (on Android): Downloads and opens the installer
+  - **Open Download Page**: Opens GitHub releases page in browser (fallback option for all platforms)
   - **Later**: Dismisses the dialog (user can check again later)
 
 #### Platform-Specific Installation
 - **Windows**: Downloads NSIS installer (.exe) or MSIX package
 - **macOS**: Downloads DMG installer (auto-detects Intel/Apple Silicon)
 - **Linux**: Downloads AppImage, DEB, or TAR.GZ
-- **Android**: Opens download link in browser for APK
+- **Android**: Opens download link in browser for APK download. After download, tap the APK file to install. Requires `REQUEST_INSTALL_PACKAGES` permission.
 - **iOS**: Opens download link for IPA
 
 ### For Developers
@@ -157,7 +158,9 @@ The app compares versions using semantic versioning:
 - Check internet connection
 - Verify download URL is valid
 - Check file permissions
-- Try manual download from GitHub releases page
+- Try using the "Open Download Page" button to manually download from GitHub releases
+- **Android specific**: If auto-download doesn't work, use "Open Download Page" button, download the APK manually, then tap it to install
+- Ensure Android device allows installation from unknown sources (Settings → Security → Install unknown apps)
 
 ### Wrong version detected
 - Check version in `pubspec.yaml`
