@@ -180,7 +180,16 @@ class _UpdateDialogState extends State<UpdateDialog> {
     });
 
     try {
-      final downloadUrl = widget.updateInfo['downloadUrl'] as String;
+      final downloadUrl = widget.updateInfo['downloadUrl'] as String?;
+      
+      if (downloadUrl == null || downloadUrl.isEmpty) {
+        setState(() {
+          _errorMessage = 'Download URL not available. Please try "Open Download Page" to download manually.';
+          _isDownloading = false;
+        });
+        return;
+      }
+      
       final success = await widget.updateService.downloadAndInstall(downloadUrl);
 
       if (!mounted) return;
@@ -198,12 +207,12 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     Icon(Icons.info, color: Colors.white),
                     SizedBox(width: 12),
                     Expanded(
-                      child: Text('Opening download page. After download completes, tap the APK to install.'),
+                      child: Text('Opening browser to download APK. After download completes, tap the APK file to install.'),
                     ),
                   ],
                 ),
                 backgroundColor: Colors.blue,
-                duration: Duration(seconds: 5),
+                duration: Duration(seconds: 6),
               ),
             );
           } else {
@@ -226,7 +235,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
         }
       } else {
         setState(() {
-          _errorMessage = 'Failed to download update. Please try using "Open Download Page" button.';
+          _errorMessage = 'Failed to open browser. Please check your browser settings or try "Open Download Page" button.';
           _isDownloading = false;
         });
       }
@@ -234,7 +243,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
       if (!mounted) return;
       
       setState(() {
-        _errorMessage = 'An error occurred: $e';
+        _errorMessage = 'Error: ${e.toString()}. Try "Open Download Page" button instead.';
         _isDownloading = false;
       });
     }
@@ -262,18 +271,18 @@ class _UpdateDialogState extends State<UpdateDialog> {
                   Icon(Icons.open_in_browser, color: Colors.white),
                   SizedBox(width: 12),
                   Expanded(
-                    child: Text('Opened GitHub releases page. Download the APK and install it.'),
+                    child: Text('Opening GitHub releases page in browser. Find and download the latest APK file.'),
                   ),
                 ],
               ),
               backgroundColor: Colors.blue,
-              duration: Duration(seconds: 5),
+              duration: Duration(seconds: 6),
             ),
           );
         }
       } else {
         setState(() {
-          _errorMessage = 'Failed to open download page. Please visit GitHub releases manually.';
+          _errorMessage = 'Failed to open browser. Please check your browser settings and try again.';
           _isDownloading = false;
         });
       }
@@ -281,7 +290,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
       if (!mounted) return;
       
       setState(() {
-        _errorMessage = 'An error occurred: $e';
+        _errorMessage = 'Error opening browser: ${e.toString()}';
         _isDownloading = false;
       });
     }
