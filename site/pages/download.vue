@@ -93,7 +93,10 @@
                   <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
                       <component :is="getPlatformIcon(asset.name)" class="w-6 h-6 text-green-400" />
-                      <h4 class="font-semibold text-white">{{ getPlatformName(asset.name) }}</h4>
+                      <div>
+                        <h4 class="font-semibold text-white">{{ getPlatformName(asset.name) }}</h4>
+                        <span v-if="getArchitecture(asset.name)" class="text-xs text-green-400 font-medium">{{ getArchitecture(asset.name) }}</span>
+                      </div>
                     </div>
                     <p class="text-sm text-slate-500 truncate">{{ asset.name }}</p>
                   </div>
@@ -143,7 +146,10 @@
                      class="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-blue-500/50 transition-all">
                     <component :is="getPlatformIcon(asset.name)" class="w-5 h-5 text-blue-400 flex-shrink-0" />
                     <div class="flex-1 min-w-0">
-                      <div class="text-sm font-medium text-white truncate">{{ getPlatformName(asset.name) }}</div>
+                      <div class="text-sm font-medium text-white truncate">
+                        {{ getPlatformName(asset.name) }}
+                        <span v-if="getArchitecture(asset.name)" class="text-blue-400 ml-1">({{ getArchitecture(asset.name) }})</span>
+                      </div>
                       <div class="text-xs text-slate-500">{{ formatSize(asset.size) }}</div>
                     </div>
                   </a>
@@ -301,7 +307,19 @@ function getPlatformName(filename) {
   if (lower.includes('android') || lower.endsWith('.apk')) return 'Android'
   if (lower.includes('linux') || lower.endsWith('.deb') || lower.endsWith('.rpm') || lower.endsWith('.appimage')) return 'Linux'
   if (lower.includes('macos') || lower.includes('darwin') || lower.endsWith('.dmg')) return 'macOS'
+  if (lower.includes('ios') || lower.endsWith('.ipa')) return 'iOS'
   return 'Other'
+}
+
+function getArchitecture(filename) {
+  const lower = filename.toLowerCase()
+  if (lower.includes('arm64') || lower.includes('aarch64')) return 'ARM64'
+  if (lower.includes('x64') || lower.includes('x86_64') || lower.includes('amd64')) return 'x64'
+  if (lower.includes('x86') || lower.includes('i386') || lower.includes('i686')) return 'x86'
+  if (lower.includes('universal')) return 'Universal'
+  // For APK/AAB without architecture specified, it's usually universal
+  if (lower.endsWith('.apk') || lower.endsWith('.aab')) return 'Universal'
+  return ''
 }
 
 function getPlatformIcon(filename) {
