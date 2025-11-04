@@ -30,7 +30,7 @@ class _ChatInputState extends State<ChatInput> {
   bool _hasText = false;
   XFile? _selectedImage;
   String? _imageBase64;
-  final bool _webSearchEnabled = false;
+  bool _webSearchEnabled = false;
   bool _reasoningEnabled = false;
   
   bool get _isDesktop {
@@ -176,6 +176,9 @@ class _ChatInputState extends State<ChatInput> {
                   onChanged: (value) {
                     setState(() {
                       _reasoningEnabled = value;
+                      if (value) {
+                        _webSearchEnabled = false; // Disable web search when thinking is enabled
+                      }
                     });
                     Navigator.pop(context);
                   },
@@ -184,6 +187,52 @@ class _ChatInputState extends State<ChatInput> {
                 onTap: () {
                   setState(() {
                     _reasoningEnabled = !_reasoningEnabled;
+                    if (_reasoningEnabled) {
+                      _webSearchEnabled = false; // Disable web search when thinking is enabled
+                    }
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _webSearchEnabled 
+                        ? const Color(0xFF3B82F6).withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.language,
+                    color: _webSearchEnabled ? const Color(0xFF3B82F6) : Colors.grey,
+                  ),
+                ),
+                title: const Text('Web Search'),
+                subtitle: Text(
+                  _webSearchEnabled 
+                      ? 'Enabled - AI will search the web for current information'
+                      : 'Disabled - Enable to search the web',
+                ),
+                trailing: Switch(
+                  value: _webSearchEnabled,
+                  onChanged: (value) {
+                    setState(() {
+                      _webSearchEnabled = value;
+                      if (value) {
+                        _reasoningEnabled = false; // Disable thinking when web search is enabled
+                      }
+                    });
+                    Navigator.pop(context);
+                  },
+                  activeThumbColor: const Color(0xFF3B82F6),
+                ),
+                onTap: () {
+                  setState(() {
+                    _webSearchEnabled = !_webSearchEnabled;
+                    if (_webSearchEnabled) {
+                      _reasoningEnabled = false; // Disable thinking when web search is enabled
+                    }
                   });
                   Navigator.pop(context);
                 },
@@ -383,6 +432,72 @@ class _ChatInputState extends State<ChatInput> {
                         onTap: () {
                           setState(() {
                             _reasoningEnabled = false;
+                          });
+                        },
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            // Web search mode indicator with animation
+            if (_webSearchEnabled)
+              TweenAnimationBuilder(
+                duration: const Duration(milliseconds: 300),
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                builder: (context, double value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 10 * (1 - value)),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF3B82F6).withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.language,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Web Search Active',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _webSearchEnabled = false;
                           });
                         },
                         child: const Icon(
