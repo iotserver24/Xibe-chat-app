@@ -96,32 +96,10 @@ class McpConfiguration {
     return McpConfiguration.fromJson(jsonDecode(jsonString));
   }
 
-  // Create a default configuration with example servers
+  // Create a default configuration (empty by default)
   factory McpConfiguration.defaultConfig() {
     return McpConfiguration(
-      mcpServers: {
-        'memory': McpServerConfig(
-          command: 'npx',
-          args: ['-y', 'mcp-knowledge-graph'],
-          // Note: memory-path will be set by the app to app documents directory
-        ),
-        'browsermcp': McpServerConfig(
-          command: 'npx',
-          args: ['@browsermcp/mcp@latest'],
-        ),
-        'rube': McpServerConfig(
-          url: 'https://rube.composio.dev/mcp?agent=cursor',
-          headers: {},
-        ),
-        'e2b': McpServerConfig(
-          url: 'https://e2b.dev/mcp',
-          headers: {},
-        ),
-        'expo-mcp': McpServerConfig(
-          url: 'https://mcp.expo.dev/mcp',
-          headers: {},
-        ),
-      },
+      mcpServers: {},
     );
   }
 }
