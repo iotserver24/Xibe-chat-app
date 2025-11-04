@@ -8,20 +8,28 @@
 
     <!-- Header -->
     <header class="relative z-10 border-b border-white/10 backdrop-blur-xl bg-slate-950/50">
-      <nav class="container mx-auto px-4 py-4">
+      <nav class="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex items-center justify-between">
-          <NuxtLink to="/" class="flex items-center space-x-3">
+          <NuxtLink to="/" class="flex items-center space-x-2 sm:space-x-3">
             <div class="relative">
               <div class="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg blur opacity-75"></div>
-              <img src="/logo.png" alt="Xibe Chat" class="relative h-10 w-10 rounded-lg" />
+              <img src="/logo.png" alt="Xibe Chat" class="relative h-8 w-8 sm:h-10 sm:w-10 rounded-lg" />
             </div>
-            <span class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Xibe Chat</span>
+            <span class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Xibe Chat</span>
           </NuxtLink>
-          <div class="flex items-center space-x-6">
+          <div class="hidden md:flex items-center space-x-4 lg:space-x-6">
             <NuxtLink to="/" class="text-sm font-medium text-slate-300 hover:text-white transition-colors">Home</NuxtLink>
             <NuxtLink to="/features" class="text-sm font-medium text-slate-300 hover:text-white transition-colors">Features</NuxtLink>
             <NuxtLink to="/docs" class="text-sm font-medium text-slate-300 hover:text-white transition-colors">Docs</NuxtLink>
             <NuxtLink to="/download" class="text-sm font-medium text-white">Download</NuxtLink>
+          </div>
+          <!-- Mobile menu -->
+          <div class="md:hidden">
+            <NuxtLink to="/" class="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </NuxtLink>
           </div>
         </div>
       </nav>
@@ -87,8 +95,17 @@
 
             <!-- Download Options -->
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div v-for="asset in stableRelease.assets" :key="asset.id" 
-                   class="group relative p-6 rounded-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 hover:border-green-500/50 transition-all duration-300">
+              <div v-for="(asset, index) in stableRelease.assets" :key="asset.id" 
+                   :class="[
+                     'group relative p-6 rounded-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 backdrop-blur-sm border transition-all duration-300',
+                     index === 0 && getPlatformName(asset.name).toLowerCase() === userOS ? 'border-blue-500/70 shadow-lg shadow-blue-500/20' : 'border-slate-700/50 hover:border-green-500/50'
+                   ]">
+                <!-- Recommended Badge -->
+                <div v-if="index === 0 && getPlatformName(asset.name).toLowerCase() === userOS" class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span class="px-3 py-1 rounded-full bg-blue-500 text-white text-xs font-semibold shadow-lg">
+                    Recommended for You
+                  </span>
+                </div>
                 <div class="flex items-start justify-between mb-4">
                   <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
@@ -267,8 +284,70 @@ const stableRelease = ref(null)
 const betaReleases = ref([])
 const loading = ref(true)
 const error = ref(null)
+const userOS = ref('')
+const userArch = ref('')
+
+// Detect user's OS and architecture
+function detectUserPlatform() {
+  const ua = navigator.userAgent.toLowerCase()
+  const platform = navigator.platform.toLowerCase()
+  
+  // Detect OS
+  if (ua.includes('android')) {
+    userOS.value = 'android'
+  } else if (ua.includes('iphone') || ua.includes('ipad')) {
+    userOS.value = 'ios'
+  } else if (ua.includes('win')) {
+    userOS.value = 'windows'
+  } else if (ua.includes('mac')) {
+    userOS.value = 'macos'
+  } else if (ua.includes('linux')) {
+    userOS.value = 'linux'
+  }
+  
+  // Detect architecture
+  if (ua.includes('arm64') || ua.includes('aarch64') || platform.includes('arm')) {
+    userArch.value = 'arm64'
+  } else if (ua.includes('x86_64') || ua.includes('amd64') || ua.includes('wow64') || platform.includes('win64') || platform.includes('x86_64')) {
+    userArch.value = 'x64'
+  } else {
+    userArch.value = 'x64' // Default to x64
+  }
+}
+
+// Sort assets to show user's platform first
+function sortAssetsByUserPlatform(assets) {
+  if (!assets) return []
+  
+  return [...assets].sort((a, b) => {
+    const aPlatform = getPlatformName(a.name).toLowerCase()
+    const bPlatform = getPlatformName(b.name).toLowerCase()
+    const aArch = getArchitecture(a.name).toLowerCase()
+    const bArch = getArchitecture(b.name).toLowerCase()
+    
+    // Check if matches user's OS
+    const aMatchesOS = aPlatform === userOS.value
+    const bMatchesOS = bPlatform === userOS.value
+    
+    // Check if matches user's architecture
+    const aMatchesArch = aArch.includes(userArch.value) || aArch === 'universal'
+    const bMatchesArch = bArch.includes(userArch.value) || bArch === 'universal'
+    
+    // Prioritize exact matches (OS + Arch)
+    if (aMatchesOS && aMatchesArch && !(bMatchesOS && bMatchesArch)) return -1
+    if (bMatchesOS && bMatchesArch && !(aMatchesOS && aMatchesArch)) return 1
+    
+    // Then OS matches
+    if (aMatchesOS && !bMatchesOS) return -1
+    if (bMatchesOS && !aMatchesOS) return 1
+    
+    return 0
+  })
+}
 
 onMounted(async () => {
+  detectUserPlatform()
+  
   try {
     const response = await fetch('https://api.github.com/repos/iotserver24/Xibe-chat-app/releases')
     if (!response.ok) throw new Error('Failed to fetch releases')
@@ -276,10 +355,17 @@ onMounted(async () => {
     const releases = await response.json()
     
     // Find stable release (not prerelease)
-    stableRelease.value = releases.find(r => !r.prerelease && !r.draft) || releases[0]
+    const stable = releases.find(r => !r.prerelease && !r.draft) || releases[0]
+    if (stable) {
+      stable.assets = sortAssetsByUserPlatform(stable.assets)
+      stableRelease.value = stable
+    }
     
     // Find beta releases (prerelease)
-    betaReleases.value = releases.filter(r => r.prerelease && !r.draft)
+    betaReleases.value = releases.filter(r => r.prerelease && !r.draft).map(release => ({
+      ...release,
+      assets: sortAssetsByUserPlatform(release.assets)
+    }))
     
     loading.value = false
   } catch (e) {
