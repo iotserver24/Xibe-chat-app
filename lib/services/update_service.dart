@@ -11,6 +11,7 @@ class UpdateService {
   static const String githubOwner = 'iotserver24';
   static const String githubRepo = 'Xibe-chat-app';
   static const String githubApiUrl = 'https://api.github.com/repos/$githubOwner/$githubRepo/releases';
+  static const String githubReleasesUrl = 'https://github.com/$githubOwner/$githubRepo/releases';
 
   /// Check if an update is available
   /// [channel] can be 'stable' (default) or 'beta'

@@ -21,7 +21,6 @@ class UpdateDialog extends StatefulWidget {
 class _UpdateDialogState extends State<UpdateDialog> {
   bool _isDownloading = false;
   String _errorMessage = '';
-  static const String githubReleasesUrl = 'https://github.com/iotserver24/Xibe-chat-app/releases';
 
   @override
   Widget build(BuildContext context) {
@@ -248,7 +247,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
     });
 
     try {
-      final success = await widget.updateService.openDownloadPage(githubReleasesUrl);
+      final success = await widget.updateService.openDownloadPage(UpdateService.githubReleasesUrl);
 
       if (!mounted) return;
 
