@@ -403,7 +403,7 @@
         </div>
         <div class="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p class="text-slate-500 text-sm">
-            &copy; 2025 Xibe Chat. Open source and built with <span class="text-red-400">❤️</span>
+            &copy; 2025 Xibe Chat. 100% Free & Open Source. Built with <span class="text-red-400">❤️</span> by <a href="https://github.com/iotserver24" target="_blank" class="text-slate-400 hover:text-white transition-colors underline">iotserver24</a>
           </p>
           <div class="flex items-center gap-4">
             <a href="https://github.com/iotserver24/Xibe-chat-app" target="_blank" class="text-slate-400 hover:text-white transition-colors">
