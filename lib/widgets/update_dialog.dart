@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../services/update_service.dart';
+import 'dart:io';
 
 /// Dialog widget to display update information and prompt user to update
 class UpdateDialog extends StatefulWidget {
@@ -20,6 +21,7 @@ class UpdateDialog extends StatefulWidget {
 class _UpdateDialogState extends State<UpdateDialog> {
   bool _isDownloading = false;
   String _errorMessage = '';
+  static const String githubReleasesUrl = 'https://github.com/iotserver24/Xibe-chat-app/releases';
 
   @override
   Widget build(BuildContext context) {
@@ -158,10 +160,15 @@ class _UpdateDialogState extends State<UpdateDialog> {
           onPressed: _isDownloading ? null : () => Navigator.of(context).pop(false),
           child: const Text('Later'),
         ),
+        TextButton.icon(
+          onPressed: _isDownloading ? null : _handleOpenDownloadPage,
+          icon: const Icon(Icons.open_in_browser),
+          label: const Text('Open Download Page'),
+        ),
         FilledButton.icon(
           onPressed: _isDownloading ? null : _handleUpdate,
           icon: const Icon(Icons.download),
-          label: const Text('Update Now'),
+          label: Text(Platform.isAndroid ? 'Download APK' : 'Update Now'),
         ),
       ],
     );
@@ -184,25 +191,90 @@ class _UpdateDialogState extends State<UpdateDialog> {
         Navigator.of(context).pop(true);
         
         if (mounted) {
+          if (Platform.isAndroid) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.info, color: Colors.white),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text('Opening download page. After download completes, tap the APK to install.'),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.blue,
+                duration: Duration(seconds: 5),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text('Update downloaded! Please install it to complete the update.'),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 5),
+              ),
+            );
+          }
+        }
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to download update. Please try using "Open Download Page" button.';
+          _isDownloading = false;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _errorMessage = 'An error occurred: $e';
+        _isDownloading = false;
+      });
+    }
+  }
+
+  Future<void> _handleOpenDownloadPage() async {
+    setState(() {
+      _isDownloading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final success = await widget.updateService.openDownloadPage(githubReleasesUrl);
+
+      if (!mounted) return;
+
+      if (success) {
+        Navigator.of(context).pop(true);
+        
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.check_circle, color: Colors.white),
+                  Icon(Icons.open_in_browser, color: Colors.white),
                   SizedBox(width: 12),
                   Expanded(
-                    child: Text('Update downloaded! Please install it to complete the update.'),
+                    child: Text('Opened GitHub releases page. Download the APK and install it.'),
                   ),
                 ],
               ),
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.blue,
               duration: Duration(seconds: 5),
             ),
           );
         }
       } else {
         setState(() {
-          _errorMessage = 'Failed to download update. Please try downloading manually.';
+          _errorMessage = 'Failed to open download page. Please visit GitHub releases manually.';
           _isDownloading = false;
         });
       }
