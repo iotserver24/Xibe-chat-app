@@ -314,18 +314,35 @@ class ChatProvider extends ChangeNotifier {
         }
       }
       
-      // Add code execution capabilities instruction
+      // Add code execution and preview capabilities instruction
       const codeExecutionInstruction = '''
-CODE EXECUTION CAPABILITIES:
-You have access to code execution environments via e2b. You can execute code in the following languages:
-- Python (versions 3.9, 3.10, 3.11, 3.12)
-- JavaScript / TypeScript (Node.js)
-- C++ (with g++ compiler)
-- Ruby
-- Go
-- Bash / Shell scripting
+CODE EXECUTION & PREVIEW CAPABILITIES:
 
-When users ask you to run code, execute scripts, or need computational results, you can use these capabilities to provide accurate, real-time results. Make sure to inform the user when you're executing code and provide the output.''';
+1. E2B Code Execution (for computational/script code):
+   You can execute code in these languages: Python, JavaScript, TypeScript, Java, R, Bash
+   - When you write code blocks in these languages, the user will see a "Run" button
+   - Perfect for: data processing, algorithms, calculations, scripts, file operations
+   - Example: Write Python code for data analysis, JS for algorithms, etc.
+
+2. CodeSandbox Preview (for single-page UI code):
+   You can create live, interactive previews for web UI code by wrapping it in <codesandbox> tags
+   - Supported frameworks: React, Vue, Angular, Svelte, Preact, SolidJS, HTML/CSS/JS
+   - When you use <codesandbox> tags, the user will see a "Run Preview" button
+   - Perfect for: UI components, interactive demos, web apps, design examples
+   - ALWAYS use <codesandbox> tags when providing single-page UI/frontend code
+   
+   Format: <codesandbox>your complete UI code here</codesandbox>
+   
+   Examples:
+   - React: <codesandbox>import React from 'react'; export default function App() { return <div>Hello</div>; }</codesandbox>
+   - HTML: <codesandbox><!DOCTYPE html><html><body><h1>Hello</h1></body></html></codesandbox>
+   - Vue: <codesandbox><template><div>Hello</div></template></codesandbox>
+
+IMPORTANT: 
+- For UI/frontend code → Use <codesandbox> tags
+- For computational/backend code → Write in regular code blocks (```python, ```javascript, etc.)
+- When users ask for UI examples, interactive demos, or web components, ALWAYS wrap in <codesandbox>
+- When users ask to run calculations, scripts, or data processing, use regular code blocks''';
       
       if (enhancedSystemPrompt != null && enhancedSystemPrompt.isNotEmpty) {
         enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$codeExecutionInstruction';
@@ -361,17 +378,31 @@ Important:
       // Add memory management instruction
       const memoryInstruction = '''
 MEMORY MANAGEMENT:
-You have access to a long-term memory system. Use it VERY SPARINGLY - only when the user explicitly shares critical personal information or when they ask you to remember something.
+You have access to a long-term memory system to remember important information about the user across all conversations.
 To save a memory, use this format: <save memory>brief fact</save memory>
 
-STRICT RULES:
-- Only save when user EXPLICITLY asks you to remember something OR shares truly critical personal info (name, profession, major life events)
-- Maximum 150 characters - keep it ultra-concise
-- DO NOT save routine preferences, general questions, or conversation topics
-- DO NOT save every time - be very selective (max 1-2 times per conversation)
-- Example of what TO save: User says "Please remember my name is John and I'm a software engineer"
-- Example of what NOT to save: User asks about code, makes general requests, shares opinions
-Only save information that would be crucial for ALL future conversations.''';
+AUTOMATIC SAVING - Save these types of information WITHOUT being asked:
+1. User Identity: Name, profession, role, location, company
+2. User Preferences: Programming languages they prefer, frameworks they use, coding style preferences, work methodologies
+3. User Reactions: When users give thumbs up/down or express strong positive/negative feedback about your responses
+4. Important Context: Ongoing projects they mention, technologies they're learning, goals they share
+5. Personal Facts: Family details, hobbies, interests (when naturally mentioned)
+
+GUIDELINES:
+- Maximum 150 characters per memory - be ultra-concise
+- Save memories proactively when you learn something important about the user
+- Examples of what TO save:
+  * "Prefers Python over JavaScript for backend"
+  * "Working at TechCorp as Senior Developer"
+  * "Likes detailed explanations with examples"
+  * "Gave positive feedback on React component structure approach"
+  * "Learning machine learning, focusing on PyTorch"
+- Examples of what NOT to save:
+  * Generic questions without personal context
+  * One-time technical queries
+  * Simple factual lookups
+  
+Be proactive but intelligent - save information that will help personalize future conversations and improve your assistance.''';
 
       if (enhancedSystemPrompt != null && enhancedSystemPrompt.isNotEmpty) {
         enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$memoryInstruction';

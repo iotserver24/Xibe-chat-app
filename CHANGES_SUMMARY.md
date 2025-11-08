@@ -1,246 +1,124 @@
-# Summary of Changes - Deep Links & Profile Updates
+# Changes Summary - Code Execution & Memory System Updates
 
-## 🎯 All Requirements Completed
+## Overview
+This update addresses three main issues:
+1. AI now automatically saves user information, preferences, and reactions in memory
+2. AI is fully aware of code sandbox capabilities for UI previews
+3. AI understands when to use E2B execution vs CodeSandbox previews
 
-This PR successfully implements all 7 requirements from the issue:
+## Changes Made
 
-1. ✅ AI profile selection is now optional - users can choose "None"
-2. ✅ No default profile selected when opening app for the first time
-3. ✅ Full deep link support with custom URI scheme and HTTPS
-4. ✅ Nuxt.js website created in `/site` folder with app info
-5. ✅ Website deep links redirect to app (e.g., `{website}/app/mes/{prompt}`)
-6. ✅ Message deep link opens app with prompt ready to send
-7. ✅ App always opens to new chat without duplicates
+### 1. Memory System Enhancement (`lib/providers/chat_provider.dart`)
 
-## 📊 Statistics
+**Previous Behavior:**
+- AI only saved memories when explicitly asked
+- Very restrictive rules (only critical personal info)
+- Maximum 1-2 saves per conversation
 
-- **27 files changed**
-- **1,875 additions**
-- **11 deletions**
-- **3 comprehensive documentation guides**
-- **1 complete Nuxt.js website**
-- **Cross-platform support** (Android, Windows, Linux, macOS)
+**New Behavior:**
+- AI proactively saves important user information WITHOUT being asked
+- Automatically saves:
+  - User identity (name, profession, role, location, company)
+  - User preferences (languages, frameworks, coding styles, methodologies)
+  - User reactions (thumbs up/down, positive/negative feedback)
+  - Important context (ongoing projects, learning goals)
+  - Personal facts (when naturally mentioned)
 
-## 🔧 Key Changes
+**Implementation:**
+Updated the memory instruction in the system prompt (lines 378-405) to encourage proactive memory saving while maintaining intelligence about what's worth remembering.
 
-### Flutter App
+### 2. Code Execution & Preview System (`lib/providers/chat_provider.dart`)
 
-#### Modified Files
-- `lib/main.dart` - Integrated DeepLinkService, handles deep links on startup
-- `lib/providers/chat_provider.dart` - Added pending prompt support, removed auto-selection
-- `lib/providers/settings_provider.dart` - Made profiles optional, no default selection
-- `lib/screens/ai_profiles_screen.dart` - Added "None" option for profiles
-- `lib/screens/chat_screen.dart` - Integrated pending prompt display
-- `lib/widgets/chat_input.dart` - Support for initial text from deep links
-- `android/app/src/main/AndroidManifest.xml` - Added intent filters for deep links
-- `pubspec.yaml` - Added app_links packages
+**Enhanced System Prompt:**
+The AI now has comprehensive knowledge about both execution methods:
 
-#### New Files
-- `lib/services/deep_link_service.dart` - Core deep link handling service
+**E2B Code Execution:**
+- For computational/script code
+- Supported languages: Python, JavaScript, TypeScript, Java, R, Bash
+- Code blocks automatically get a "Run" button in the UI
+- Perfect for: data processing, algorithms, calculations, scripts
 
-### Website (Nuxt.js)
+**CodeSandbox Preview:**
+- For single-page UI code
+- Supported frameworks: React, Vue, Angular, Svelte, Preact, SolidJS, HTML/CSS/JS
+- Code wrapped in `<codesandbox>` tags gets a "Run Preview" button
+- Perfect for: UI components, interactive demos, web apps, design examples
 
-All files in `/site` directory:
-- Landing page with features and download links
-- Deep link redirect pages for `/app/mes/{prompt}`, `/app/new`, `/app/settings`
-- Auto-redirect functionality
-- Tailwind CSS styling
-- Responsive design
-
-### Documentation
-
-Three comprehensive guides:
-1. `DEEP_LINK_GUIDE.md` - Technical documentation (229 lines)
-2. `DEEP_LINK_QUICKSTART.md` - Quick start for users (298 lines)
-3. `IMPLEMENTATION_SUMMARY_DEEPLINKS.md` - Implementation details (263 lines)
-
-## 🚀 New Features
-
-### Deep Link Support
-
-**Custom URI Scheme:**
+**Format Example:**
 ```
-xibechat://new                    # Open new chat
-xibechat://mes/{prompt}           # Open with prompt
-xibechat://settings               # Open settings
-xibechat://chat/{id}              # Open specific chat (framework ready)
+<codesandbox>
+import React from 'react';
+export default function App() {
+  return <div>Hello World</div>;
+}
+</codesandbox>
 ```
 
-**HTTPS URLs (when website deployed):**
-```
-https://xibechat.app/app/new
-https://xibechat.app/app/mes/{prompt}
-https://xibechat.app/app/settings
-```
+**Implementation:**
+Updated code execution instruction (lines 317-345) with detailed information about both systems, when to use each, and how to format code properly.
 
-### Optional AI Profiles
+### 3. AI Profile Updates (`lib/models/ai_profile.dart`)
 
-- "None" option added as first choice
-- No default profile on first open
-- Each model uses its own system prompt when no profile selected
-- Users can still select profiles if desired
+**Updated All 8 Default Profiles:**
+Each profile now includes guidance about code execution and preview:
 
-### Always New Chat
+1. **Socratic Tutor** - Added code formatting guidelines
+2. **Creative Writer** - Added interactive writing tools guidance  
+3. **Strict Coder** - Enhanced with clear UI vs backend code instructions
+4. **Friendly Assistant** - Updated code sharing guidelines
+5. **Professional Analyst** - Added data visualization instructions
+6. **Mindfulness Coach** - Added interactive tools guidance
+7. **Debugging Expert** - Added bug fix code formatting instructions
+8. **Brief & Direct** - Concise code formatting note
 
-- App opens to fresh new chat state
-- No auto-selection of previous chats
-- Prevents duplicate chats
-- Clean UX for new conversations
+## How It Works
 
-## 📱 Platform Support
+### Memory Saving Flow:
+1. User shares information (e.g., "I prefer Python")
+2. AI recognizes this as valuable preference information
+3. AI includes `<save memory>Prefers Python for development</save memory>` in response
+4. System extracts and saves the memory automatically
+5. Memory is included in future conversations automatically
 
-| Platform | Deep Links | Status |
-|----------|-----------|--------|
-| Android  | ✅ Full support | Configured |
-| Windows  | ✅ Via app_links | Ready |
-| Linux    | ✅ Via app_links | Ready |
-| macOS    | ✅ Via app_links | Ready |
-| iOS      | ⚠️ Needs Info.plist | Documented |
-| Web      | ✅ Via website | Ready |
+### Code Execution Flow:
+1. User asks for computational code (e.g., "sort this array")
+2. AI provides code in regular code blocks: ` ```python ... ``` `
+3. UI automatically shows "Run" button
+4. User clicks, code executes via E2B backend
 
-## 🧪 Testing
+### Code Preview Flow:
+1. User asks for UI code (e.g., "create a button component")
+2. AI wraps code in `<codesandbox>` tags
+3. UI detects tags and shows "Run Preview" button
+4. User clicks, preview opens in full-screen webview
 
-### Quick Test Commands
+## Testing Recommendations
 
-```bash
-# Android - Test custom URI
-adb shell am start -a android.intent.action.VIEW -d "xibechat://mes/Hello%20World"
+1. **Test Memory Saving:**
+   - Start new chat and mention preferences
+   - Check if memory is automatically saved without asking
+   - Give thumbs up/down reactions and verify they're remembered
 
-# Android - Test HTTPS (when deployed)
-adb shell am start -a android.intent.action.VIEW -d "https://xibechat.app/app/mes/Test"
+2. **Test E2B Execution:**
+   - Ask for Python/JavaScript algorithms
+   - Verify "Run" button appears
+   - Test execution works properly
 
-# Website - Local development
-cd site && npm install && npm run dev
-```
+3. **Test CodeSandbox Preview:**
+   - Ask for React/Vue/HTML components
+   - Verify `<codesandbox>` tags are used
+   - Verify "Run Preview" button appears
+   - Test preview opens and renders correctly
 
-### Manual Testing Checklist
+## Files Modified
 
-- [ ] Open app → Settings → AI Profiles → Select "None" ✓
-- [ ] Close and reopen app → Verify new chat opens ✓
-- [ ] Click deep link → Verify app opens with prompt ✓
-- [ ] Test website locally → Verify redirects work ✓
+1. `/lib/providers/chat_provider.dart` - Enhanced system prompts
+2. `/lib/models/ai_profile.dart` - Updated all 8 default AI profiles
 
-## 📦 Deployment
+## No Breaking Changes
 
-### Flutter App
-No changes to build process:
-```bash
-flutter build apk --release
-flutter build windows --release
-flutter build linux --release
-```
-
-### Website
-```bash
-cd site
-npm install
-npm run generate
-# Deploy .output/public to hosting
-```
-
-Recommended hosting: Vercel, Netlify, or GitHub Pages
-
-## 🔒 Security
-
-- ✅ URL validation and parsing
-- ✅ Encoded parameters to prevent injection
-- ✅ Scheme verification
-- ✅ Domain verification support (Android App Links)
-- ✅ No sensitive data in deep links
-
-## 📖 Documentation
-
-### For Users
-- **DEEP_LINK_QUICKSTART.md** - Easy-to-follow examples
-- Quick test links included
-- Common use cases covered
-
-### For Developers
-- **DEEP_LINK_GUIDE.md** - Complete technical guide
-- Platform-specific configurations
-- Testing instructions
-
-### For Maintainers
-- **IMPLEMENTATION_SUMMARY_DEEPLINKS.md** - Full implementation details
-- Future enhancement ideas
-- Migration notes
-
-## 🎨 UI/UX Changes
-
-1. **AI Profiles Screen**
-   - Title updated to "Personality Selection (Optional)"
-   - Description clarifies profiles are optional
-   - "None" option added as first card
-   - "None" shows block icon and describes using model defaults
-
-2. **App Startup**
-   - Always opens to new chat
-   - Clean slate for conversations
-   - No auto-selection of old chats
-
-3. **Chat Input**
-   - Supports pre-filled text from deep links
-   - User can edit or send immediately
-   - Smooth integration with pending prompts
-
-## 🔄 Breaking Changes
-
-**None!** All changes are backward compatible:
-- Existing profiles continue to work
-- Existing chats are preserved
-- No data migration required
-
-## ⚡ Performance Impact
-
-Minimal:
-- Deep link service is lightweight
-- Lazy initialization
-- No impact on normal app usage
-- Website is static and fast
-
-## 🐛 Known Limitations
-
-1. iOS platform configuration not included (project has no iOS folder)
-2. Deep link analytics not implemented (can be added later)
-3. Share functionality not implemented (future enhancement)
-
-## 🎯 Future Enhancements
-
-Documented in guides:
-- Deep link to specific AI profiles
-- Share chat via deep link
-- Authenticated deep links
-- Deep link analytics
-- Open specific message in chat
-
-## 📝 Notes for Reviewers
-
-1. **Website Dependencies**: The website requires `npm install` in the `/site` directory
-2. **Testing**: Deep links require the app to be installed on device
-3. **Domain**: For HTTPS deep links to work, website should be at `xibechat.app`
-4. **iOS**: Info.plist configuration is documented but not implemented
-
-## ✅ Review Checklist
-
-- [x] All requirements implemented
-- [x] Code follows existing patterns
-- [x] Documentation comprehensive
-- [x] Testing instructions provided
-- [x] Security considerations addressed
-- [x] Backward compatible
-- [x] No breaking changes
-
-## 🤝 Credits
-
-Implementation by GitHub Copilot for @iotserver24
-
-## 📞 Support
-
-Questions? Check the documentation:
-- Start with `DEEP_LINK_QUICKSTART.md`
-- Read `DEEP_LINK_GUIDE.md` for details
-- See `IMPLEMENTATION_SUMMARY_DEEPLINKS.md` for technical info
-
----
-
-**Ready to merge!** 🎉
+All changes are additive and enhance existing functionality:
+- Memory system still works the same way, just more proactive
+- Code execution unchanged, AI just knows about it better
+- CodeSandbox service unchanged, AI just uses it correctly now
+- All existing conversations and data remain compatible
