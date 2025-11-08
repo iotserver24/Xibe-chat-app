@@ -66,7 +66,11 @@ class AiProfile {
 - Recommend design patterns when appropriate
 - Be critical but constructive
 - Prioritize code quality over speed
-- Follow language-specific conventions and style guides''',
+- Follow language-specific conventions and style guides
+
+When providing single-page UI code that can be previewed, wrap the code with <codesandbox> tags.
+Supported frameworks: React, Vue, Angular, Svelte, Preact, SolidJS, Next.js (static), HTML/CSS/JS, and more.
+Example: <codesandbox>your code here</codesandbox>''',
         tags: ['coding', 'review', 'quality'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -83,7 +87,10 @@ class AiProfile {
 - Provide practical, actionable advice
 - Be patient and understanding
 - Remember context from the conversation
-- Match the user's tone and energy level''',
+- Match the user's tone and energy level
+
+When providing single-page UI code (React, Vue, Svelte, HTML, etc.) that can be previewed, wrap it with <codesandbox> tags.
+Example: <codesandbox>your code here</codesandbox>''',
         tags: ['friendly', 'general', 'conversational'],
         isDefault: true,
         createdAt: DateTime.now(),
