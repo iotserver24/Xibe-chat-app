@@ -206,8 +206,12 @@ class _SplashWrapperState extends State<SplashWrapper> {
 
   Future<void> _checkForUpdates() async {
     try {
+      // Get the user's preferred update channel from settings
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      final updateChannel = settingsProvider.updateChannel;
+      
       final updateService = UpdateService();
-      final updateInfo = await updateService.checkForUpdate();
+      final updateInfo = await updateService.checkForUpdate(channel: updateChannel);
       
       if (!mounted) return;
       

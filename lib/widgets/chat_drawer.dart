@@ -35,46 +35,46 @@ class _ChatDrawerState extends State<ChatDrawer> {
     return Stack(
       children: [
         SizedBox(
-          width: drawerWidth,
-          child: Drawer(
-            backgroundColor: Colors.black,
-            child: SafeArea(
-              child: Column(
-                children: [
-              Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: const BoxDecoration(
-                  color: Colors.black,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Color(0xFF1A1A1A),
-                      width: 1,
-                    ),
+        width: drawerWidth,
+        child: Drawer(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          child: SafeArea(
+            child: Column(
+              children: [
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(context).dividerColor,
+                    width: 1,
                   ),
                 ),
+              ),
                 child: Row(
                   children: [
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.chat_bubble_outline,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface,
                           size: 20,
                         ),
                         const SizedBox(width: 12),
-                        const Text(
+                        Text(
                           'Xibe Chat',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
                     ),
                     const Spacer(),
                     IconButton(
-                      icon: const Icon(Icons.more_vert, color: Colors.white, size: 20),
+                      icon: Icon(Icons.more_vert, color: Theme.of(context).colorScheme.onSurface, size: 20),
                       onPressed: () {
                         if (Navigator.canPop(context)) {
                           Navigator.pop(context);
@@ -107,21 +107,21 @@ class _ChatDrawerState extends State<ChatDrawer> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0A0A0A),
+                      color: Theme.of(context).colorScheme.surfaceVariant,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.add,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface,
                           size: 18,
                         ),
                         const SizedBox(width: 12),
-                        const Text(
+                        Text(
                           'New Chat',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                           ),
@@ -172,7 +172,9 @@ class _ChatDrawerState extends State<ChatDrawer> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF0A0A0A) : Colors.transparent,
+                          color: isSelected 
+                              ? Theme.of(context).colorScheme.surfaceVariant
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: ListTile(
@@ -187,7 +189,9 @@ class _ChatDrawerState extends State<ChatDrawer> {
                                   chat.title,
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: isSelected ? Colors.white : const Color(0xFFD1D5DB),
+                                    color: isSelected 
+                                        ? Theme.of(context).colorScheme.onSurface
+                                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                     fontWeight: FontWeight.w400,
                                   ),
                                   maxLines: 1,
@@ -199,17 +203,30 @@ class _ChatDrawerState extends State<ChatDrawer> {
                                   width: 6,
                                   height: 6,
                                   margin: const EdgeInsets.only(left: 8),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF10A37F),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.primary,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
                             ],
                           ),
+                          trailing: IconButton(
+                            icon: const Icon(
+                              Icons.more_horiz,
+                              color: Color(0xFF9AA0A6),
+                              size: 20,
+                            ),
+                            onPressed: () {
+                              _showSidePanel(chat);
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
                           onTap: () {
-                            // Select the chat and show side panel (keep drawer open)
                             chatProvider.selectChat(chat);
-                            _showSidePanel(chat);
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            }
                           },
                         ),
                       );

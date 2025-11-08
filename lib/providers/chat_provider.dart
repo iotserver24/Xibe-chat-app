@@ -180,19 +180,13 @@ class ChatProvider extends ChangeNotifier {
 
   Future<void> createNewChat() async {
     final now = DateTime.now();
-    final chat = Chat(
+    // Create a temporary chat that's not yet saved to database
+    // It will be saved when the user sends the first message
+    _currentChat = Chat(
+      id: null, // null indicates this chat hasn't been saved yet
       title: 'New Chat',
       createdAt: now,
       updatedAt: now,
-    );
-    final id = await _databaseService.createChat(chat);
-    
-    // Set state immediately before async operations
-    _currentChat = Chat(
-      id: id,
-      title: chat.title,
-      createdAt: chat.createdAt,
-      updatedAt: chat.updatedAt,
     );
     _messages = [];
     _error = null;
@@ -200,13 +194,6 @@ class ChatProvider extends ChangeNotifier {
     _isStreaming = false;
     _streamingContent = '';
     
-    // Notify immediately so UI updates right away
-    notifyListeners();
-    
-    // Then reload chats list in background
-    final chats = await _databaseService.getAllChats();
-    _chats = chats;
-    // Notify again after chats list is updated
     notifyListeners();
   }
 
@@ -220,6 +207,23 @@ class ChatProvider extends ChangeNotifier {
   Future<void> sendMessage(String content, {String? imageBase64, String? imagePath, bool webSearch = false, bool reasoning = false}) async {
     if (_currentChat == null) {
       await createNewChat();
+    }
+
+    // If this is a new chat (id is null), save it to the database first
+    if (_currentChat!.id == null) {
+      final now = DateTime.now();
+      final chat = Chat(
+        title: _currentChat!.title,
+        createdAt: _currentChat!.createdAt,
+        updatedAt: now,
+      );
+      final id = await _databaseService.createChat(chat);
+      _currentChat = Chat(
+        id: id,
+        title: chat.title,
+        createdAt: chat.createdAt,
+        updatedAt: chat.updatedAt,
+      );
     }
 
     _error = null;
@@ -335,15 +339,17 @@ Important:
       // Add memory management instruction
       const memoryInstruction = '''
 MEMORY MANAGEMENT:
-You have access to a long-term memory system. When you learn important information about the user (preferences, background, goals, etc.), you can save it to memory.
-To save a memory, use this format in your response: <save memory>brief important fact about user</save memory>
-The memory should be:
-- A single, clear, important fact about the user
-- Maximum 200 characters
-- Relevant for future conversations
-- When you use the tag, it will be shown to the user with a confirmation that the memory was saved
-Example: If user says "I'm a Python developer working on ML projects", you can respond normally and include: <save memory>Python developer specializing in ML projects</save memory>
-Only save truly significant information that would be useful across conversations.''';
+You have access to a long-term memory system. Use it VERY SPARINGLY - only when the user explicitly shares critical personal information or when they ask you to remember something.
+To save a memory, use this format: <save memory>brief fact</save memory>
+
+STRICT RULES:
+- Only save when user EXPLICITLY asks you to remember something OR shares truly critical personal info (name, profession, major life events)
+- Maximum 150 characters - keep it ultra-concise
+- DO NOT save routine preferences, general questions, or conversation topics
+- DO NOT save every time - be very selective (max 1-2 times per conversation)
+- Example of what TO save: User says "Please remember my name is John and I'm a software engineer"
+- Example of what NOT to save: User asks about code, makes general requests, shares opinions
+Only save information that would be crucial for ALL future conversations.''';
 
       if (enhancedSystemPrompt != null && enhancedSystemPrompt.isNotEmpty) {
         enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$memoryInstruction';

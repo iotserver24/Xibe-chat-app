@@ -54,7 +54,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         title: Consumer<ChatProvider>(
           builder: (context, chatProvider, child) {
@@ -64,10 +64,10 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 Text(
                   chatProvider.currentChat?.title ?? 'Xibe Chat',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFFE8EAED),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -87,7 +87,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
+            icon: Icon(Icons.menu, color: Theme.of(context).colorScheme.onSurface),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
@@ -166,7 +166,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Expanded(
             child: Container(
-              color: const Color(0xFF0D1521),
+              color: Theme.of(context).scaffoldBackgroundColor,
               child: Consumer<ChatProvider>(
                 builder: (context, chatProvider, child) {
                   if (chatProvider.currentChat == null) {
@@ -233,13 +233,14 @@ class _ChatScreenState extends State<ChatScreen> {
                             chatProvider.messages.isEmpty && 
                             index == 0) {
                           return TweenAnimationBuilder(
-                            duration: const Duration(milliseconds: 500),
+                            duration: const Duration(milliseconds: 800),
                             tween: Tween<double>(begin: 0.0, end: 1.0),
+                            curve: Curves.easeOutCubic,
                             builder: (context, double value, child) {
                               return Opacity(
                                 opacity: value,
                                 child: Transform.translate(
-                                  offset: Offset(0, 20 * (1 - value)),
+                                  offset: Offset(0, 30 * (1 - value)),
                                   child: child,
                                 ),
                               );
@@ -250,7 +251,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                  style: TextStyle(
                                    fontSize: 24,
                                    fontWeight: FontWeight.w400,
-                                   color: Colors.white.withOpacity(0.7),
+                                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                  ),
                                ),
                              ),
@@ -290,13 +291,14 @@ class _ChatScreenState extends State<ChatScreen> {
                         final message = chatProvider.messages[messageIndex];
                         return TweenAnimationBuilder(
                           key: ValueKey('${message.id}_${message.timestamp.millisecondsSinceEpoch}'),
-                          duration: const Duration(milliseconds: 300),
+                          duration: const Duration(milliseconds: 400),
                           tween: Tween<double>(begin: 0.0, end: 1.0),
+                          curve: Curves.easeOutCubic,
                           builder: (context, double value, child) {
                             return Opacity(
                               opacity: value,
                               child: Transform.translate(
-                                offset: Offset(0, 10 * (1 - value)),
+                                offset: Offset(0, 15 * (1 - value)),
                                 child: child,
                               ),
                             );
