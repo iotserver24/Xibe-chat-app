@@ -44,111 +44,74 @@ class _McpServersScreenState extends State<McpServersScreen> {
   void _showAddServerDialog() {
     final nameController = TextEditingController();
     final urlController = TextEditingController();
-    final commandController = TextEditingController();
-    final argsController = TextEditingController();
-    bool useUrl = false;
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text(
-            'Add MCP Server',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Server Name',
-                    hintText: 'e.g., my-mcp-server',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SwitchListTile(
-                  title: const Text('Use URL-based server'),
-                  value: useUrl,
-                  onChanged: (value) {
-                    setDialogState(() {
-                      useUrl = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 12),
-                if (useUrl) ...[
-                  TextField(
-                    controller: urlController,
-                    decoration: const InputDecoration(
-                      labelText: 'Server URL',
-                      hintText: 'e.g., https://mcp.example.com',
-                    ),
-                  ),
-                ] else ...[
-                  TextField(
-                    controller: commandController,
-                    decoration: const InputDecoration(
-                      labelText: 'Command',
-                      hintText: 'e.g., npx',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: argsController,
-                    decoration: const InputDecoration(
-                      labelText: 'Arguments (comma-separated)',
-                      hintText: 'e.g., -y, @browsermcp/mcp@latest',
-                    ),
-                    maxLines: 3,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (nameController.text.isNotEmpty) {
-                  final config = useUrl
-                      ? McpServerConfig(
-                          url: urlController.text,
-                          headers: {},
-                        )
-                      : McpServerConfig(
-                          command: commandController.text,
-                          args: argsController.text
-                              .split(',')
-                              .map((e) => e.trim())
-                              .where((e) => e.isNotEmpty)
-                              .toList(),
-                        );
-                  
-                  await _configService.addOrUpdateServer(nameController.text, config);
-                  await _loadServers();
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    // Reload MCP connections in ChatProvider
-                    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-                    await chatProvider.reloadMcpServers();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Server added successfully')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Add MCP Server',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Only hosted MCP servers (URL-based) are supported.',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Server Name',
+                  hintText: 'e.g., my-mcp-server',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: urlController,
+                decoration: const InputDecoration(
+                  labelText: 'Server URL',
+                  hintText: 'e.g., https://mcp.example.com',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (nameController.text.isNotEmpty && urlController.text.isNotEmpty) {
+                final config = McpServerConfig(
+                  url: urlController.text,
+                  headers: {},
+                );
+                
+                await _configService.addOrUpdateServer(nameController.text, config);
+                await _loadServers();
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  // Reload MCP connections in ChatProvider
+                  final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+                  await chatProvider.reloadMcpServers();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Server added successfully')),
+                  );
+                }
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
       ),
     );
   }
@@ -464,7 +427,7 @@ class _McpServersScreenState extends State<McpServersScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 32),
                             child: Text(
-                              'MCP (Model Context Protocol) servers provide additional context and tools for AI models',
+                              'MCP (Model Context Protocol) servers provide additional context and tools for AI models.\n\nOnly hosted (URL-based) MCP servers are supported.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 14,
@@ -527,7 +490,7 @@ class _McpServersScreenState extends State<McpServersScreen> {
                     subtitle: Text(
                       serverConfig.url?.isNotEmpty == true 
                           ? 'URL: ${serverConfig.url}'
-                          : 'Command: ${serverConfig.command}',
+                          : 'Invalid configuration',
                       style: const TextStyle(fontSize: 12),
                     ),
                     trailing: Switch(
@@ -557,12 +520,10 @@ class _McpServersScreenState extends State<McpServersScreen> {
                               if (serverConfig.headers?.isNotEmpty == true)
                                 _buildDetailRow('Headers', serverConfig.headers.toString()),
                             ] else ...[
-                              _buildDetailRow('Command', serverConfig.command),
-                              if (serverConfig.args.isNotEmpty)
-                                _buildDetailRow('Arguments', serverConfig.args.join(', ')),
-                              if (serverConfig.env?.isNotEmpty == true)
-                                _buildDetailRow('Environment', 
-                                    serverConfig.env!.keys.join(', ')),
+                              const Text(
+                                'Invalid server configuration. Only URL-based servers are supported.',
+                                style: TextStyle(color: Colors.red, fontSize: 12),
+                              ),
                             ],
                             const SizedBox(height: 12),
                             Row(
