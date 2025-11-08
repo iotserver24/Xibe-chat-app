@@ -255,12 +255,13 @@ class UpdateService {
   Future<bool> downloadAndInstall(String downloadUrl) async {
     try {
       if (Platform.isAndroid || Platform.isIOS) {
-        // For mobile, open the download URL in browser
+        // For mobile, open the download URL in external browser
         final uri = Uri.parse(downloadUrl);
-        if (await canLaunchUrl(uri)) {
-          return await launchUrl(uri, mode: LaunchMode.externalApplication);
-        }
-        return false;
+        // Use external application mode to ensure it opens in default browser
+        return await launchUrl(
+          uri, 
+          mode: LaunchMode.externalApplication,
+        );
       } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
         // For desktop, download the file and open it
         return await _downloadAndOpenDesktop(downloadUrl);
@@ -315,10 +316,11 @@ class UpdateService {
   Future<bool> openDownloadPage(String downloadUrl) async {
     try {
       final uri = Uri.parse(downloadUrl);
-      if (await canLaunchUrl(uri)) {
-        return await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-      return false;
+      // For Android/mobile, always use external application mode to open in default browser
+      return await launchUrl(
+        uri, 
+        mode: LaunchMode.externalApplication,
+      );
     } catch (e) {
       debugPrint('Error opening download page: $e');
       return false;

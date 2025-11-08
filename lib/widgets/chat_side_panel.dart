@@ -16,22 +16,22 @@ class ChatSidePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
-      child: GestureDetector(
-        onTap: onClose, // Close when tapping outside
-        child: Container(
-          color: Colors.black.withOpacity(0.5), // Semi-transparent overlay
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: GestureDetector(
-              onTap: () {}, // Prevent closing when tapping on panel
-              child: Container(
-                width: 280,
-                margin: const EdgeInsets.only(right: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF343541), // Dark grey background
-                  borderRadius: BorderRadius.circular(12),
-                ),
+    color: Colors.transparent,
+    child: GestureDetector(
+      onTap: onClose, // Close when tapping outside
+      child: Container(
+        color: Colors.black.withOpacity(0.5), // Semi-transparent overlay
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: GestureDetector(
+            onTap: () {}, // Prevent closing when tapping on panel
+            child: Container(
+              width: 280,
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -100,7 +100,7 @@ class ChatSidePanel extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: isDestructive ? Colors.red : Colors.white,
+                color: isDestructive ? Colors.red : Theme.of(context).colorScheme.onSurface,
                 size: 20,
               ),
               const SizedBox(width: 12),
@@ -108,7 +108,7 @@ class ChatSidePanel extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 14,
-                  color: isDestructive ? Colors.red : Colors.white,
+                  color: isDestructive ? Colors.red : Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -124,23 +124,23 @@ class ChatSidePanel extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF343541),
-        title: const Text(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: Text(
           'Rename Chat',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
         content: TextField(
           controller: textController,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: 'Enter new name',
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+            hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
             enabledBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xFF565869)),
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
               borderRadius: BorderRadius.circular(8),
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xFF10A37F)),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
               borderRadius: BorderRadius.circular(8),
             ),
           ),
@@ -149,9 +149,9 @@ class ChatSidePanel extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: Colors.white70),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
             ),
           ),
           TextButton(
@@ -163,9 +163,9 @@ class ChatSidePanel extends StatelessWidget {
               }
               Navigator.pop(context);
             },
-            child: const Text(
+            child: Text(
               'Rename',
-              style: TextStyle(color: Color(0xFF10A37F)),
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
             ),
           ),
         ],
@@ -199,21 +199,21 @@ class ChatSidePanel extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF343541),
-        title: const Text(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: Text(
           'Delete Chat',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
-        content: const Text(
+        content: Text(
           'Are you sure you want to delete this chat?',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: Colors.white70),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
             ),
           ),
           TextButton(

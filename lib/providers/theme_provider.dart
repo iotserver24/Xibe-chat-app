@@ -64,10 +64,11 @@ class ThemeProvider extends ChangeNotifier {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: Colors.black,
       primaryColor: const Color(0xFF10A37F),
+      dividerColor: const Color(0xFF1A1A1A),
       colorScheme: const ColorScheme.dark(
         primary: Color(0xFF10A37F),
         secondary: Color(0xFF10A37F),
-        surface: Colors.black,
+        surface: Color(0xFF1A1A1A),
         surfaceVariant: Color(0xFF0A0A0A),
         onSurface: Colors.white,
         onPrimary: Colors.white,
@@ -118,17 +119,23 @@ class ThemeProvider extends ChangeNotifier {
 
   ThemeData _lightTheme() {
     return ThemeData(
+      useMaterial3: true,
       brightness: Brightness.light,
       scaffoldBackgroundColor: Colors.white,
       primaryColor: const Color(0xFF3B82F6),
+      dividerColor: const Color(0xFFE5E7EB),
       colorScheme: const ColorScheme.light(
         primary: Color(0xFF3B82F6),
         secondary: Color(0xFF2563EB),
         surface: Color(0xFFF5F5F5),
+        surfaceVariant: Color(0xFFE5E7EB),
+        onSurface: Colors.black,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         iconTheme: IconThemeData(color: Colors.black),
         titleTextStyle: TextStyle(
           color: Colors.black,
@@ -141,17 +148,23 @@ class ThemeProvider extends ChangeNotifier {
 
   ThemeData _blueTheme() {
     return ThemeData(
+      useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: const Color(0xFF0A1929),
       primaryColor: const Color(0xFF1E88E5),
+      dividerColor: const Color(0xFF1E3A5F),
       colorScheme: const ColorScheme.dark(
         primary: Color(0xFF1E88E5),
         secondary: Color(0xFF42A5F5),
         surface: Color(0xFF132F4C),
+        surfaceVariant: Color(0xFF0F2744),
+        onSurface: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFF0A1929),
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
       ),
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,
@@ -166,17 +179,23 @@ class ThemeProvider extends ChangeNotifier {
 
   ThemeData _purpleTheme() {
     return ThemeData(
+      useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: const Color(0xFF1A0D2E),
       primaryColor: const Color(0xFF9C27B0),
+      dividerColor: const Color(0xFF3D2459),
       colorScheme: const ColorScheme.dark(
         primary: Color(0xFF9C27B0),
         secondary: Color(0xFFBA68C8),
         surface: Color(0xFF2E1A47),
+        surfaceVariant: Color(0xFF25153B),
+        onSurface: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFF1A0D2E),
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
       ),
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,
@@ -191,17 +210,23 @@ class ThemeProvider extends ChangeNotifier {
 
   ThemeData _greenTheme() {
     return ThemeData(
+      useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: const Color(0xFF0D1F12),
       primaryColor: const Color(0xFF4CAF50),
+      dividerColor: const Color(0xFF2A4F30),
       colorScheme: const ColorScheme.dark(
         primary: Color(0xFF4CAF50),
         secondary: Color(0xFF66BB6A),
         surface: Color(0xFF1B3A20),
+        surfaceVariant: Color(0xFF152E1A),
+        onSurface: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFF0D1F12),
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
       ),
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,
