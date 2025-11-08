@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/message.dart';
 import '../providers/chat_provider.dart';
+import '../services/codesandbox_service.dart';
+import '../screens/codesandbox_preview_screen.dart';
 import 'code_block.dart';
 
 class MessageBubble extends StatefulWidget {
@@ -26,6 +28,7 @@ class MessageBubble extends StatefulWidget {
 class _MessageBubbleState extends State<MessageBubble>
     with SingleTickerProviderStateMixin {
   late AnimationController _cursorController;
+  bool _isCreatingPreview = false;
 
   @override
   void initState() {
@@ -237,6 +240,11 @@ class _MessageBubbleState extends State<MessageBubble>
                         ),
                       ),
                   ],
+                  // CodeSandbox Preview Button
+                  if (!isUser && !widget.isStreaming && CodeSandboxService.canPreview(widget.message.content)) ...[
+                    const SizedBox(height: 12),
+                    _buildPreviewButton(),
+                  ],
                   // Footer with time, response time, reactions, and copy
                   const SizedBox(height: 6),
                   Row(
@@ -366,6 +374,104 @@ class _MessageBubbleState extends State<MessageBubble>
     final isCurrentlySelected = widget.message.reaction == reaction;
     final newReaction = isCurrentlySelected ? null : reaction;
     chatProvider.setMessageReaction(widget.message.id!, newReaction);
+  }
+
+  Widget _buildPreviewButton() {
+    return GestureDetector(
+      onTap: _isCreatingPreview ? null : _handlePreviewTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF10A37F), Color(0xFF0D8C6D)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF10A37F).withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_isCreatingPreview)
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            else
+              const Icon(
+                Icons.play_circle_outline,
+                color: Colors.white,
+                size: 18,
+              ),
+            const SizedBox(width: 8),
+            Text(
+              _isCreatingPreview ? 'Creating Preview...' : 'Run Preview',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handlePreviewTap() async {
+    setState(() => _isCreatingPreview = true);
+
+    try {
+      // Extract code from codesandbox tags
+      final code = CodeSandboxService.extractCode(widget.message.content);
+      
+      // Create preview
+      final preview = await CodeSandboxService.createPreview(code: code);
+
+      if (!mounted) return;
+
+      setState(() => _isCreatingPreview = false);
+
+      // Open preview screen
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => CodeSandboxPreviewScreen(
+            embedUrl: preview.embedUrl,
+            title: 'Code Preview',
+            framework: preview.framework,
+          ),
+          fullscreenDialog: true,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() => _isCreatingPreview = false);
+
+      // Show error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create preview: ${e.toString()}'),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFFEF4444),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    }
   }
 }
 

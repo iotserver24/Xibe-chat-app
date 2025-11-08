@@ -16,6 +16,11 @@ migrate_working_dir/
 *.iws
 .idea/
 
+# Node.js (CodeSandbox proxy)
+codesandbox-proxy/node_modules/
+codesandbox-proxy/.env
+codesandbox-proxy/package-lock.json
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
