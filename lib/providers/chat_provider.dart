@@ -255,12 +255,15 @@ class ChatProvider extends ChangeNotifier {
     
     final isFirstMessage = _messages.length == 1;
 
+    // Set loading state first to show typing indicator
     _isLoading = true;
-    _isStreaming = true;
+    _isStreaming = false;
     _streamingContent = '';
     
     // Track response start time
     final responseStartTime = DateTime.now();
+    
+    // Notify to show typing indicator
     notifyListeners();
 
     try {
@@ -309,6 +312,25 @@ class ChatProvider extends ChangeNotifier {
         } else {
           enhancedSystemPrompt = mcpContext;
         }
+      }
+      
+      // Add code execution capabilities instruction
+      const codeExecutionInstruction = '''
+CODE EXECUTION CAPABILITIES:
+You have access to code execution environments via e2b. You can execute code in the following languages:
+- Python (versions 3.9, 3.10, 3.11, 3.12)
+- JavaScript / TypeScript (Node.js)
+- C++ (with g++ compiler)
+- Ruby
+- Go
+- Bash / Shell scripting
+
+When users ask you to run code, execute scripts, or need computational results, you can use these capabilities to provide accurate, real-time results. Make sure to inform the user when you're executing code and provide the output.''';
+      
+      if (enhancedSystemPrompt != null && enhancedSystemPrompt.isNotEmpty) {
+        enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$codeExecutionInstruction';
+      } else {
+        enhancedSystemPrompt = codeExecutionInstruction;
       }
       
       // Add web search instruction if web search is enabled
@@ -384,6 +406,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
       // Stream the response
       String fullResponseContent = '';
       String streamingDisplayContent = '';
+      bool firstChunk = true;
       await for (final chunk in _apiService.sendMessageStream(
         message: content,
         history: historyForApi,
@@ -392,6 +415,12 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         reasoning: reasoning,
         mcpTools: _mcpClientService.getAllTools(),
       )) {
+        // On first chunk, switch from loading to streaming
+        if (firstChunk) {
+          _isStreaming = true;
+          firstChunk = false;
+        }
+        
         fullResponseContent += chunk;
         
         // For first message, filter out chat name JSON from display in real-time
