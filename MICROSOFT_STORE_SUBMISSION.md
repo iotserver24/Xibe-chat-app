@@ -66,16 +66,22 @@ After running the build workflow:
 ### 4. Upload Packages
 
 1. Navigate to **Packages**
-2. Click **Upload packages**
-3. Drag and drop or browse to `xibe-chat-windows-universal-store-v{VERSION}-{BUILD}.msix`
-4. Wait for validation to complete
-5. Microsoft will automatically sign the package
+2. **IMPORTANT**: Configure Device Family Availability **BEFORE** uploading
+   - Look for **Device family availability** section
+   - ✅ Check **ONLY**: Windows 10 Desktop (or Windows.Desktop)
+   - ❌ Uncheck all others: Xbox, Mobile, Holographic, IoT, Team, etc.
+   - This ensures the package validation passes for supported platforms
+3. Click **Upload packages**
+4. Drag and drop or browse to `xibe-chat-windows-universal-store-v{VERSION}-{BUILD}.msix`
+5. Wait for validation to complete
+6. Microsoft will automatically sign the package
 
 **Important Package Requirements:**
 - ✅ Package must be under 25 GB
 - ✅ Must be an MSIX or MSIXBUNDLE file
 - ✅ Must be unsigned (Microsoft will sign it)
 - ✅ Must target Windows 10 version 1809 or later
+- ✅ Only Windows Desktop device family should be selected
 
 **Common Warnings (non-blocking):**
 - ⚠️ **runFullTrust capability**: This is expected for Flutter desktop apps as they are Win32 applications wrapped in MSIX. This warning does not block submission, but Microsoft may review your app to ensure proper use of this capability. Simply explain in your submission notes that this is a Flutter desktop application that requires this capability to function properly.
@@ -214,8 +220,8 @@ The MSIX package is configured in `pubspec.yaml`:
 msix_config:
   display_name: Xibe Chat
   publisher_display_name: MegaVault
-  identity_name: MegaVault.XibeChat
-  publisher: CN=MegaVault
+  identity_name: MegaVault.Xibechat
+  publisher: CN=A65494A1-61E8-4D9B-82E9-7592028A8CCB
   msix_version: 1.0.0.0
   logo_path: logo.png
   capabilities: internetClient
@@ -227,11 +233,11 @@ msix_config:
 
 - **store: true** - Generates unsigned package for Store submission
 - **publisher_display_name: MegaVault** - Must match your Microsoft Partner Center publisher display name
-- **publisher: CN=MegaVault** - Publisher certificate name (Microsoft will sign with their certificate)
-- **identity_name: MegaVault.XibeChat** - Unique identifier in the Store
+- **publisher: CN=A65494A1-61E8-4D9B-82E9-7592028A8CCB** - Publisher certificate identifier from Partner Center (GUID format)
+- **identity_name: MegaVault.Xibechat** - Unique identifier reserved in Partner Center (note: lowercase 'c' in 'chat')
 - **msix_version: 1.0.0.0** - Version format must be X.X.X.0 (revision must be 0 for Store)
 - **capabilities: internetClient** - Allows network access
-- **architecture: x64** - Universal package for all architectures
+- **architecture: x64** - Desktop x64 architecture
 
 ## Troubleshooting
 
@@ -245,6 +251,20 @@ msix_config:
 - The `publisher_display_name` in `pubspec.yaml` must exactly match your Microsoft Partner Center publisher display name
 - Update `pubspec.yaml` to use your correct publisher name
 - Rebuild the MSIX package with the corrected configuration
+
+**Error: "Invalid package family name" or "Invalid package publisher name"**
+- These values come from your Microsoft Partner Center account when you reserve your app name
+- Copy the exact values from the error message provided by Partner Center
+- Update `identity_name` and `publisher` in `pubspec.yaml` to match exactly
+- Note: `identity_name` is case-sensitive (e.g., "Xibechat" not "XibeChat")
+- Rebuild the MSIX package with the corrected configuration
+
+**Error: "You must provide a package that supports each selected device family"**
+- This means you've selected device families in Partner Center that your package doesn't support
+- **Solution**: In Partner Center, go to your submission → Packages → Device family availability
+- **Uncheck all device families except**: Windows 10 Desktop
+- Xibe Chat only supports Desktop x64, not Xbox, Mobile, Holographic, or other device families
+- See `MSIX_DEVICE_FAMILY_GUIDE.md` for detailed instructions
 
 **Error: "Version with a revision number other than zero"**
 - Microsoft Store requires version format X.X.X.0 (the last component must be 0)

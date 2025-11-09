@@ -62,8 +62,8 @@ flutter_launcher_icons:
 msix_config:
   display_name: Xibe Chat
   publisher_display_name: MegaVault
-  identity_name: MegaVault.XibeChat
-  publisher: CN=MegaVault
+  identity_name: MegaVault.Xibechat
+  publisher: CN=A65494A1-61E8-4D9B-82E9-7592028A8CCB
   msix_version: 1.0.0.0
   logo_path: logo.png
   capabilities: internetClient
