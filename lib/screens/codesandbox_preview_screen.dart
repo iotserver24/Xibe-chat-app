@@ -48,7 +48,7 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
     if (!kIsWeb) {
       _webViewController = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setBackgroundColor(const Color(0xFF0A0A0A))
+        ..setBackgroundColor(const Color(0xFF0F0F0F))
         ..setNavigationDelegate(
           NavigationDelegate(
             onPageStarted: (String url) {
@@ -59,10 +59,18 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
             },
             onWebResourceError: (WebResourceError error) {
               debugPrint('WebView error: ${error.description}');
+              // Show error state if page fails to load
+              if (mounted) {
+                setState(() => _isLoading = false);
+              }
             },
           ),
-        )
-        ..loadRequest(Uri.parse(widget.embedUrl));
+        );
+      
+      // Load the URL after a short delay to ensure WebView is ready
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _webViewController?.loadRequest(Uri.parse(widget.embedUrl));
+      });
     }
   }
 
@@ -91,18 +99,22 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Check if running on desktop
+    final isDesktop = !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+    
     return SlideTransition(
       position: _slideAnimation,
       child: Scaffold(
         backgroundColor: const Color(0xFF0A0A0A),
         body: GestureDetector(
-          onVerticalDragUpdate: _handleDragUpdate,
-          onVerticalDragEnd: _handleDragEnd,
+          // Only enable drag gestures on mobile
+          onVerticalDragUpdate: isDesktop ? null : _handleDragUpdate,
+          onVerticalDragEnd: isDesktop ? null : _handleDragEnd,
           child: SafeArea(
             child: Column(
               children: [
-                // Custom app bar with drag handle
-                _buildAppBar(),
+                // Custom app bar with drag handle (only show drag handle on mobile)
+                _buildAppBar(showDragHandle: !isDesktop),
                 // WebView content
                 Expanded(
                   child: Transform.translate(
@@ -110,14 +122,14 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
                     child: Container(
                       decoration: BoxDecoration(
                         color: const Color(0xFF0F0F0F),
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(20),
-                        ),
+                        borderRadius: isDesktop 
+                            ? BorderRadius.zero 
+                            : const BorderRadius.vertical(top: Radius.circular(20)),
                       ),
                       child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(20),
-                        ),
+                        borderRadius: isDesktop 
+                            ? BorderRadius.zero 
+                            : const BorderRadius.vertical(top: Radius.circular(20)),
                         child: Stack(
                           children: [
                             _buildWebView(),
@@ -143,7 +155,7 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _buildAppBar({bool showDragHandle = true}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -157,16 +169,17 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
       ),
       child: Column(
         children: [
-          // Drag handle
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(2),
+          // Drag handle (only on mobile)
+          if (showDragHandle)
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
           // Title bar
           Row(
             children: [
