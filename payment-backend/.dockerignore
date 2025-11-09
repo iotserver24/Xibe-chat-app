@@ -1,0 +1,40 @@
+# Node modules
+node_modules
+npm-debug.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# Development files
+.vscode
+.idea
+
+# Logs
+logs
+*.log
+
+# Test files
+test
+tests
+*.test.js
+
+# Package lock files (will be generated during build)
+package-lock.json
+yarn.lock
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Deployment files
+DEPLOYMENT.md

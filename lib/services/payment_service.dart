@@ -2,10 +2,22 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
+import '../config/payment_config.dart';
 
 class PaymentService {
-  // Update this URL with your deployed backend URL
-  static const String _backendUrl = 'http://localhost:3000';
+  // Use backend URL from build-time configuration
+  // Can be overridden using: flutter run --dart-define=PAYMENT_BACKEND_URL=https://your-url.com
+  static String get _backendUrl => PaymentConfig.backendUrl;
+  
+  // For debugging - prints current configuration
+  static void printConfiguration() {
+    debugPrint('=== Payment Service Configuration ===');
+    debugPrint('Backend URL: $_backendUrl');
+    debugPrint('Environment: ${PaymentConfig.environment}');
+    debugPrint('Is Production: ${PaymentConfig.isProduction}');
+    debugPrint('Is Local: ${PaymentConfig.isLocal}');
+    debugPrint('====================================');
+  }
   
   // Create order on backend
   Future<Map<String, dynamic>?> createOrder({
