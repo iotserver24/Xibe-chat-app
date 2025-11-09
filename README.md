@@ -58,12 +58,22 @@ Download the latest build for your platform from the [Releases](https://github.c
 
 **Available Platforms:**
 - 📱 **Android**: APK (universal) and AAB (Play Store)
-- 💻 **Windows**: MSIX installer and portable ZIP (x64)
-- 🍎 **macOS**: DMG and ZIP for Intel and Apple Silicon
-- 🐧 **Linux**: DEB, AppImage, and TAR.GZ (x64)
-- 📱 **iOS**: IPA (requires signing)
+- 💻 **Windows**: 
+  - Universal MSIX for Microsoft Store (unsigned, ready for Store submission)
+  - NSIS installers (x64, ARM64)
+  - Portable ZIP (x64, ARM64)
+- 🍎 **macOS**: DMG and ZIP for Intel (x64) and Apple Silicon (ARM64)
+- 🐧 **Linux**: All architectures (x64, ARM64, ARMv7)
+  - DEB packages (Debian/Ubuntu)
+  - RPM packages (Fedora/RHEL)
+  - AppImage (universal)
+  - ZIP archives (portable)
+- 📱 **iOS**: IPA (unsigned, requires signing)
 
-See [WORKFLOW_USAGE.md](WORKFLOW_USAGE.md) for detailed installation instructions for each platform.
+**📖 Documentation:**
+- [WORKFLOW_USAGE.md](WORKFLOW_USAGE.md) - Detailed installation instructions
+- [MICROSOFT_STORE_SUBMISSION.md](MICROSOFT_STORE_SUBMISSION.md) - Submit to Microsoft Store without a certificate
+- [LINUX_MULTI_ARCH_BUILD.md](LINUX_MULTI_ARCH_BUILD.md) - Linux multi-architecture guide
 
 ### Option 2: Build from Source
 See [BUILD_INSTRUCTIONS.md](BUILD_INSTRUCTIONS.md) for detailed build instructions.

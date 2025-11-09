@@ -66,3 +66,7 @@ msix_config:
   msix_version: 1.0.0.0
   logo_path: logo.png
   capabilities: internetClient
+  # Store configuration - makes package ready for Microsoft Store submission
+  # Microsoft Store will sign the package with their own certificate
+  store: true
+  architecture: x64
