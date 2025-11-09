@@ -215,9 +215,8 @@ class _CodeBlockState extends State<CodeBlock> {
 
       setState(() => _isCreatingPreview = false);
 
-      // Open preview screen
-      // On desktop, don't use fullscreenDialog to avoid white screen issues
-      final isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+      // Open preview screen as a regular page transition (not fullscreen dialog)
+      // This prevents blank page issues on Windows and improves navigation consistency
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => CodeSandboxPreviewScreen(
@@ -225,7 +224,6 @@ class _CodeBlockState extends State<CodeBlock> {
             title: 'Code Preview',
             framework: preview.framework,
           ),
-          fullscreenDialog: !isDesktop,
         ),
       );
     } catch (e) {
