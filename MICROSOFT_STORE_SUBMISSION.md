@@ -207,6 +207,7 @@ msix_config:
   display_name: Xibe Chat
   publisher_display_name: XibeChat
   identity_name: XibeChat.XibeChat
+  publisher: CN=XibeChat
   msix_version: 1.0.0.0
   logo_path: logo.png
   capabilities: internetClient
@@ -217,6 +218,7 @@ msix_config:
 ### Important Settings
 
 - **store: true** - Generates unsigned package for Store submission
+- **publisher: CN=XibeChat** - Publisher identity (placeholder for Store submission, Microsoft will replace this)
 - **capabilities: internetClient** - Allows network access
 - **architecture: x64** - Universal package for all architectures
 

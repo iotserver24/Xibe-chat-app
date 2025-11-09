@@ -63,6 +63,7 @@ msix_config:
   display_name: Xibe Chat
   publisher_display_name: XibeChat
   identity_name: XibeChat.XibeChat
+  publisher: CN=XibeChat
   msix_version: 1.0.0.0
   logo_path: logo.png
   capabilities: internetClient
