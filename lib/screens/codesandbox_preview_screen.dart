@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io' show Platform;
 
 class CodeSandboxPreviewScreen extends StatefulWidget {
   final String embedUrl;
+  final String? previewUrl;
   final String title;
   final String framework;
 
   const CodeSandboxPreviewScreen({
     super.key,
     required this.embedUrl,
+    this.previewUrl,
     this.title = 'Preview',
     this.framework = 'Code',
   });
@@ -94,6 +97,36 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
     } else {
       // Reset position
       setState(() => _dragOffset = 0);
+    }
+  }
+
+  Future<void> _openInBrowser() async {
+    final urlToOpen = widget.previewUrl ?? widget.embedUrl;
+    final uri = Uri.parse(urlToOpen);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not open URL in browser'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening browser: $e'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -183,23 +216,6 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
           // Title bar
           Row(
             children: [
-              // Close button
-              GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
               // Framework badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -243,6 +259,46 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Open in browser button
+              Tooltip(
+                message: 'Open in Browser',
+                child: GestureDetector(
+                  onTap: _openInBrowser,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.open_in_new,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Close button
+              Tooltip(
+                message: 'Close Preview',
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
                 ),
               ),
             ],

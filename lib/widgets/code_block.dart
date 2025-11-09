@@ -9,6 +9,7 @@ import 'dart:io';
 import '../services/e2b_service.dart';
 import '../services/codesandbox_service.dart';
 import '../screens/codesandbox_preview_screen.dart';
+import '../screens/split_view_preview_screen.dart';
 
 class CodeBlock extends StatefulWidget {
   final String code;
@@ -215,19 +216,37 @@ class _CodeBlockState extends State<CodeBlock> {
 
       setState(() => _isCreatingPreview = false);
 
-      // Open preview screen
-      // On desktop, don't use fullscreenDialog to avoid white screen issues
+      // Check if we're on desktop and if the screen is wide enough for split view
       final isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => CodeSandboxPreviewScreen(
-            embedUrl: preview.embedUrl,
-            title: 'Code Preview',
-            framework: preview.framework,
+      final screenWidth = MediaQuery.of(context).size.width;
+      final useSplitView = isDesktop && screenWidth > 1000;
+
+      if (useSplitView) {
+        // Use split-view for desktop with wide screens
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => SplitViewPreviewScreen(
+              embedUrl: preview.embedUrl,
+              previewUrl: preview.previewUrl,
+              title: 'Code Preview',
+              framework: preview.framework,
+            ),
           ),
-          fullscreenDialog: !isDesktop,
-        ),
-      );
+        );
+      } else {
+        // Use full-screen preview for mobile or narrow desktop screens
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => CodeSandboxPreviewScreen(
+              embedUrl: preview.embedUrl,
+              previewUrl: preview.previewUrl,
+              title: 'Code Preview',
+              framework: preview.framework,
+            ),
+            fullscreenDialog: !isDesktop,
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       
