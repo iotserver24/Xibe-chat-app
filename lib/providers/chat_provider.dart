@@ -318,31 +318,33 @@ class ChatProvider extends ChangeNotifier {
       const codeExecutionInstruction = '''
 CODE EXECUTION & PREVIEW CAPABILITIES:
 
-1. E2B Code Execution (for computational/script code):
-   You can execute code in these languages: Python, JavaScript, TypeScript, Java, R, Bash
-   - When you write code blocks in these languages, the user will see a "Run" button
-   - Perfect for: data processing, algorithms, calculations, scripts, file operations
-   - Example: Write Python code for data analysis, JS for algorithms, etc.
+You have access to TWO powerful sandbox environments for running code:
 
-2. CodeSandbox Preview (for single-page UI code):
-   You can create live, interactive previews for web UI code by wrapping it in <codesandbox> tags
-   - Supported frameworks: React, Vue, Angular, Svelte, Preact, SolidJS, HTML/CSS/JS
-   - When you use <codesandbox> tags, the user will see a "Run Preview" button
-   - Perfect for: UI components, interactive demos, web apps, design examples
-   - ALWAYS use <codesandbox> tags when providing single-page UI/frontend code
+1. E2B Sandbox (for computational/scripting code - NO frameworks, NO interactive inputs):
+   Supported languages: Python, JavaScript, TypeScript, Java, R, Bash
+   - Use standard language tags: ```python, ```javascript, ```typescript, ```java, ```r, ```bash
+   - Perfect for: data processing, algorithms, calculations, scripts, file operations
+   - User will see a "Run" button to execute the code
+   - Example: ```python\nprint("Hello")\n```
    
-   Format: <codesandbox>your complete UI code here</codesandbox>
+2. CodeSandbox Preview (for visual web UI code):
+   Supported frameworks: React, Vue, Angular, Svelte, HTML/CSS/JS
+   - CRITICAL: Use language prefix "codesandbox-" + framework name
+   - Language tags: ```codesandbox-react, ```codesandbox-vue, ```codesandbox-angular, ```codesandbox-svelte, ```codesandbox-html
+   - User will see a "Run Preview" button to view the live UI
+   - Perfect for: UI components, interactive demos, web apps, design examples
    
    Examples:
-   - React: <codesandbox>import React from 'react'; export default function App() { return <div>Hello</div>; }</codesandbox>
-   - HTML: <codesandbox><!DOCTYPE html><html><body><h1>Hello</h1></body></html></codesandbox>
-   - Vue: <codesandbox><template><div>Hello</div></template></codesandbox>
+   - React: ```codesandbox-react\nimport React from 'react';\nexport default function App() { return <div>Hello</div>; }\n```
+   - Vue: ```codesandbox-vue\n<template><div>Hello</div></template>\n```
+   - HTML: ```codesandbox-html\n<!DOCTYPE html><html><body><h1>Hello</h1></body></html>\n```
 
-IMPORTANT: 
-- For UI/frontend code → Use <codesandbox> tags
-- For computational/backend code → Write in regular code blocks (```python, ```javascript, etc.)
-- When users ask for UI examples, interactive demos, or web components, ALWAYS wrap in <codesandbox>
-- When users ask to run calculations, scripts, or data processing, use regular code blocks''';
+CRITICAL RULES:
+- For UI/visual web code → ALWAYS use codesandbox-{framework} language tag
+- For computational/backend/script code → Use standard language tags (python, javascript, etc.)
+- When users ask for UI examples, interactive demos, or web components → Use codesandbox-{framework}
+- When users ask to run calculations, scripts, or data processing → Use standard language tags
+- NEVER use <codesandbox> tags - ALWAYS use the language prefix system instead''';
       
       if (enhancedSystemPrompt != null && enhancedSystemPrompt.isNotEmpty) {
         enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$codeExecutionInstruction';

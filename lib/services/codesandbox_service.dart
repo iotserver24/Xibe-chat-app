@@ -5,61 +5,6 @@ class CodeSandboxService {
   // Official CodeSandbox Define API endpoint
   static const String _apiUrl = 'https://codesandbox.io/api/v1/sandboxes/define';
 
-  /// Detects if code can be previewed in CodeSandbox
-  /// Looks for <codesandbox> tags in the AI response
-  static bool canPreview(String content) {
-    return content.contains('<codesandbox>') || 
-           content.contains('</codesandbox>');
-  }
-
-  /// Extracts code from <codesandbox> tags
-  static String extractCode(String content) {
-    final regex = RegExp(
-      r'<codesandbox>(.*?)</codesandbox>',
-      dotAll: true,
-      multiLine: true,
-    );
-    final match = regex.firstMatch(content);
-    return match?.group(1)?.trim() ?? content;
-  }
-  
-  /// Removes <codesandbox> tags from content for display purposes
-  /// and wraps the code in proper markdown code fences for rendering
-  static String stripCodesandboxTags(String content) {
-    final regex = RegExp(
-      r'<codesandbox>(.*?)</codesandbox>',
-      dotAll: true,
-      multiLine: true,
-    );
-    
-    return content.replaceAllMapped(regex, (match) {
-      final code = match.group(1)?.trim() ?? '';
-      // Detect language/framework for proper syntax highlighting
-      final framework = detectFramework(code);
-      
-      // Determine the language tag for markdown code fence
-      String languageTag;
-      switch (framework) {
-        case 'react':
-        case 'vue':
-        case 'svelte':
-          languageTag = 'jsx';
-          break;
-        case 'angular':
-          languageTag = 'typescript';
-          break;
-        case 'html':
-          languageTag = 'html';
-          break;
-        default:
-          languageTag = 'javascript';
-      }
-      
-      // Wrap in markdown code fence so it renders as a code block
-      return '```$languageTag\n$code\n```';
-    });
-  }
-
   /// Extracts sandbox ID from a CodeSandbox URL
   static String _extractSandboxIdFromUrl(String url) {
     // Handle URLs like "/s/ggfh8z" or "https://codesandbox.io/s/ggfh8z"

@@ -5,7 +5,10 @@ import 'package:flutter_highlight/themes/atom-one-dark.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:io';
 import '../services/e2b_service.dart';
+import '../services/codesandbox_service.dart';
+import '../screens/codesandbox_preview_screen.dart';
 
 class CodeBlock extends StatefulWidget {
   final String code;
@@ -26,6 +29,20 @@ class _CodeBlockState extends State<CodeBlock> {
   String? _output;
   String? _error;
   List<Map<String, dynamic>>? _results; // Store all result types
+  bool _isCreatingPreview = false;
+
+  /// Check if the language starts with "codesandbox-"
+  bool get _isCodesandboxPreview {
+    final lang = widget.language?.toLowerCase() ?? '';
+    return lang.startsWith('codesandbox-');
+  }
+
+  /// Extract the actual framework name from "codesandbox-{framework}"
+  String? get _codesandboxFramework {
+    if (!_isCodesandboxPreview) return null;
+    final lang = widget.language?.toLowerCase() ?? '';
+    return lang.replaceFirst('codesandbox-', '');
+  }
 
   /// Check if the code can be executed based on language support
   bool get _canRun {
@@ -61,6 +78,18 @@ class _CodeBlockState extends State<CodeBlock> {
 
   String get _displayLanguage {
     final lang = widget.language?.toLowerCase() ?? '';
+    
+    // Handle codesandbox- prefix
+    if (lang.startsWith('codesandbox-')) {
+      final framework = lang.replaceFirst('codesandbox-', '');
+      if (framework == 'react') return 'React (Preview)';
+      if (framework == 'vue') return 'Vue (Preview)';
+      if (framework == 'angular') return 'Angular (Preview)';
+      if (framework == 'svelte') return 'Svelte (Preview)';
+      if (framework == 'html') return 'HTML (Preview)';
+      return '${framework[0].toUpperCase()}${framework.substring(1)} (Preview)';
+    }
+    
     if (lang == 'jsx' || lang == 'tsx' || lang == 'react') return 'React';
     if (lang == 'js' || lang == 'javascript') return 'JavaScript';
     if (lang == 'ts' || lang == 'typescript') return 'TypeScript';
@@ -172,6 +201,53 @@ class _CodeBlockState extends State<CodeBlock> {
     }
   }
 
+  Future<void> _runPreview() async {
+    setState(() => _isCreatingPreview = true);
+
+    try {
+      // Create preview using codesandbox service
+      final preview = await CodeSandboxService.createPreview(
+        code: widget.code,
+        framework: _codesandboxFramework,
+      );
+
+      if (!mounted) return;
+
+      setState(() => _isCreatingPreview = false);
+
+      // Open preview screen
+      // On desktop, don't use fullscreenDialog to avoid white screen issues
+      final isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => CodeSandboxPreviewScreen(
+            embedUrl: preview.embedUrl,
+            title: 'Code Preview',
+            framework: preview.framework,
+          ),
+          fullscreenDialog: !isDesktop,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() => _isCreatingPreview = false);
+
+      // Show error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create preview: ${e.toString()}'),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFFEF4444),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -208,7 +284,26 @@ class _CodeBlockState extends State<CodeBlock> {
                   ),
                 ),
                 const Spacer(),
-                if (_canRun) ...[
+                if (_isCodesandboxPreview) ...[
+                  IconButton(
+                    icon: _isCreatingPreview
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10A37F)),
+                            ),
+                          )
+                        : const Icon(Icons.play_circle_outline, size: 20),
+                    color: const Color(0xFF10A37F),
+                    onPressed: _isCreatingPreview ? null : _runPreview,
+                    tooltip: 'Run Preview in CodeSandbox',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 8),
+                ] else if (_canRun) ...[
                   IconButton(
                     icon: _isRunning
                         ? const SizedBox(
@@ -254,7 +349,10 @@ class _CodeBlockState extends State<CodeBlock> {
               scrollDirection: Axis.horizontal,
               child: HighlightView(
                 widget.code,
-                language: widget.language ?? 'plaintext',
+                // Strip codesandbox- prefix for syntax highlighting
+                language: _isCodesandboxPreview 
+                    ? (_codesandboxFramework == 'html' ? 'html' : 'javascript')
+                    : (widget.language ?? 'plaintext'),
                 theme: atomOneDarkTheme,
                 padding: EdgeInsets.zero,
                 textStyle: const TextStyle(
