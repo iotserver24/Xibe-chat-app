@@ -18,10 +18,20 @@ class _DonateScreenState extends State<DonateScreen> {
   bool _isProcessing = false;
   bool _isMobileSupported = false;
   String _selectedAmount = '100';
+  String _selectedCurrency = 'INR';
   final TextEditingController _customAmountController = TextEditingController();
 
-  // Predefined donation amounts
-  final List<String> _predefinedAmounts = ['50', '100', '200', '500', '1000'];
+  // Predefined donation amounts for each currency
+  final Map<String, List<String>> _predefinedAmounts = {
+    'INR': ['50', '100', '200', '500', '1000'],
+    'USD': ['1', '5', '10', '25', '50'],
+  };
+  
+  // Currency symbols
+  final Map<String, String> _currencySymbols = {
+    'INR': '₹',
+    'USD': '\$',
+  };
 
   @override
   void initState() {
@@ -123,8 +133,11 @@ class _DonateScreenState extends State<DonateScreen> {
       return;
     }
 
-    // Create order
-    final orderData = await _paymentService.createOrder(amount: amount);
+    // Create order with selected currency
+    final orderData = await _paymentService.createOrder(
+      amount: amount,
+      currency: _selectedCurrency,
+    );
 
     if (orderData == null) {
       setState(() => _isProcessing = false);
@@ -143,10 +156,16 @@ class _DonateScreenState extends State<DonateScreen> {
   }
 
   void _openMobileCheckout(Map<String, dynamic> orderData, int amount) {
+    // Convert amount based on currency (Razorpay expects amount in smallest unit)
+    final razorpayAmount = _selectedCurrency == 'INR' 
+        ? amount * 100  // Paise for INR
+        : amount * 100; // Cents for USD
+    
     var options = {
       'key': orderData['keyId'],
-      'amount': amount * 100,
+      'amount': razorpayAmount,
       'order_id': orderData['orderId'],
+      'currency': _selectedCurrency,
       'name': 'Xibe Chat',
       'description': 'Support Xibe Chat Development',
       'timeout': 300,
@@ -170,6 +189,8 @@ class _DonateScreenState extends State<DonateScreen> {
   }
 
   void _openWebCheckout(Map<String, dynamic> orderData, int amount) {
+    final currencySymbol = _currencySymbols[_selectedCurrency]!;
+    
     // For web/desktop, show payment instructions with UPI and direct link
     showDialog(
       context: context,
@@ -181,7 +202,7 @@ class _DonateScreenState extends State<DonateScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Amount: ₹$amount',
+                'Amount: $currencySymbol$amount $_selectedCurrency',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -202,27 +223,29 @@ class _DonateScreenState extends State<DonateScreen> {
                 style: TextStyle(fontSize: 12),
               ),
               const SizedBox(height: 12),
-              const Text(
-                '2. UPI Payment',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const Text(
-                'You can also directly send payment via UPI to:',
-                style: TextStyle(fontSize: 12),
-              ),
-              const SizedBox(height: 4),
-              const SelectableText(
-                'your-upi-id@bank',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.blue,
-                  fontWeight: FontWeight.w500,
+              if (_selectedCurrency == 'INR') ...[
+                const Text(
+                  '2. UPI Payment',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                '3. Bank Transfer',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                const Text(
+                  'You can also directly send payment via UPI to:',
+                  style: TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                const SelectableText(
+                  'your-upi-id@bank',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              Text(
+                _selectedCurrency == 'INR' ? '3. Bank Transfer' : '2. Bank Transfer',
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               const Text(
                 'Contact us for bank details.',
@@ -325,6 +348,8 @@ class _DonateScreenState extends State<DonateScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 600;
+    final currencySymbol = _currencySymbols[_selectedCurrency]!;
+    final amounts = _predefinedAmounts[_selectedCurrency]!;
 
     return Scaffold(
       appBar: AppBar(
@@ -370,6 +395,47 @@ class _DonateScreenState extends State<DonateScreen> {
                 ),
                 const SizedBox(height: 32),
 
+                // Currency selection
+                const Text(
+                  'Select Currency',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        label: Text('₹ INR'),
+                        selected: _selectedCurrency == 'INR',
+                        onSelected: (selected) {
+                          setState(() {
+                            _selectedCurrency = 'INR';
+                            _selectedAmount = '100'; // Reset to default for currency
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: Text('\$ USD'),
+                        selected: _selectedCurrency == 'USD',
+                        onSelected: (selected) {
+                          setState(() {
+                            _selectedCurrency = 'USD';
+                            _selectedAmount = '5'; // Reset to default for currency
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
                 // Amount selection
                 const Text(
                   'Select Amount',
@@ -384,10 +450,10 @@ class _DonateScreenState extends State<DonateScreen> {
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: _predefinedAmounts.map((amount) {
+                  children: amounts.map((amount) {
                     final isSelected = _selectedAmount == amount;
                     return ChoiceChip(
-                      label: Text('₹$amount'),
+                      label: Text('$currencySymbol$amount'),
                       selected: isSelected,
                       onSelected: (selected) {
                         setState(() {
@@ -415,11 +481,11 @@ class _DonateScreenState extends State<DonateScreen> {
                   TextField(
                     controller: _customAmountController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Enter Amount (₹)',
-                      hintText: 'e.g., 250',
-                      prefixText: '₹ ',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: 'Enter Amount ($currencySymbol)',
+                      hintText: _selectedCurrency == 'INR' ? 'e.g., 250' : 'e.g., 10',
+                      prefixText: '$currencySymbol ',
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ],
@@ -476,7 +542,8 @@ class _DonateScreenState extends State<DonateScreen> {
                         const SizedBox(height: 12),
                         _buildPaymentMethodRow(Icons.credit_card, 'Credit/Debit Cards'),
                         _buildPaymentMethodRow(Icons.account_balance, 'Net Banking'),
-                        _buildPaymentMethodRow(Icons.payment, 'UPI'),
+                        if (_selectedCurrency == 'INR')
+                          _buildPaymentMethodRow(Icons.payment, 'UPI'),
                         _buildPaymentMethodRow(Icons.account_balance_wallet, 'Wallets'),
                       ],
                     ),
@@ -504,43 +571,57 @@ class _DonateScreenState extends State<DonateScreen> {
 
                 const SizedBox(height: 24),
 
-                // Other support options
-                const Divider(),
-                const SizedBox(height: 16),
-                const Text(
-                  'Other Ways to Support',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                // Additional support options
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Other Ways to Support',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildSupportOptionTile(
+                          Icons.star,
+                          'Star on GitHub',
+                          'Show your support by starring our repository',
+                          () async {
+                            final url = Uri.parse('https://github.com/iotserver24/xibe-chat');
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildSupportOptionTile(
+                          Icons.share,
+                          'Share with Friends',
+                          'Help us grow by sharing Xibe Chat',
+                          () {
+                            // Could implement share functionality
+                            _showErrorDialog('Share functionality coming soon!');
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildSupportOptionTile(
+                          Icons.bug_report,
+                          'Report Issues',
+                          'Help us improve by reporting bugs',
+                          () async {
+                            final url = Uri.parse('https://github.com/iotserver24/xibe-chat/issues');
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildSupportOptionTile(
-                  Icons.star,
-                  'Rate the App',
-                  'Leave a review on the app store',
-                  () {
-                    // Open app store
-                  },
-                ),
-                _buildSupportOptionTile(
-                  Icons.share,
-                  'Share with Friends',
-                  'Help others discover Xibe Chat',
-                  () {
-                    // Share functionality
-                  },
-                ),
-                _buildSupportOptionTile(
-                  Icons.code,
-                  'Contribute on GitHub',
-                  'Help improve the codebase',
-                  () async {
-                    final uri = Uri.parse('https://github.com/iotserver24');
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
-                    }
-                  },
                 ),
               ],
             ),
@@ -550,15 +631,15 @@ class _DonateScreenState extends State<DonateScreen> {
     );
   }
 
-  Widget _buildPaymentMethodRow(IconData icon, String text) {
+  Widget _buildPaymentMethodRow(IconData icon, String label) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: Colors.grey[400]),
+          Icon(icon, size: 20, color: Colors.grey[300]),
           const SizedBox(width: 12),
           Text(
-            text,
+            label,
             style: const TextStyle(fontSize: 13),
           ),
         ],

@@ -6,7 +6,7 @@ class PaymentConfig {
   /// flutter build --dart-define=PAYMENT_BACKEND_URL=https://payment.yourdomain.com
   static const String backendUrl = String.fromEnvironment(
     'PAYMENT_BACKEND_URL',
-    defaultValue: 'http://localhost:3000', // Default for local development
+    defaultValue: 'https://xibe-pay.n92dev.us.kg', // Production payment backend
   );
   
   /// Check if using production backend
