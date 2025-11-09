@@ -198,7 +198,7 @@ class _MessageBubbleState extends State<MessageBubble>
                   ]
                   else ...[
                     MarkdownBody(
-                      data: widget.message.content,
+                      data: CodeSandboxService.stripCodesandboxTags(widget.message.content),
                       styleSheet: MarkdownStyleSheet(
                         p: TextStyle(color: const Color(0xFFE8EAED), fontSize: 15, height: 1.7, letterSpacing: 0.1),
                         h1: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, height: 1.4),

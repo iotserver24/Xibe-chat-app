@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class CodeSandboxService {
-  // Change this to your deployed server URL in production
-  static const String baseUrl = 'http://localhost:3000';
+  // Official CodeSandbox Define API endpoint
+  static const String _apiUrl = 'https://codesandbox.io/api/v1/sandboxes/define';
 
   /// Detects if code can be previewed in CodeSandbox
   /// Looks for <codesandbox> tags in the AI response
@@ -21,6 +21,11 @@ class CodeSandboxService {
     );
     final match = regex.firstMatch(content);
     return match?.group(1)?.trim() ?? content;
+  }
+  
+  /// Removes <codesandbox> tags from content for display purposes
+  static String stripCodesandboxTags(String content) {
+    return content.replaceAll(RegExp(r'<\/?codesandbox>'), '');
   }
 
   /// Detects the framework from code content
@@ -51,7 +56,7 @@ class CodeSandboxService {
     return 'javascript';
   }
 
-  /// Creates a preview sandbox
+  /// Creates a preview sandbox using the official CodeSandbox API
   static Future<CodeSandboxPreview> createPreview({
     required String code,
     String? framework,
@@ -63,18 +68,31 @@ class CodeSandboxService {
       // Parse code into files based on framework
       final files = _parseCodeIntoFiles(code, framework);
 
+      // Make the POST request to CodeSandbox Define API
       final response = await http.post(
-        Uri.parse('$baseUrl/preview/create'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'files': files,
-          'framework': framework,
-        }),
+        Uri.parse(_apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({'files': files}),
       ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
-        return CodeSandboxPreview.fromJson(json);
+        final sandboxId = json['sandbox_id'] as String;
+        
+        // Construct the embed and preview URLs
+        final embedUrl = 'https://codesandbox.io/embed/$sandboxId?view=preview&hidenavigation=1&theme=dark';
+        final previewUrl = 'https://codesandbox.io/s/$sandboxId';
+        
+        return CodeSandboxPreview(
+          success: true,
+          sandboxId: sandboxId,
+          previewUrl: previewUrl,
+          embedUrl: embedUrl,
+          framework: framework,
+        );
       } else if (response.statusCode == 429) {
         throw CodeSandboxException(
           'Rate limit exceeded. Please try again later.',
@@ -82,7 +100,7 @@ class CodeSandboxService {
         );
       } else {
         throw CodeSandboxException(
-          'Failed to create preview: ${response.statusCode}',
+          'Failed to create preview: ${response.statusCode} - ${response.body}',
           statusCode: response.statusCode,
         );
       }
@@ -155,36 +173,52 @@ $code
     return {
       'package.json': {
         'content': jsonEncode({
+          'name': 'ai-react-app',
+          'version': '1.0.0',
+          'description': 'AI Generated React App',
+          'main': 'src/index.js',
           'dependencies': {
             'react': '^18.2.0',
             'react-dom': '^18.2.0',
+            'react-scripts': '5.0.1',
+          },
+          'scripts': {
+            'start': 'react-scripts start',
+            'build': 'react-scripts build',
+            'test': 'react-scripts test',
+            'eject': 'react-scripts eject',
+          },
+          'browserslist': {
+            'production': ['>0.2%', 'not dead', 'not op_mini all'],
+            'development': ['last 1 chrome version', 'last 1 firefox version', 'last 1 safari version'],
           },
         }),
       },
       'public/index.html': {
-        'content': '''
-<!DOCTYPE html>
+        'content': '''<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Preview</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI React App</title>
 </head>
 <body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
 </body>
-</html>
-''',
+</html>''',
       },
       'src/index.js': {
-        'content': '''
-import React from 'react';
+        'content': '''import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
-''',
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);''',
       },
       'src/App.js': {
         'content': appJs,
