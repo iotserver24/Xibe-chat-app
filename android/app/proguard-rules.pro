@@ -14,3 +14,8 @@
 -keepclasseswithmembers class * {
   public void onPayment*(...);
 }
+
+## Google Play Core (Flutter deferred components support - not used but referenced)
+-dontwarn com.google.android.play.core.splitcompat.**
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**

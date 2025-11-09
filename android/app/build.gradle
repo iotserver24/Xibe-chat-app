@@ -68,6 +68,10 @@ android {
         release {
             // Use release signing if key.properties exists, otherwise use debug signing
             signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            
+            // Enable R8/ProGuard
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

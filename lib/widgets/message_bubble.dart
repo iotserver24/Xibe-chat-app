@@ -444,6 +444,8 @@ class _MessageBubbleState extends State<MessageBubble>
       setState(() => _isCreatingPreview = false);
 
       // Open preview screen
+      // On desktop, don't use fullscreenDialog to avoid white screen issues
+      final isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => CodeSandboxPreviewScreen(
@@ -451,7 +453,7 @@ class _MessageBubbleState extends State<MessageBubble>
             title: 'Code Preview',
             framework: preview.framework,
           ),
-          fullscreenDialog: true,
+          fullscreenDialog: !isDesktop,
         ),
       );
     } catch (e) {
