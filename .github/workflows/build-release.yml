@@ -826,6 +826,22 @@ jobs:
           flutter pub run flutter_launcher_icons
           echo "✅ App icons generated"
 
+      - name: Configure iOS project for unsigned build
+        run: |
+          # Disable code signing in Xcode project to allow --no-codesign builds
+          # This is required for CI/CD environments without signing certificates
+          if [ -f "ios/Runner.xcodeproj/project.pbxproj" ]; then
+            sed -i.bak 's/CODE_SIGN_IDENTITY = "iPhone Developer"/CODE_SIGN_IDENTITY = ""/g' ios/Runner.xcodeproj/project.pbxproj
+            sed -i.bak 's/CODE_SIGN_IDENTITY = "iPhone Distribution"/CODE_SIGN_IDENTITY = ""/g' ios/Runner.xcodeproj/project.pbxproj
+            sed -i.bak 's/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = "";/g' ios/Runner.xcodeproj/project.pbxproj
+            # Also disable automatic signing
+            sed -i.bak 's/ProvisioningStyle = Automatic;/ProvisioningStyle = Manual;/g' ios/Runner.xcodeproj/project.pbxproj
+            rm -f ios/Runner.xcodeproj/project.pbxproj.bak
+            echo "✅ Configured iOS project for unsigned build"
+          else
+            echo "⚠️  iOS project file not found, skipping configuration"
+          fi
+
       - name: Build iOS (unsigned)
         run: |
           flutter build ios --release --no-codesign --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
