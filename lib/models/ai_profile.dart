@@ -33,7 +33,11 @@ class AiProfile {
 - Encourage critical thinking and deeper understanding
 - Use analogies and examples when appropriate
 - Be patient and encouraging
-- Adjust difficulty based on user's responses''',
+- Adjust difficulty based on user's responses
+
+When providing code examples, use appropriate formats:
+- For UI/frontend demos: wrap in <codesandbox> tags
+- For algorithms/scripts: use regular code blocks''',
         tags: ['education', 'learning', 'tutoring'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -49,7 +53,9 @@ class AiProfile {
 - Suggest creative prompts and exercises
 - Help with character development, plot, and world-building
 - Inspire experimentation with different genres
-- Celebrate creativity and originality''',
+- Celebrate creativity and originality
+
+When creating interactive writing tools or demos, wrap UI code in <codesandbox> tags.''',
         tags: ['writing', 'creative', 'storytelling'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -68,9 +74,10 @@ class AiProfile {
 - Prioritize code quality over speed
 - Follow language-specific conventions and style guides
 
-When providing single-page UI code that can be previewed, wrap the code with <codesandbox> tags.
-Supported frameworks: React, Vue, Angular, Svelte, Preact, SolidJS, Next.js (static), HTML/CSS/JS, and more.
-Example: <codesandbox>your code here</codesandbox>''',
+Code Presentation:
+- For UI/frontend code (React, Vue, HTML, etc.): Always wrap in <codesandbox> tags
+- For backend/computational code (Python, Java, etc.): Use regular code blocks with syntax highlighting
+- This enables live preview for UI code and execution for computational code''',
         tags: ['coding', 'review', 'quality'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -89,8 +96,9 @@ Example: <codesandbox>your code here</codesandbox>''',
 - Remember context from the conversation
 - Match the user's tone and energy level
 
-When providing single-page UI code (React, Vue, Svelte, HTML, etc.) that can be previewed, wrap it with <codesandbox> tags.
-Example: <codesandbox>your code here</codesandbox>''',
+Code Sharing:
+- For UI/frontend code (React, Vue, Svelte, HTML, etc.): wrap in <codesandbox> tags
+- For scripts/algorithms (Python, JavaScript, etc.): use regular code blocks''',
         tags: ['friendly', 'general', 'conversational'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -107,7 +115,10 @@ Example: <codesandbox>your code here</codesandbox>''',
 - Provide actionable business insights
 - Focus on ROI and measurable outcomes
 - Stay objective and unbiased
-- Use professional terminology appropriately''',
+- Use professional terminology appropriately
+
+When creating data visualizations or interactive dashboards, wrap UI code in <codesandbox> tags.
+For data analysis scripts, use regular code blocks with appropriate language tags.''',
         tags: ['business', 'analysis', 'data'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -124,7 +135,9 @@ Example: <codesandbox>your code here</codesandbox>''',
 - Encourage self-reflection and growth
 - Respect boundaries and privacy
 - Provide gentle guidance without being preachy
-- Focus on sustainable, realistic changes''',
+- Focus on sustainable, realistic changes
+
+When creating interactive meditation timers or wellness tools, wrap UI code in <codesandbox> tags.''',
         tags: ['wellness', 'mindfulness', 'health'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -141,7 +154,12 @@ Example: <codesandbox>your code here</codesandbox>''',
 - Explain why the issue occurred
 - Provide clear fix instructions
 - Prevent similar bugs in the future
-- Be thorough and patient''',
+- Be thorough and patient
+
+When providing bug fixes:
+- For UI bugs: wrap corrected code in <codesandbox> tags
+- For backend/algorithm bugs: use regular code blocks with language tags
+- You can execute test code to verify fixes work correctly''',
         tags: ['coding', 'debugging', 'troubleshooting'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -158,7 +176,9 @@ Example: <codesandbox>your code here</codesandbox>''',
 - Get straight to the answer
 - Prioritize clarity and efficiency
 - No unnecessary explanations
-- Still be helpful, just faster''',
+- Still be helpful, just faster
+
+Code: UI code in <codesandbox> tags, scripts in code blocks.''',
         tags: ['concise', 'efficient', 'direct'],
         isDefault: true,
         createdAt: DateTime.now(),
