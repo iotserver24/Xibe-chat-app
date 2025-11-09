@@ -190,7 +190,8 @@ jobs:
           Write-Host "Building unsigned universal MSIX for Microsoft Store submission..."
           # The --store flag creates an unsigned MSIX package suitable for Microsoft Store submission
           # Microsoft Store will sign the package with their certificate
-          flutter pub run msix:create --store --version ${{ inputs.version }}.${{ inputs.build_number }}
+          # Note: Microsoft Store requires version format X.X.X.0 (revision must be 0)
+          flutter pub run msix:create --store --version ${{ inputs.version }}.0
           Write-Host "Universal MSIX package created successfully"
         shell: powershell
 

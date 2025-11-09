@@ -77,6 +77,9 @@ After running the build workflow:
 - ✅ Must be unsigned (Microsoft will sign it)
 - ✅ Must target Windows 10 version 1809 or later
 
+**Common Warnings (non-blocking):**
+- ⚠️ **runFullTrust capability**: This is expected for Flutter desktop apps as they are Win32 applications wrapped in MSIX. This warning does not block submission, but Microsoft may review your app to ensure proper use of this capability. Simply explain in your submission notes that this is a Flutter desktop application that requires this capability to function properly.
+
 ### 5. Store Listings
 
 #### English (United States) - Required
@@ -138,6 +141,11 @@ Test Account (if required):
 Features requiring internet:
 - AI chat functionality requires internet connection
 - Local chat history works offline
+
+Technical notes:
+- This is a Flutter desktop application (Win32 app packaged as MSIX)
+- The runFullTrust capability is required for the app to function properly
+- No special permissions or administrative access required beyond standard desktop app functionality
 
 Known limitations:
 - First launch may require internet to download AI models
@@ -205,9 +213,9 @@ The MSIX package is configured in `pubspec.yaml`:
 ```yaml
 msix_config:
   display_name: Xibe Chat
-  publisher_display_name: XibeChat
-  identity_name: XibeChat.XibeChat
-  publisher: CN=XibeChat
+  publisher_display_name: MegaVault
+  identity_name: MegaVault.XibeChat
+  publisher: CN=MegaVault
   msix_version: 1.0.0.0
   logo_path: logo.png
   capabilities: internetClient
@@ -218,7 +226,10 @@ msix_config:
 ### Important Settings
 
 - **store: true** - Generates unsigned package for Store submission
-- **publisher: CN=XibeChat** - Publisher identity (placeholder for Store submission, Microsoft will replace this)
+- **publisher_display_name: MegaVault** - Must match your Microsoft Partner Center publisher display name
+- **publisher: CN=MegaVault** - Publisher certificate name (Microsoft will sign with their certificate)
+- **identity_name: MegaVault.XibeChat** - Unique identifier in the Store
+- **msix_version: 1.0.0.0** - Version format must be X.X.X.0 (revision must be 0 for Store)
 - **capabilities: internetClient** - Allows network access
 - **architecture: x64** - Universal package for all architectures
 
@@ -230,6 +241,16 @@ msix_config:
 - ✅ This is expected - the package is unsigned
 - ✅ Microsoft will sign it during publishing
 
+**Error: "PublisherDisplayName doesn't match"**
+- The `publisher_display_name` in `pubspec.yaml` must exactly match your Microsoft Partner Center publisher display name
+- Update `pubspec.yaml` to use your correct publisher name
+- Rebuild the MSIX package with the corrected configuration
+
+**Error: "Version with a revision number other than zero"**
+- Microsoft Store requires version format X.X.X.0 (the last component must be 0)
+- The workflow automatically sets the revision to 0
+- If you're building manually, use: `flutter pub run msix:create --store --version 1.0.0.0`
+
 **Error: "Unsupported package architecture"**
 - Check that architecture is set correctly in msix_config
 - Ensure you're using the universal store package
@@ -237,6 +258,12 @@ msix_config:
 **Error: "Package version conflict"**
 - Version number must be higher than previous submissions
 - Update version in workflow inputs
+
+**Warning: "runFullTrust capability requires approval"**
+- ⚠️ This is a warning, not an error - your submission will not be blocked
+- This is normal for Flutter desktop apps (Win32 apps packaged as MSIX)
+- Include a note in your certification comments explaining this is a Flutter desktop application
+- Microsoft may review the capability usage during certification
 
 ### Submission Issues
 
