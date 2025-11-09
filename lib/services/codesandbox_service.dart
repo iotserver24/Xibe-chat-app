@@ -24,8 +24,54 @@ class CodeSandboxService {
   }
   
   /// Removes <codesandbox> tags from content for display purposes
+  /// and wraps the code in proper markdown code fences for rendering
   static String stripCodesandboxTags(String content) {
-    return content.replaceAll(RegExp(r'<\/?codesandbox>'), '');
+    final regex = RegExp(
+      r'<codesandbox>(.*?)</codesandbox>',
+      dotAll: true,
+      multiLine: true,
+    );
+    
+    return content.replaceAllMapped(regex, (match) {
+      final code = match.group(1)?.trim() ?? '';
+      // Detect language/framework for proper syntax highlighting
+      final framework = detectFramework(code);
+      
+      // Determine the language tag for markdown code fence
+      String languageTag;
+      switch (framework) {
+        case 'react':
+        case 'vue':
+        case 'svelte':
+          languageTag = 'jsx';
+          break;
+        case 'angular':
+          languageTag = 'typescript';
+          break;
+        case 'html':
+          languageTag = 'html';
+          break;
+        default:
+          languageTag = 'javascript';
+      }
+      
+      // Wrap in markdown code fence so it renders as a code block
+      return '```$languageTag\n$code\n```';
+    });
+  }
+
+  /// Extracts sandbox ID from a CodeSandbox URL
+  static String _extractSandboxIdFromUrl(String url) {
+    // Handle URLs like "/s/ggfh8z" or "https://codesandbox.io/s/ggfh8z"
+    final match = RegExp(r'/s/([a-zA-Z0-9]+)').firstMatch(url);
+    if (match != null) {
+      return match.group(1)!;
+    }
+    // If it's just the ID itself
+    if (RegExp(r'^[a-zA-Z0-9]+$').hasMatch(url)) {
+      return url;
+    }
+    throw CodeSandboxException('Could not extract sandbox ID from URL: $url');
   }
 
   /// Detects the framework from code content
@@ -78,9 +124,34 @@ class CodeSandboxService {
         body: jsonEncode({'files': files}),
       ).timeout(const Duration(seconds: 30));
 
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        final sandboxId = json['sandbox_id'] as String;
+      // Handle success responses (200 or 302 redirect)
+      if (response.statusCode == 200 || response.statusCode == 302) {
+        String sandboxId;
+        
+        if (response.statusCode == 302) {
+          // CodeSandbox redirects to the sandbox URL
+          // Try to get sandbox ID from Location header first
+          if (response.headers.containsKey('location')) {
+            final location = response.headers['location']!;
+            sandboxId = _extractSandboxIdFromUrl(location);
+          } else {
+            // Fallback: parse from HTML body (e.g., "/s/ggfh8z")
+            final body = response.body;
+            final redirectMatch = RegExp(r'/s/([a-zA-Z0-9]+)').firstMatch(body);
+            if (redirectMatch != null) {
+              sandboxId = redirectMatch.group(1)!;
+            } else {
+              throw CodeSandboxException(
+                'Failed to extract sandbox ID from redirect',
+                statusCode: 302,
+              );
+            }
+          }
+        } else {
+          // Status 200 - parse JSON response
+          final json = jsonDecode(response.body);
+          sandboxId = json['sandbox_id'] as String;
+        }
         
         // Construct the embed and preview URLs
         final embedUrl = 'https://codesandbox.io/embed/$sandboxId?view=preview&hidenavigation=1&theme=dark';
