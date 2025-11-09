@@ -36,8 +36,8 @@ class AiProfile {
 - Adjust difficulty based on user's responses
 
 When providing code examples, use appropriate formats:
-- For UI/frontend demos: wrap in <codesandbox> tags
-- For algorithms/scripts: use regular code blocks''',
+- For UI/frontend demos: use codesandbox-{framework} language tags (e.g., ```codesandbox-react)
+- For algorithms/scripts: use standard language tags (e.g., ```python, ```javascript)''',
         tags: ['education', 'learning', 'tutoring'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -55,7 +55,7 @@ When providing code examples, use appropriate formats:
 - Inspire experimentation with different genres
 - Celebrate creativity and originality
 
-When creating interactive writing tools or demos, wrap UI code in <codesandbox> tags.''',
+When creating interactive writing tools or demos, use codesandbox-{framework} language tags.''',
         tags: ['writing', 'creative', 'storytelling'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -75,8 +75,8 @@ When creating interactive writing tools or demos, wrap UI code in <codesandbox> 
 - Follow language-specific conventions and style guides
 
 Code Presentation:
-- For UI/frontend code (React, Vue, HTML, etc.): Always wrap in <codesandbox> tags
-- For backend/computational code (Python, Java, etc.): Use regular code blocks with syntax highlighting
+- For UI/frontend code (React, Vue, HTML, etc.): Always use codesandbox-{framework} language tags
+- For backend/computational code (Python, Java, etc.): Use standard language tags with syntax highlighting
 - This enables live preview for UI code and execution for computational code''',
         tags: ['coding', 'review', 'quality'],
         isDefault: true,
@@ -97,8 +97,8 @@ Code Presentation:
 - Match the user's tone and energy level
 
 Code Sharing:
-- For UI/frontend code (React, Vue, Svelte, HTML, etc.): wrap in <codesandbox> tags
-- For scripts/algorithms (Python, JavaScript, etc.): use regular code blocks''',
+- For UI/frontend code (React, Vue, Svelte, HTML, etc.): use codesandbox-{framework} language tags
+- For scripts/algorithms (Python, JavaScript, etc.): use standard language tags''',
         tags: ['friendly', 'general', 'conversational'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -117,8 +117,8 @@ Code Sharing:
 - Stay objective and unbiased
 - Use professional terminology appropriately
 
-When creating data visualizations or interactive dashboards, wrap UI code in <codesandbox> tags.
-For data analysis scripts, use regular code blocks with appropriate language tags.''',
+When creating data visualizations or interactive dashboards, use codesandbox-{framework} language tags.
+For data analysis scripts, use standard language tags.''',
         tags: ['business', 'analysis', 'data'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -137,7 +137,7 @@ For data analysis scripts, use regular code blocks with appropriate language tag
 - Provide gentle guidance without being preachy
 - Focus on sustainable, realistic changes
 
-When creating interactive meditation timers or wellness tools, wrap UI code in <codesandbox> tags.''',
+When creating interactive meditation timers or wellness tools, use codesandbox-{framework} language tags.''',
         tags: ['wellness', 'mindfulness', 'health'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -157,8 +157,8 @@ When creating interactive meditation timers or wellness tools, wrap UI code in <
 - Be thorough and patient
 
 When providing bug fixes:
-- For UI bugs: wrap corrected code in <codesandbox> tags
-- For backend/algorithm bugs: use regular code blocks with language tags
+- For UI bugs: use codesandbox-{framework} language tags for corrected code
+- For backend/algorithm bugs: use standard language tags
 - You can execute test code to verify fixes work correctly''',
         tags: ['coding', 'debugging', 'troubleshooting'],
         isDefault: true,
@@ -178,7 +178,7 @@ When providing bug fixes:
 - No unnecessary explanations
 - Still be helpful, just faster
 
-Code: UI code in <codesandbox> tags, scripts in code blocks.''',
+Code: UI code with codesandbox-{framework} tags, scripts with standard language tags.''',
         tags: ['concise', 'efficient', 'direct'],
         isDefault: true,
         createdAt: DateTime.now(),
