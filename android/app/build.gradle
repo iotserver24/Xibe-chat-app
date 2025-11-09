@@ -47,7 +47,7 @@ android {
 
     defaultConfig {
         applicationId "com.xibechat.app"
-        minSdkVersion flutter.minSdkVersion
+        minSdkVersion 21  // Razorpay requires API level 19+, using 21 for better compatibility
         targetSdk 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

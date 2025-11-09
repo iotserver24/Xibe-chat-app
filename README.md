@@ -36,6 +36,7 @@ Quick setup script: `./scripts/encode-keystore.sh` (Linux/macOS) or `.\scripts\e
 - 💻 **NEW:** E2B code execution sandbox integration
 - 🔌 **NEW:** MCP (Model Context Protocol) server support
 - 📸 **NEW:** Enhanced image upload with camera and gallery support
+- 💰 **NEW:** Razorpay donation integration for supporting development
 - 🌙 Multi-theme support with custom color schemes
 - 📝 Markdown message rendering
 - 💾 Local chat history with SQLite
@@ -160,7 +161,46 @@ The APK will be generated at `build/app/outputs/flutter-apk/app-release.apk`.
 - **Local Storage**: SQLite (sqflite + sqflite_common_ffi for desktop)
 - **HTTP Client**: http package
 - **Markdown Rendering**: flutter_markdown
+- **Payment Gateway**: Razorpay (Node.js backend)
 - **Platforms**: Android, iOS, Windows, macOS, Linux
+
+## 💰 Support Development
+
+Xibe Chat is free and open source. If you find it useful, you can support its development through in-app donations!
+
+### Donation Feature
+
+- **In-App Donations**: Go to Settings → Support → Donate
+- **Payment Methods**: Cards, UPI, Net Banking, Wallets
+- **Secure**: Powered by Razorpay
+- **Multi-Platform**: Works on all supported platforms
+
+### For Developers
+
+If you want to set up the donation feature in your fork:
+
+**📚 Complete Documentation**: See [DONATION_DOCS_INDEX.md](DONATION_DOCS_INDEX.md) for all available docs
+
+**Quick Links:**
+1. **Quick Start**: [DONATION_QUICKSTART.md](DONATION_QUICKSTART.md) - Get started in 5 minutes
+2. **Docker/Coolify Deploy**: [payment-backend/COOLIFY_DEPLOYMENT.md](payment-backend/COOLIFY_DEPLOYMENT.md) - Deploy with Docker
+3. **GitHub Actions Setup**: [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md) - Configure backend URL
+4. **Complete Setup**: [DONATION_SETUP.md](DONATION_SETUP.md) - Comprehensive guide
+5. **Technical Docs**: [RAZORPAY_INTEGRATION.md](RAZORPAY_INTEGRATION.md) - API reference
+6. **FAQ**: [DONATION_FAQ.md](DONATION_FAQ.md) - Common questions and troubleshooting
+
+**GitHub Actions Variable:**
+- Variable Name: `PAYMENT_BACKEND_URL`
+- Format: `https://payment.yourdomain.com`
+- Used for: Configuring backend URL at build time
+
+The donation system includes:
+- Node.js backend for secure payment processing (with Dockerfile for easy deployment)
+- Razorpay integration for payments
+- Support for all major payment methods in India
+- Multi-platform support (Android, iOS, Web, Desktop)
+- Docker support for deployment with Coolify or any container platform
+- GitHub Actions integration for automated builds with custom backend URL
 
 ## License
 

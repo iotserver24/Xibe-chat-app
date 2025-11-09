@@ -21,6 +21,11 @@ codesandbox-proxy/node_modules/
 codesandbox-proxy/.env
 codesandbox-proxy/package-lock.json
 
+# Node.js (Payment backend)
+payment-backend/node_modules/
+payment-backend/.env
+payment-backend/package-lock.json
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
