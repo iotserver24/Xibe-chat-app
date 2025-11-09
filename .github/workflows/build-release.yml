@@ -732,7 +732,6 @@ jobs:
           Summary:        Xibe Chat - AI-powered chat application
           License:        MIT
           URL:            https://github.com/iotserver24/xibe-chat
-          BuildArch:      ${RPM_ARCH}
           
           %description
           A modern AI chat application built with Flutter
@@ -757,8 +756,8 @@ jobs:
           - Release ${{ inputs.version }}-${{ inputs.build_number }}
           EOL
           
-          # Build RPM
-          rpmbuild --define "_topdir $(pwd)/rpmbuild" -bb rpmbuild/SPECS/xibe-chat.spec
+          # Build RPM with target architecture
+          rpmbuild --define "_topdir $(pwd)/rpmbuild" --target ${RPM_ARCH} -bb rpmbuild/SPECS/xibe-chat.spec
           
           # Copy RPM to artifacts
           find rpmbuild/RPMS -name "*.rpm" -exec cp {} "artifacts/linux-${{ matrix.arch }}/xibe-chat-linux-${{ matrix.arch }}-v${{ inputs.version }}-${{ inputs.build_number }}.rpm" \;
