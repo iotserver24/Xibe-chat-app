@@ -36,6 +36,7 @@ Quick setup script: `./scripts/encode-keystore.sh` (Linux/macOS) or `.\scripts\e
 - 💻 **NEW:** E2B code execution sandbox integration
 - 🔌 **NEW:** MCP (Model Context Protocol) server support
 - 📸 **NEW:** Enhanced image upload with camera and gallery support
+- 💰 **NEW:** Razorpay donation integration for supporting development
 - 🌙 Multi-theme support with custom color schemes
 - 📝 Markdown message rendering
 - 💾 Local chat history with SQLite
@@ -160,7 +161,34 @@ The APK will be generated at `build/app/outputs/flutter-apk/app-release.apk`.
 - **Local Storage**: SQLite (sqflite + sqflite_common_ffi for desktop)
 - **HTTP Client**: http package
 - **Markdown Rendering**: flutter_markdown
+- **Payment Gateway**: Razorpay (Node.js backend)
 - **Platforms**: Android, iOS, Windows, macOS, Linux
+
+## 💰 Support Development
+
+Xibe Chat is free and open source. If you find it useful, you can support its development through in-app donations!
+
+### Donation Feature
+
+- **In-App Donations**: Go to Settings → Support → Donate
+- **Payment Methods**: Cards, UPI, Net Banking, Wallets
+- **Secure**: Powered by Razorpay
+- **Multi-Platform**: Works on all supported platforms
+
+### For Developers
+
+If you want to set up the donation feature in your fork:
+
+1. **Quick Start**: See [DONATION_QUICKSTART.md](DONATION_QUICKSTART.md) - Get started in 5 minutes
+2. **Complete Setup**: See [DONATION_SETUP.md](DONATION_SETUP.md) - Comprehensive setup guide
+3. **Technical Docs**: See [RAZORPAY_INTEGRATION.md](RAZORPAY_INTEGRATION.md) - API reference and integration details
+4. **Deployment**: See [payment-backend/DEPLOYMENT.md](payment-backend/DEPLOYMENT.md) - Deploy to various platforms
+
+The donation system includes:
+- Node.js backend for secure payment processing
+- Razorpay integration for payments
+- Support for all major payment methods in India
+- Multi-platform support (Android, iOS, Web, Desktop)
 
 ## License
 

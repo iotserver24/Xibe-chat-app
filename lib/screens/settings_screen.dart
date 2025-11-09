@@ -9,6 +9,7 @@ import '../services/update_service.dart';
 import '../widgets/update_dialog.dart';
 import 'mcp_servers_screen.dart';
 import 'memory_screen.dart';
+import 'donate_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -441,6 +442,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 leading: const Icon(Icons.code),
+              ),
+            ],
+          ),
+          const Divider(),
+          _buildSection(
+            context,
+            'Support',
+            [
+              ListTile(
+                title: const Text('Donate'),
+                subtitle: const Text('Support Xibe Chat development'),
+                leading: Icon(Icons.favorite, color: Colors.red[300]),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DonateScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
