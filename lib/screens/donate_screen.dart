@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../services/payment_service.dart';
+import '../widgets/razorpay_payment_overlay.dart';
 
 class DonateScreen extends StatefulWidget {
   const DonateScreen({super.key});
@@ -26,7 +27,7 @@ class _DonateScreenState extends State<DonateScreen> {
     'INR': ['50', '100', '200', '500', '1000'],
     'USD': ['1', '5', '10', '25', '50'],
   };
-  
+
   // Currency symbols
   final Map<String, String> _currencySymbols = {
     'INR': '₹',
@@ -73,16 +74,17 @@ class _DonateScreenState extends State<DonateScreen> {
       if (isVerified) {
         _showSuccessDialog(response.paymentId!);
       } else {
-        _showErrorDialog('Payment verification failed. Please contact support.');
+        _showErrorDialog(
+            'Payment verification failed. Please contact support.');
       }
     }
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
     setState(() => _isProcessing = false);
-    
+
     String errorMessage = 'Payment failed';
-    
+
     switch (response.code) {
       case Razorpay.NETWORK_ERROR:
         errorMessage = 'Network error. Please check your internet connection.';
@@ -151,16 +153,17 @@ class _DonateScreenState extends State<DonateScreen> {
     if (_isMobileSupported && _razorpay != null) {
       _openMobileCheckout(orderData, amount);
     } else {
-      _openWebCheckout(orderData, amount);
+      // For desktop/web, open Razorpay in WebView overlay
+      _openDesktopCheckout(orderData, amount);
     }
   }
 
   void _openMobileCheckout(Map<String, dynamic> orderData, int amount) {
     // Convert amount based on currency (Razorpay expects amount in smallest unit)
-    final razorpayAmount = _selectedCurrency == 'INR' 
-        ? amount * 100  // Paise for INR
+    final razorpayAmount = _selectedCurrency == 'INR'
+        ? amount * 100 // Paise for INR
         : amount * 100; // Cents for USD
-    
+
     var options = {
       'key': orderData['keyId'],
       'amount': razorpayAmount,
@@ -188,91 +191,58 @@ class _DonateScreenState extends State<DonateScreen> {
     }
   }
 
-  void _openWebCheckout(Map<String, dynamic> orderData, int amount) {
-    final currencySymbol = _currencySymbols[_selectedCurrency]!;
-    
-    // For web/desktop, show payment instructions with UPI and direct link
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Complete Payment'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Amount: $currencySymbol$amount $_selectedCurrency',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'To complete your donation on desktop/web, you have these options:',
-                style: TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                '1. Open on Mobile Device',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const Text(
-                'Use your mobile device to scan a QR code or open the payment link directly.',
-                style: TextStyle(fontSize: 12),
-              ),
-              const SizedBox(height: 12),
-              if (_selectedCurrency == 'INR') ...[
-                const Text(
-                  '2. UPI Payment',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const Text(
-                  'You can also directly send payment via UPI to:',
-                  style: TextStyle(fontSize: 12),
-                ),
-                const SizedBox(height: 4),
-                const SelectableText(
-                  'your-upi-id@bank',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.blue,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-              Text(
-                _selectedCurrency == 'INR' ? '3. Bank Transfer' : '2. Bank Transfer',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const Text(
-                'Contact us for bank details.',
-                style: TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              // Open Razorpay payment link in browser
-              final url = Uri.parse(
-                'https://razorpay.me/@yourusername/$amount',
-              );
-              if (await canLaunchUrl(url)) {
-                await launchUrl(url, mode: LaunchMode.externalApplication);
+  void _openDesktopCheckout(Map<String, dynamic> orderData, int amount) {
+    // Open Razorpay checkout in fullscreen WebView overlay for desktop (like Android)
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            RazorpayPaymentOverlay(
+          orderData: orderData,
+          amount: amount,
+          currency: _selectedCurrency,
+          onSuccess: (paymentId, orderId, signature) async {
+            Navigator.of(context).pop(); // Close overlay first
+            // Verify payment on server
+            final isVerified = await _paymentService.verifyPaymentOnServer(
+              orderId: orderId,
+              paymentId: paymentId,
+              signature: signature,
+            );
+
+            if (mounted) {
+              if (isVerified) {
+                _showSuccessDialog(paymentId);
+              } else {
+                _showErrorDialog(
+                    'Payment verification failed. Please contact support.');
               }
-            },
-            child: const Text('Open Payment Link'),
-          ),
-        ],
+            }
+          },
+          onError: (error) {
+            Navigator.of(context).pop(); // Close overlay first
+            if (mounted) {
+              _showErrorDialog(error);
+            }
+          },
+          onCancel: () {
+            Navigator.of(context).pop(); // Close overlay
+          },
+        ),
+        fullscreenDialog: true,
+        opaque: false,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(0.0, 1.0);
+          const end = Offset.zero;
+          const curve = Curves.easeOutCubic;
+
+          var tween =
+              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
       ),
     );
   }
@@ -413,7 +383,8 @@ class _DonateScreenState extends State<DonateScreen> {
                         onSelected: (selected) {
                           setState(() {
                             _selectedCurrency = 'INR';
-                            _selectedAmount = '100'; // Reset to default for currency
+                            _selectedAmount =
+                                '100'; // Reset to default for currency
                           });
                         },
                       ),
@@ -426,7 +397,8 @@ class _DonateScreenState extends State<DonateScreen> {
                         onSelected: (selected) {
                           setState(() {
                             _selectedCurrency = 'USD';
-                            _selectedAmount = '5'; // Reset to default for currency
+                            _selectedAmount =
+                                '5'; // Reset to default for currency
                           });
                         },
                       ),
@@ -483,7 +455,8 @@ class _DonateScreenState extends State<DonateScreen> {
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: 'Enter Amount ($currencySymbol)',
-                      hintText: _selectedCurrency == 'INR' ? 'e.g., 250' : 'e.g., 10',
+                      hintText:
+                          _selectedCurrency == 'INR' ? 'e.g., 250' : 'e.g., 10',
                       prefixText: '$currencySymbol ',
                       border: const OutlineInputBorder(),
                     ),
@@ -540,11 +513,14 @@ class _DonateScreenState extends State<DonateScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        _buildPaymentMethodRow(Icons.credit_card, 'Credit/Debit Cards'),
-                        _buildPaymentMethodRow(Icons.account_balance, 'Net Banking'),
+                        _buildPaymentMethodRow(
+                            Icons.credit_card, 'Credit/Debit Cards'),
+                        _buildPaymentMethodRow(
+                            Icons.account_balance, 'Net Banking'),
                         if (_selectedCurrency == 'INR')
                           _buildPaymentMethodRow(Icons.payment, 'UPI'),
-                        _buildPaymentMethodRow(Icons.account_balance_wallet, 'Wallets'),
+                        _buildPaymentMethodRow(
+                            Icons.account_balance_wallet, 'Wallets'),
                       ],
                     ),
                   ),
@@ -591,20 +567,12 @@ class _DonateScreenState extends State<DonateScreen> {
                           'Star on GitHub',
                           'Show your support by starring our repository',
                           () async {
-                            final url = Uri.parse('https://github.com/iotserver24/xibe-chat');
+                            final url = Uri.parse(
+                                'https://github.com/iotserver24/xibe-chat-app');
                             if (await canLaunchUrl(url)) {
-                              await launchUrl(url, mode: LaunchMode.externalApplication);
+                              await launchUrl(url,
+                                  mode: LaunchMode.externalApplication);
                             }
-                          },
-                        ),
-                        const Divider(height: 1),
-                        _buildSupportOptionTile(
-                          Icons.share,
-                          'Share with Friends',
-                          'Help us grow by sharing Xibe Chat',
-                          () {
-                            // Could implement share functionality
-                            _showErrorDialog('Share functionality coming soon!');
                           },
                         ),
                         const Divider(height: 1),
@@ -613,9 +581,39 @@ class _DonateScreenState extends State<DonateScreen> {
                           'Report Issues',
                           'Help us improve by reporting bugs',
                           () async {
-                            final url = Uri.parse('https://github.com/iotserver24/xibe-chat/issues');
+                            final url = Uri.parse(
+                                'https://github.com/iotserver24/xibe-chat-app/issues');
                             if (await canLaunchUrl(url)) {
-                              await launchUrl(url, mode: LaunchMode.externalApplication);
+                              await launchUrl(url,
+                                  mode: LaunchMode.externalApplication);
+                            }
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildSupportOptionTile(
+                          Icons.forum,
+                          'Discussions',
+                          'Join community discussions',
+                          () async {
+                            final url = Uri.parse(
+                                'https://github.com/iotserver24/xibe-chat-app/discussions');
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url,
+                                  mode: LaunchMode.externalApplication);
+                            }
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildSupportOptionTile(
+                          Icons.lightbulb_outline,
+                          'Feature Requests',
+                          'Suggest new features',
+                          () async {
+                            final url = Uri.parse(
+                                'https://github.com/iotserver24/xibe-chat-app/discussions/categories/ideas');
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url,
+                                  mode: LaunchMode.externalApplication);
                             }
                           },
                         ),

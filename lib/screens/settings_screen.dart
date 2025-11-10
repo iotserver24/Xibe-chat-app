@@ -640,11 +640,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     leading: const Icon(Icons.person),
                   ),
                   ListTile(
-                    title: const Text('GitHub'),
-                    subtitle: const Text('github.com/iotserver24'),
+                    title: const Text('GitHub Repository'),
+                    subtitle:
+                        const Text('github.com/iotserver24/xibe-chat-app'),
                     leading: const Icon(Icons.code),
                     onTap: () async {
-                      final uri = Uri.parse('https://github.com/iotserver24');
+                      final uri = Uri.parse(
+                          'https://github.com/iotserver24/xibe-chat-app');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
+                      }
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('Issues'),
+                    subtitle: const Text('Report bugs or request features'),
+                    leading: const Icon(Icons.bug_report),
+                    onTap: () async {
+                      final uri = Uri.parse(
+                          'https://github.com/iotserver24/xibe-chat-app/issues');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
+                      }
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('Discussions'),
+                    subtitle: const Text('Community discussions'),
+                    leading: const Icon(Icons.forum),
+                    onTap: () async {
+                      final uri = Uri.parse(
+                          'https://github.com/iotserver24/xibe-chat-app/discussions');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
+                      }
+                    },
+                  ),
+                  ListTile(
+                    title: const Text('Star on GitHub'),
+                    subtitle: const Text('Show your support'),
+                    leading: const Icon(Icons.star),
+                    onTap: () async {
+                      final uri = Uri.parse(
+                          'https://github.com/iotserver24/xibe-chat-app');
                       if (await canLaunchUrl(uri)) {
                         await launchUrl(uri,
                             mode: LaunchMode.externalApplication);
