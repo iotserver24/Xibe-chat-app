@@ -1,217 +1,214 @@
 # Xibe Chat
-//copilot made this lol
-A modern AI chat application built with Flutter - available on Android, iOS, Windows, macOS, and Linux.
 
-## 🎯 NEW: Android Build Fixed!
+<div align="center">
 
-The GitHub Actions Android build issue has been fixed! 
+![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)
+![Flutter](https://img.shields.io/badge/Flutter-3.0+-02569B?logo=flutter)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
-**Quick Setup (5 minutes):** See [GITHUB_SECRET_SETUP.md](GITHUB_SECRET_SETUP.md) for GitHub Secrets setup with direct download URLs.
+**A modern, cross-platform AI chat application built with Flutter**
 
-## 🔐 Android Release Signing
+[Features](#-features) • [Installation](#-installation) • [Documentation](#-documentation) • [Support](#-support-development) • [Contributing](#-contributing)
 
-The app is now configured for signed Android releases! To build signed APKs/AABs:
+[![GitHub stars](https://img.shields.io/github/stars/iotserver24/xibe-chat-app?style=social)](https://github.com/iotserver24/xibe-chat-app/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/iotserver24/xibe-chat-app?style=social)](https://github.com/iotserver24/xibe-chat-app/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/iotserver24/xibe-chat-app)](https://github.com/iotserver24/xibe-chat-app/issues)
+[![GitHub discussions](https://img.shields.io/github/discussions/iotserver24/xibe-chat-app)](https://github.com/iotserver24/xibe-chat-app/discussions)
 
-- **🚀 GitHub Secrets Setup**: [GITHUB_SECRET_SETUP.md](GITHUB_SECRET_SETUP.md) - **Base64 URL included!**
-- **Quick Start**: [QUICK_START.md](QUICK_START.md) - Fix the build in 3 steps!
-- **For local builds**: Create `android/key.properties` with your keystore passwords
-- **What Changed**: [FIX_SUMMARY.md](FIX_SUMMARY.md) - complete fix documentation
-- **Detailed Guide**: [KEYSTORE_BASE64_INSTRUCTIONS.md](KEYSTORE_BASE64_INSTRUCTIONS.md)
+</div>
 
-**Base64 Direct Link:** https://github.com/iotserver24/Flutterrrr/raw/copilot/decode-save-keystore/keystore_base64_clean.txt
+---
 
-Quick setup script: `./scripts/encode-keystore.sh` (Linux/macOS) or `.\scripts\encode-keystore.ps1` (Windows)
+## ✨ Features
 
-## Features
+### 🤖 AI Capabilities
+- **Multiple AI Models**: Access various models from Xibe, OpenAI, Anthropic, DeepSeek, Mistral, and more
+- **Custom Providers**: Add your own API providers with custom endpoints
+- **Streaming Responses**: Real-time streaming for faster, interactive conversations
+- **Vision Support**: Send images to vision-capable models for analysis
+- **AI Profiles**: Pre-built personalities (Socratic Tutor, Creative Writer, Strict Coder, etc.)
+- **Custom System Prompts**: Define AI behavior with custom instructions
 
-- 🤖 AI-powered chat interface with Xibe API integration
-- 🔄 Real-time streaming responses for live chat
-- 🎯 Multiple AI model selection (Gemini, OpenAI, DeepSeek, Mistral, and more)
-- 💬 Multiple conversation threads
-- 👋 Smart greetings based on time of day
-- 🎨 **NEW:** 5 Beautiful themes (Dark, Light, Blue, Purple, Green)
-- 🌐 **NEW:** Web search toggle for real-time information
-- 🧠 **NEW:** Thinking indicator showing AI reasoning process
-- ⚙️ **NEW:** Advanced AI controls (temperature, max tokens, top-p, penalties)
-- 💻 **NEW:** E2B code execution sandbox integration
-- 🔌 **NEW:** MCP (Model Context Protocol) server support
-- 📸 **NEW:** Enhanced image upload with camera and gallery support
-- 💰 **NEW:** Razorpay donation integration for supporting development
-- 🌙 Multi-theme support with custom color schemes
-- 📝 Markdown message rendering
-- 💾 Local chat history with SQLite
-- 📋 Copy message functionality
-- ⚡ Real-time typing indicators
-- 🔑 Configurable API key support
-- 🎨 Beautiful animations and smooth transitions
+### 💬 Chat Features
+- **Multiple Conversations**: Manage multiple chat threads
+- **Persistent Memory**: Long-term memory system across conversations
+- **Markdown Support**: Rich text formatting with code highlighting
+- **Message History**: Local SQLite database for chat persistence
+- **Smart Greetings**: Time-based personalized greetings
 
-> **See [FEATURES.md](FEATURES.md) for detailed feature documentation!**
+### 💻 Code & Development
+- **Code Execution (E2B)**: Run Python, JavaScript, TypeScript, Java, R, Bash code in secure sandbox
+- **Live Previews (CodeSandbox)**: Preview React, Vue, Angular, Svelte components with live rendering
+- **Multi-File Support**: Create complete projects with multiple files in single code blocks
 
-## Screenshots
+### 🔌 Advanced Features
+- **MCP Integration**: Model Context Protocol for tool/resource access
+- **Web Search**: Real-time web search integration
+- **Deep Links**: Custom URL scheme support
+- **Auto Updates**: Automatic update checking
 
-Coming soon!
+### 🎨 User Experience
+- **Material 3 Design**: Modern, beautiful UI
+- **Multiple Themes**: Dark, Light, Blue, Purple, Green themes
+- **Cross-Platform**: Native experience on all platforms
+- **Responsive Layout**: Optimized for mobile, tablet, and desktop
 
-## Installation
+### 💰 Support
+- **In-App Donations**: Support development via Razorpay
+- **Multiple Payment Methods**: Cards, UPI, Net Banking, Wallets
 
-### Option 1: Download Pre-built Releases
-Download the latest build for your platform from the [Releases](https://github.com/iotserver24/Flutterrrr/releases) page.
+---
+
+## 📦 Installation
+
+### Download Pre-built Releases
+
+Download the latest build for your platform from the [Releases](https://github.com/iotserver24/xibe-chat-app/releases) page.
 
 **Available Platforms:**
 - 📱 **Android**: APK (universal) and AAB (Play Store)
-- 💻 **Windows**: 
-  - Universal MSIX for Microsoft Store (unsigned, ready for Store submission)
-  - NSIS installers (x64, ARM64)
-  - Portable ZIP (x64, ARM64)
+- 💻 **Windows**: MSIX, NSIS installers, Portable ZIP (x64, ARM64)
 - 🍎 **macOS**: DMG and ZIP for Intel (x64) and Apple Silicon (ARM64)
-- 🐧 **Linux**: All architectures (x64, ARM64, ARMv7)
-  - DEB packages (Debian/Ubuntu)
-  - RPM packages (Fedora/RHEL)
-  - AppImage (universal)
-  - ZIP archives (portable)
-- 📱 **iOS**: IPA (unsigned, requires signing)
+- 🐧 **Linux**: DEB, RPM, AppImage, ZIP (x64, ARM64, ARMv7)
+- 📱 **iOS**: IPA (requires signing)
 
-**📖 Documentation:**
-- [WORKFLOW_USAGE.md](WORKFLOW_USAGE.md) - Detailed installation instructions
-- [MICROSOFT_STORE_SUBMISSION.md](MICROSOFT_STORE_SUBMISSION.md) - Submit to Microsoft Store without a certificate
-- [LINUX_MULTI_ARCH_BUILD.md](LINUX_MULTI_ARCH_BUILD.md) - Linux multi-architecture guide
+### Build from Source
 
-### Option 2: Build from Source
-See [BUILD_INSTRUCTIONS.md](BUILD_INSTRUCTIONS.md) for detailed build instructions.
+**Prerequisites:**
+- Flutter SDK (3.0.0 or higher)
+- Dart SDK
+- Platform-specific tools (Android SDK, Xcode, Visual Studio, etc.)
 
-Quick build for Android:
+**Quick Start:**
 ```bash
-./MANUAL_BUILD.sh
-```
+# Clone the repository
+git clone https://github.com/iotserver24/xibe-chat-app.git
+cd xibe-chat-app
 
-Or build for any platform:
-```bash
+# Install dependencies
 flutter pub get
 
-# Android
-flutter build apk --release
+# Run the app
+flutter run
 
-# Windows (on Windows)
-flutter build windows --release
-
-# macOS (on macOS)
-flutter build macos --release
-
-# Linux (on Linux)
-flutter build linux --release
-
-# iOS (on macOS)
-flutter build ios --release --no-codesign
+# Build for specific platform
+flutter build apk --release          # Android
+flutter build windows --release      # Windows
+flutter build macos --release        # macOS
+flutter build linux --release        # Linux
+flutter build ios --release          # iOS
 ```
 
-## Configuration
+For detailed build instructions, see [docs/BUILD.md](docs/BUILD.md).
 
-### API Key Setup
+---
 
-The app uses the Xibe API (https://api.xibe.app) for AI responses. You can configure the API key in two ways:
+## 🚀 Quick Start
 
-1. **Through the app settings**:
-   - Open the app
-   - Navigate to Settings (☰ menu → Settings icon)
-   - Enter your Xibe API key in the "API Configuration" section
-   - Click the save button
+1. **Download** the app for your platform from [Releases](https://github.com/iotserver24/xibe-chat-app/releases)
+2. **Install** and launch the app
+3. **Start chatting** - No API key required for default Xibe models
+4. **Configure** your API key in Settings (optional, for custom providers)
 
-2. **Using environment variable**:
-   - Set the `XIBE_API` environment variable with your API key
-   - The app will automatically use this key if no key is set in settings
+---
 
-If no API key is configured, the app will attempt to use the default configuration.
+## 📚 Documentation
 
-### Available AI Models
+Complete documentation is available in the [`docs/`](docs/) folder:
 
-The app automatically fetches available models from the Xibe API. You can switch between models using the robot icon (🤖) in the top right corner of the chat screen. Available models include:
-- Gemini 2.5 Flash Lite
-- OpenAI GPT-5 Nano
-- DeepSeek V3.1
-- Mistral Small 3.2
-- Qwen 2.5 Coder
-- And many more!
+- **[User Guide](docs/USER_GUIDE.md)** - Complete guide to using Xibe Chat
+- **[Installation Guide](docs/INSTALLATION.md)** - Detailed installation instructions
+- **[Custom Providers](docs/CUSTOM_PROVIDERS.md)** - Add your own AI providers
+- **[Build Guide](docs/BUILD.md)** - Building from source
+- **[Development Guide](docs/DEVELOPMENT.md)** - Contributing and development
+- **[API Reference](docs/API.md)** - API integration documentation
+- **[MCP Configuration](docs/MCP.md)** - Model Context Protocol setup
+- **[Payment Setup](docs/PAYMENT.md)** - Donation system configuration
+- **[E2B Code Execution](docs/E2B.md)** - Running code in secure sandbox
+- **[CodeSandbox Preview](docs/CODESANDBOX.md)** - Visual web previews
 
-## Building from Source
+---
 
-### Prerequisites
-
-- Flutter SDK (3.0.0 or higher)
-- Android SDK
-- Android Studio or VS Code with Flutter extensions
-
-### Steps
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/iotserver24/Flutterrrr.git
-   cd Flutterrrr
-   ```
-
-2. Install dependencies:
-   ```bash
-   flutter pub get
-   ```
-
-3. Run the app:
-   ```bash
-   flutter run
-   ```
-
-4. Build release APK:
-   ```bash
-   flutter build apk --release
-   ```
-
-The APK will be generated at `build/app/outputs/flutter-apk/app-release.apk`.
-
-## Tech Stack
+## 🛠️ Tech Stack
 
 - **Framework**: Flutter (cross-platform)
+- **Language**: Dart
 - **State Management**: Provider
-- **Local Storage**: SQLite (sqflite + sqflite_common_ffi for desktop)
+- **Local Storage**: SQLite (sqflite + sqflite_common_ffi)
 - **HTTP Client**: http package
-- **Markdown Rendering**: flutter_markdown
-- **Payment Gateway**: Razorpay (Node.js backend)
-- **Platforms**: Android, iOS, Windows, macOS, Linux
+- **Markdown**: flutter_markdown
+- **Payment**: Razorpay (Node.js backend)
+- **Code Execution**: E2B Sandbox
+- **Web Preview**: CodeSandbox
+
+---
 
 ## 💰 Support Development
 
-Xibe Chat is free and open source. If you find it useful, you can support its development through in-app donations!
+Xibe Chat is **100% free and open source**. If you find it useful, please consider supporting its development!
 
-### Donation Feature
+### Ways to Support
 
-- **In-App Donations**: Go to Settings → Support → Donate
+1. **⭐ Star the repository** - Show your appreciation
+2. **💰 Donate via in-app** - Settings → Support → Donate
+3. **🐛 Report bugs** - [GitHub Issues](https://github.com/iotserver24/xibe-chat-app/issues)
+4. **💡 Suggest features** - [GitHub Discussions](https://github.com/iotserver24/xibe-chat-app/discussions)
+5. **📢 Share with friends** - Help us grow!
+
+### Donation
+
+Support development through secure in-app donations powered by Razorpay:
+
 - **Payment Methods**: Cards, UPI, Net Banking, Wallets
 - **Secure**: Powered by Razorpay
-- **Multi-Platform**: Works on all supported platforms
+- **Multi-Currency**: INR and USD supported
 
-### For Developers
+[![Donate](https://img.shields.io/badge/Donate-Support%20Development-green?style=for-the-badge)](https://github.com/iotserver24/xibe-chat-app)
 
-If you want to set up the donation feature in your fork:
+---
 
-**📚 Complete Documentation**: See [DONATION_DOCS_INDEX.md](DONATION_DOCS_INDEX.md) for all available docs
+## 🤝 Contributing
 
-**Quick Links:**
-1. **Quick Start**: [DONATION_QUICKSTART.md](DONATION_QUICKSTART.md) - Get started in 5 minutes
-2. **Docker/Coolify Deploy**: [payment-backend/COOLIFY_DEPLOYMENT.md](payment-backend/COOLIFY_DEPLOYMENT.md) - Deploy with Docker
-3. **GitHub Actions Setup**: [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md) - Configure backend URL
-4. **Complete Setup**: [DONATION_SETUP.md](DONATION_SETUP.md) - Comprehensive guide
-5. **Technical Docs**: [RAZORPAY_INTEGRATION.md](RAZORPAY_INTEGRATION.md) - API reference
-6. **FAQ**: [DONATION_FAQ.md](DONATION_FAQ.md) - Common questions and troubleshooting
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-**GitHub Actions Variable:**
-- Variable Name: `PAYMENT_BACKEND_URL`
-- Format: `https://payment.yourdomain.com`
-- Used for: Configuring backend URL at build time
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-The donation system includes:
-- Node.js backend for secure payment processing (with Dockerfile for easy deployment)
-- Razorpay integration for payments
-- Support for all major payment methods in India
-- Multi-platform support (Android, iOS, Web, Desktop)
-- Docker support for deployment with Coolify or any container platform
-- GitHub Actions integration for automated builds with custom backend URL
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
-## License
+---
 
-MIT License
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🔗 Links
+
+- **GitHub Repository**: [iotserver24/xibe-chat-app](https://github.com/iotserver24/xibe-chat-app)
+- **Issues**: [Report a bug](https://github.com/iotserver24/xibe-chat-app/issues)
+- **Discussions**: [Join discussions](https://github.com/iotserver24/xibe-chat-app/discussions)
+- **Releases**: [Download latest](https://github.com/iotserver24/xibe-chat-app/releases)
+
+---
+
+## 👨‍💻 Developer
+
+**R3AP3Reditz** (A.K.A Anish Kumar)
+- 🌐 Portfolio: [anishkumar.tech](https://anishkumar.tech)
+- 💻 GitHub: [@iotserver24](https://github.com/iotserver24)
+
+---
+
+<div align="center">
+
+**Made with ❤️ in India**
+
+[⭐ Star on GitHub](https://github.com/iotserver24/xibe-chat-app) • [🐛 Report Bug](https://github.com/iotserver24/xibe-chat-app/issues) • [💡 Request Feature](https://github.com/iotserver24/xibe-chat-app/discussions)
+
+</div>

@@ -1,98 +1,82 @@
 # Xibe Chat Documentation
 
-Welcome to the comprehensive documentation for Xibe Chat - a modern, feature-rich AI chat application built with Flutter.
+Complete documentation for Xibe Chat - a modern, cross-platform AI chat application.
 
-## Table of Contents
+## 📚 Documentation Index
 
-1. [Overview](#overview)
-2. [Quick Links](#quick-links)
-3. [Getting Started](#getting-started)
-4. [Documentation Structure](#documentation-structure)
+### Getting Started
+- **[User Guide](USER_GUIDE.md)** - Complete guide to using Xibe Chat
+- **[Installation Guide](INSTALLATION.md)** - Installation instructions for all platforms
+- **[Build Guide](BUILD.md)** - Building from source
 
-## Overview
+### Features & Configuration
+- **[Custom Providers](CUSTOM_PROVIDERS.md)** - Adding and managing custom AI providers
+- **[MCP Configuration](MCP.md)** - Model Context Protocol setup
+- **[Payment Setup](PAYMENT.md)** - Razorpay donation system configuration
+- **[E2B Code Execution](E2B.md)** - Running code in secure sandbox
+- **[CodeSandbox Preview](CODESANDBOX.md)** - Visual web previews
 
-Xibe Chat is a cross-platform AI chat application that supports multiple AI providers, custom models, streaming responses, code execution, memory management, and more. Built with Flutter, it runs seamlessly on Desktop (Windows, macOS, Linux), Mobile (Android, iOS), and Web.
-
-### Key Features
-
-- 🤖 **Multi-Model Support**: Chat with multiple AI models from different providers
-- 🔌 **Custom Providers**: Add your own API providers (OpenAI, Anthropic, OpenRouter, etc.)
-- 💬 **Streaming Responses**: Real-time streaming for faster interactions
-- 💾 **Persistent Memory**: Long-term memory system across conversations
-- 🎭 **AI Profiles**: Customize AI behavior with different personalities
-- 🖼️ **Vision Support**: Send images to vision-capable models
-- 🌐 **Web Search**: Real-time web search integration
-- 💻 **Code Execution**: Execute code in Python, JavaScript, TypeScript, Java, R, Bash
-- 🎨 **Live Previews**: Preview React, Vue, Angular, Svelte components
-- 🔗 **MCP Integration**: Model Context Protocol for tool/resource access
-- 💰 **Donation System**: Support development via Razorpay
-- 🎨 **Material 3 Theming**: Beautiful, modern UI with multiple theme options
-
-## Quick Links
-
-- **[Installation Guide](INSTALLATION.md)** - Get started with Xibe Chat
-- **[User Guide](USER_GUIDE.md)** - Learn how to use all features
-- **[Custom Providers](CUSTOM_PROVIDERS.md)** - Add your own AI providers
-- **[Features](FEATURES.md)** - Detailed feature documentation
-- **[Architecture](ARCHITECTURE.md)** - Technical architecture overview
-- **[Development Guide](DEVELOPMENT.md)** - Contributing and development
-- **[API Reference](API_REFERENCE.md)** - API and integration documentation
-
-## Getting Started
-
-### Prerequisites
-
-- Flutter SDK (>= 3.0.0)
-- Dart SDK (>= 3.0.0)
-- Platform-specific requirements (see [Installation Guide](INSTALLATION.md))
-
-### Quick Install
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/xibe-chat.git
-cd xibe-chat
-
-# Install dependencies
-flutter pub get
-
-# Run on your platform
-flutter run
-```
-
-For detailed installation instructions, see the [Installation Guide](INSTALLATION.md).
-
-## Documentation Structure
-
-### For Users
-
-- **[USER_GUIDE.md](USER_GUIDE.md)** - Complete guide for end users
-- **[CUSTOM_PROVIDERS.md](CUSTOM_PROVIDERS.md)** - How to add custom API providers
-- **[FEATURES.md](FEATURES.md)** - Detailed feature descriptions
-
-### For Developers
-
-- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Development setup and guidelines
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture and design
-- **[API_REFERENCE.md](API_REFERENCE.md)** - API integration and reference
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute
-
-### Additional Resources
-
-- **[FAQ.md](FAQ.md)** - Frequently asked questions
-- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues and solutions
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
-
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/xibe-chat/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/xibe-chat/discussions)
-- **Donate**: Support development via the in-app donation feature
-
-## License
-
-Xibe Chat is open-source software. See [LICENSE](../LICENSE) for details.
+### Development
+- **[Development Guide](DEVELOPMENT.md)** - Contributing and development guidelines
+- **[API Reference](API.md)** - API integration documentation
 
 ---
 
-Last Updated: 2024
+## Quick Links
+
+### For Users
+- [Installation Guide](INSTALLATION.md) - Get started quickly
+- [User Guide](USER_GUIDE.md) - Learn all features
+- [Custom Providers](CUSTOM_PROVIDERS.md) - Add your own AI providers
+
+### For Developers
+- [Development Guide](DEVELOPMENT.md) - Contribute to the project
+- [Build Guide](BUILD.md) - Build from source
+- [API Reference](API.md) - Integrate with APIs
+
+### For Contributors
+- [Development Guide](DEVELOPMENT.md) - Code style and architecture
+- [Contributing Guidelines](../CONTRIBUTING.md) - How to contribute
+
+---
+
+## Overview
+
+Xibe Chat is a cross-platform AI chat application that supports:
+
+- **Multiple AI Models**: Xibe, OpenAI, Anthropic, DeepSeek, Mistral, and more
+- **Custom Providers**: Add your own API providers
+- **Code Execution**: Run code in multiple languages
+- **Live Previews**: Preview web components
+- **MCP Integration**: Model Context Protocol support
+- **Long-Term Memory**: Persistent memory across conversations
+- **Cross-Platform**: Android, iOS, Windows, macOS, Linux
+
+---
+
+## Documentation Structure
+
+```
+docs/
+├── README.md              # This file
+├── USER_GUIDE.md         # User documentation
+├── INSTALLATION.md       # Installation guide
+├── BUILD.md              # Build instructions
+├── CUSTOM_PROVIDERS.md   # Custom provider guide
+├── MCP.md                # MCP configuration
+├── PAYMENT.md            # Payment setup
+├── DEVELOPMENT.md        # Development guide
+└── API.md                # API reference
+```
+
+---
+
+## Need Help?
+
+- **Issues**: [GitHub Issues](https://github.com/iotserver24/xibe-chat-app/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/iotserver24/xibe-chat-app/discussions)
+- **Documentation**: Browse this folder
+
+---
+
+**Last Updated**: 2025

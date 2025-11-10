@@ -667,19 +667,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   ListTile(
-                    title: const Text('Discussions'),
-                    subtitle: const Text('Community discussions'),
-                    leading: const Icon(Icons.forum),
-                    onTap: () async {
-                      final uri = Uri.parse(
-                          'https://github.com/iotserver24/xibe-chat-app/discussions');
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri,
-                            mode: LaunchMode.externalApplication);
-                      }
-                    },
-                  ),
-                  ListTile(
                     title: const Text('Star on GitHub'),
                     subtitle: const Text('Show your support'),
                     leading: const Icon(Icons.star),

@@ -7,8 +7,8 @@ Thank you for your interest in contributing to Xibe Chat! This document provides
 1. **Fork the repository**
 2. **Clone your fork**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/Flutterrrr.git
-   cd Flutterrrr
+   git clone https://github.com/YOUR_USERNAME/xibe-chat-app.git
+   cd xibe-chat-app
    ```
 3. **Install Flutter** (if not already installed)
    - Follow the [official Flutter installation guide](https://flutter.dev/docs/get-started/install)
