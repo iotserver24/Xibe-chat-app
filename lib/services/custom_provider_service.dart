@@ -20,12 +20,17 @@ class CustomProviderService {
     List<McpTool>? mcpTools,
   }) async* {
     try {
-      // Use the endpointUrl from the model, or fallback to constructing it
+      // Use endpoint URL in this priority:
+      // 1. Model's custom endpointUrl (if provided)
+      // 2. Provider's endpointUrl (if provided)
+      // 3. Auto-generate from provider baseUrl based on type
       final endpoint = endpointUrl.isNotEmpty
           ? endpointUrl
-          : (provider.type == 'anthropic'
-              ? '${provider.baseUrl}/messages'
-              : '${provider.baseUrl}/chat/completions');
+          : (provider.endpointUrl?.isNotEmpty == true
+              ? provider.endpointUrl!
+              : (provider.type == 'anthropic'
+                  ? '${provider.baseUrl}/messages'
+                  : '${provider.baseUrl}/chat/completions'));
 
       final request = http.Request('POST', Uri.parse(endpoint));
 
@@ -71,7 +76,11 @@ class CustomProviderService {
           'model': modelId,
           'messages': messages,
           'stream': true,
-          if (reasoning) 'reasoning': true,
+          if (reasoning)
+            'reasoning': {
+              'enabled': true,
+              'effort': 'medium', // Can be "low", "medium", or "high"
+            },
           if (mcpTools != null && mcpTools.isNotEmpty)
             'tools': mcpTools
                 .map((tool) => {

@@ -9,7 +9,7 @@ class ApiService {
   static const String baseUrl = 'https://api.xibe.app';
   static const String chatEndpoint = '/openai/v1/chat/completions';
   static const String modelsEndpoint = '/api/xibe/models';
-  
+
   final String? apiKey;
 
   ApiService({this.apiKey});
@@ -52,7 +52,8 @@ class ApiService {
 
       request.headers.addAll({
         'Content-Type': 'application/json',
-        if (apiKey != null && apiKey!.isNotEmpty) 'Authorization': 'Bearer $apiKey',
+        if (apiKey != null && apiKey!.isNotEmpty)
+          'Authorization': 'Bearer $apiKey',
       });
 
       // Build messages array in OpenAI format
@@ -67,17 +68,23 @@ class ApiService {
         'model': model,
         'messages': messages,
         'stream': true,
-        if (reasoning) 'reasoning': true,
+        if (reasoning)
+          'reasoning': {
+            'enabled': true,
+            'effort': 'medium', // Can be "low", "medium", or "high"
+          },
         // Include MCP tools if available
         if (mcpTools != null && mcpTools.isNotEmpty)
-          'tools': mcpTools.map((tool) => {
-            'type': 'function',
-            'function': {
-              'name': tool.name,
-              'description': tool.description,
-              'parameters': tool.inputSchema ?? {},
-            }
-          }).toList(),
+          'tools': mcpTools
+              .map((tool) => {
+                    'type': 'function',
+                    'function': {
+                      'name': tool.name,
+                      'description': tool.description,
+                      'parameters': tool.inputSchema ?? {},
+                    }
+                  })
+              .toList(),
       };
 
       request.body = jsonEncode(requestBody);
@@ -85,13 +92,14 @@ class ApiService {
       final streamedResponse = await request.send();
 
       if (streamedResponse.statusCode != 200) {
-        throw Exception('Server returned status code: ${streamedResponse.statusCode}');
+        throw Exception(
+            'Server returned status code: ${streamedResponse.statusCode}');
       }
 
       String buffer = '';
       await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
         buffer += chunk;
-        
+
         // Process complete lines
         while (buffer.contains('\n')) {
           final newlineIndex = buffer.indexOf('\n');
@@ -140,18 +148,21 @@ class ApiService {
         {'role': 'user', 'content': message},
       ];
 
-      final response = await http.post(
-        Uri.parse('$baseUrl$chatEndpoint'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (apiKey != null && apiKey!.isNotEmpty) 'Authorization': 'Bearer $apiKey',
-        },
-        body: jsonEncode({
-          'model': model,
-          'messages': messages,
-          'stream': false,
-        }),
-      ).timeout(const Duration(seconds: 60));
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl$chatEndpoint'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (apiKey != null && apiKey!.isNotEmpty)
+                'Authorization': 'Bearer $apiKey',
+            },
+            body: jsonEncode({
+              'model': model,
+              'messages': messages,
+              'stream': false,
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);

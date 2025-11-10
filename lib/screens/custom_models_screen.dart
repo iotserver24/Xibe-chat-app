@@ -152,10 +152,10 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
                 TextField(
                   controller: endpointUrlController,
                   decoration: InputDecoration(
-                    labelText: 'Full Endpoint URL *',
+                    labelText: 'Custom Endpoint URL (Optional)',
                     hintText: exampleUrl,
                     helperText:
-                        'Enter the complete API endpoint URL including /chat/completions or /messages. Different providers may use different endpoints.',
+                        'Leave empty to auto-generate from provider base URL. Only specify if this model uses a different endpoint than the provider default.',
                     helperMaxLines: 3,
                   ),
                 ),
@@ -207,15 +207,15 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
             ElevatedButton(
               onPressed: () {
                 if (nameController.text.isNotEmpty &&
-                    modelIdController.text.isNotEmpty &&
-                    endpointUrlController.text.isNotEmpty) {
+                    modelIdController.text.isNotEmpty) {
                   final model = CustomModel(
                     id: const Uuid().v4(),
                     name: nameController.text,
                     modelId: modelIdController.text,
                     providerId: widget.providerId,
                     description: descriptionController.text,
-                    endpointUrl: endpointUrlController.text.trim(),
+                    endpointUrl: endpointUrlController.text
+                        .trim(), // Optional - will use provider base URL if empty
                     supportsVision: supportsVision,
                     supportsStreaming: supportsStreaming,
                     supportsTools: supportsTools,
@@ -274,11 +274,11 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
                 TextField(
                   controller: endpointUrlController,
                   decoration: InputDecoration(
-                    labelText: 'Full Endpoint URL *',
+                    labelText: 'Custom Endpoint URL (Optional)',
                     hintText: exampleUrl,
                     helperText:
-                        'Enter the complete API endpoint URL including /chat/completions or /messages.',
-                    helperMaxLines: 2,
+                        'Leave empty to auto-generate from provider base URL. Only specify if this model uses a different endpoint than the provider default.',
+                    helperMaxLines: 3,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -325,12 +325,14 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                if (endpointUrlController.text.isNotEmpty) {
+                if (nameController.text.isNotEmpty &&
+                    modelIdController.text.isNotEmpty) {
                   final updatedModel = model.copyWith(
                     name: nameController.text,
                     modelId: modelIdController.text,
                     description: descriptionController.text,
-                    endpointUrl: endpointUrlController.text.trim(),
+                    endpointUrl: endpointUrlController.text
+                        .trim(), // Optional - will use provider base URL if empty
                     supportsVision: supportsVision,
                     supportsStreaming: supportsStreaming,
                     supportsTools: supportsTools,

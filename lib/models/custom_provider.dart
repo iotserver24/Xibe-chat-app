@@ -5,6 +5,8 @@ class CustomProvider {
   final String apiKey;
   final String type;
   final bool isBuiltIn;
+  final String?
+      endpointUrl; // Full endpoint URL (optional - auto-generated from baseUrl if not provided)
   final Map<String, String>? additionalHeaders;
 
   CustomProvider({
@@ -14,6 +16,7 @@ class CustomProvider {
     required this.apiKey,
     required this.type,
     this.isBuiltIn = false,
+    this.endpointUrl,
     this.additionalHeaders,
   });
 
@@ -25,6 +28,7 @@ class CustomProvider {
       apiKey: json['apiKey'] as String,
       type: json['type'] as String,
       isBuiltIn: json['isBuiltIn'] as bool? ?? false,
+      endpointUrl: json['endpointUrl'] as String?,
       additionalHeaders: json['additionalHeaders'] != null
           ? Map<String, String>.from(json['additionalHeaders'])
           : null,
@@ -39,6 +43,7 @@ class CustomProvider {
       'apiKey': apiKey,
       'type': type,
       'isBuiltIn': isBuiltIn,
+      if (endpointUrl != null) 'endpointUrl': endpointUrl,
       'additionalHeaders': additionalHeaders,
     };
   }
@@ -50,6 +55,7 @@ class CustomProvider {
     String? apiKey,
     String? type,
     bool? isBuiltIn,
+    String? endpointUrl,
     Map<String, String>? additionalHeaders,
   }) {
     return CustomProvider(
@@ -59,6 +65,7 @@ class CustomProvider {
       apiKey: apiKey ?? this.apiKey,
       type: type ?? this.type,
       isBuiltIn: isBuiltIn ?? this.isBuiltIn,
+      endpointUrl: endpointUrl ?? this.endpointUrl,
       additionalHeaders: additionalHeaders ?? this.additionalHeaders,
     );
   }

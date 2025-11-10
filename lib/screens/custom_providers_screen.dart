@@ -37,7 +37,8 @@ class _CustomProvidersScreenState extends State<CustomProvidersScreen> {
               itemBuilder: (context, index) {
                 final provider = providers[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: ListTile(
                     leading: Icon(
                       provider.isBuiltIn ? Icons.verified : Icons.cloud,
@@ -78,7 +79,8 @@ class _CustomProvidersScreenState extends State<CustomProvidersScreen> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.edit),
-                          onPressed: () => _showEditProviderDialog(context, provider),
+                          onPressed: () =>
+                              _showEditProviderDialog(context, provider),
                         ),
                         if (!provider.isBuiltIn)
                           IconButton(
@@ -97,83 +99,110 @@ class _CustomProvidersScreenState extends State<CustomProvidersScreen> {
   void _showAddProviderDialog(BuildContext context) {
     final nameController = TextEditingController();
     final baseUrlController = TextEditingController();
+    final endpointUrlController = TextEditingController();
     final apiKeyController = TextEditingController();
     String selectedType = 'openai';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Custom Provider'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Provider Name',
-                  hintText: 'e.g., My Custom Provider',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Add Custom Provider'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Provider Name',
+                    hintText: 'e.g., My Custom Provider',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: baseUrlController,
-                decoration: const InputDecoration(
-                  labelText: 'Base URL',
-                  hintText: 'e.g., https://api.example.com/v1',
+                const SizedBox(height: 16),
+                TextField(
+                  controller: baseUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'Base URL *',
+                    hintText: 'e.g., https://api.example.com/v1',
+                    helperText: 'Base URL of the API provider',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: apiKeyController,
-                decoration: const InputDecoration(
-                  labelText: 'API Key',
-                  hintText: 'Enter your API key',
+                const SizedBox(height: 16),
+                TextField(
+                  controller: endpointUrlController,
+                  decoration: InputDecoration(
+                    labelText: 'Full Endpoint URL *',
+                    hintText: selectedType == 'anthropic'
+                        ? 'https://api.example.com/v1/messages'
+                        : 'https://api.example.com/v1/chat/completions',
+                    helperText:
+                        'Enter the complete API endpoint URL including /chat/completions or /messages. This will be used for all models in this provider.',
+                    helperMaxLines: 3,
+                  ),
                 ),
-                obscureText: true,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: selectedType,
-                decoration: const InputDecoration(
-                  labelText: 'API Type',
+                const SizedBox(height: 16),
+                TextField(
+                  controller: apiKeyController,
+                  decoration: const InputDecoration(
+                    labelText: 'API Key',
+                    hintText: 'Enter your API key',
+                  ),
+                  obscureText: true,
                 ),
-                items: const [
-                  DropdownMenuItem(value: 'openai', child: Text('OpenAI Compatible')),
-                  DropdownMenuItem(value: 'anthropic', child: Text('Anthropic')),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    selectedType = value;
-                  }
-                },
-              ),
-            ],
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedType,
+                  decoration: const InputDecoration(
+                    labelText: 'API Type',
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                        value: 'openai', child: Text('OpenAI Compatible')),
+                    DropdownMenuItem(
+                        value: 'anthropic', child: Text('Anthropic')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() {
+                        selectedType = value;
+                        // Update hint text based on type
+                        endpointUrlController.clear();
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.isNotEmpty &&
+                    baseUrlController.text.isNotEmpty &&
+                    endpointUrlController.text.isNotEmpty) {
+                  final provider = CustomProvider(
+                    id: const Uuid().v4(),
+                    name: nameController.text,
+                    baseUrl: baseUrlController.text,
+                    endpointUrl: endpointUrlController.text.trim(),
+                    apiKey: apiKeyController.text,
+                    type: selectedType,
+                    isBuiltIn: false,
+                  );
+                  Provider.of<SettingsProvider>(context, listen: false)
+                      .addCustomProvider(provider);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Add'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty && baseUrlController.text.isNotEmpty) {
-                final provider = CustomProvider(
-                  id: const Uuid().v4(),
-                  name: nameController.text,
-                  baseUrl: baseUrlController.text,
-                  apiKey: apiKeyController.text,
-                  type: selectedType,
-                  isBuiltIn: false,
-                );
-                Provider.of<SettingsProvider>(context, listen: false).addCustomProvider(provider);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
       ),
     );
   }
@@ -181,73 +210,103 @@ class _CustomProvidersScreenState extends State<CustomProvidersScreen> {
   void _showEditProviderDialog(BuildContext context, CustomProvider provider) {
     final nameController = TextEditingController(text: provider.name);
     final baseUrlController = TextEditingController(text: provider.baseUrl);
+    final endpointUrlController =
+        TextEditingController(text: provider.endpointUrl ?? '');
     final apiKeyController = TextEditingController(text: provider.apiKey);
     String selectedType = provider.type;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Provider'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Provider Name'),
-                enabled: !provider.isBuiltIn,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: baseUrlController,
-                decoration: const InputDecoration(labelText: 'Base URL'),
-                enabled: !provider.isBuiltIn,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: apiKeyController,
-                decoration: const InputDecoration(
-                  labelText: 'API Key',
-                  hintText: 'Enter your API key',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Edit Provider'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Provider Name'),
+                  enabled: !provider.isBuiltIn,
                 ),
-                obscureText: true,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: selectedType,
-                decoration: const InputDecoration(labelText: 'API Type'),
-                items: const [
-                  DropdownMenuItem(value: 'openai', child: Text('OpenAI Compatible')),
-                  DropdownMenuItem(value: 'anthropic', child: Text('Anthropic')),
-                ],
-                onChanged: provider.isBuiltIn ? null : (value) {
-                  if (value != null) {
-                    selectedType = value;
-                  }
-                },
-              ),
-            ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: baseUrlController,
+                  decoration: const InputDecoration(labelText: 'Base URL'),
+                  enabled: !provider.isBuiltIn,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: endpointUrlController,
+                  decoration: InputDecoration(
+                    labelText: 'Full Endpoint URL *',
+                    hintText: selectedType == 'anthropic'
+                        ? 'https://api.example.com/v1/messages'
+                        : 'https://api.example.com/v1/chat/completions',
+                    helperText:
+                        'Enter the complete API endpoint URL including /chat/completions or /messages. This will be used for all models in this provider.',
+                    helperMaxLines: 3,
+                  ),
+                  enabled: !provider.isBuiltIn,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: apiKeyController,
+                  decoration: const InputDecoration(
+                    labelText: 'API Key',
+                    hintText: 'Enter your API key',
+                  ),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedType,
+                  decoration: const InputDecoration(labelText: 'API Type'),
+                  items: const [
+                    DropdownMenuItem(
+                        value: 'openai', child: Text('OpenAI Compatible')),
+                    DropdownMenuItem(
+                        value: 'anthropic', child: Text('Anthropic')),
+                  ],
+                  onChanged: provider.isBuiltIn
+                      ? null
+                      : (value) {
+                          if (value != null) {
+                            setDialogState(() {
+                              selectedType = value;
+                            });
+                          }
+                        },
+                ),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.isNotEmpty &&
+                    baseUrlController.text.isNotEmpty &&
+                    endpointUrlController.text.isNotEmpty) {
+                  final updatedProvider = provider.copyWith(
+                    name: nameController.text,
+                    baseUrl: baseUrlController.text,
+                    endpointUrl: endpointUrlController.text.trim(),
+                    apiKey: apiKeyController.text,
+                    type: selectedType,
+                  );
+                  Provider.of<SettingsProvider>(context, listen: false)
+                      .updateCustomProvider(updatedProvider);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final updatedProvider = provider.copyWith(
-                name: nameController.text,
-                baseUrl: baseUrlController.text,
-                apiKey: apiKeyController.text,
-                type: selectedType,
-              );
-              Provider.of<SettingsProvider>(context, listen: false).updateCustomProvider(updatedProvider);
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }
@@ -257,7 +316,8 @@ class _CustomProvidersScreenState extends State<CustomProvidersScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Provider'),
-        content: Text('Are you sure you want to delete ${provider.name}? This will also delete all associated custom models.'),
+        content: Text(
+            'Are you sure you want to delete ${provider.name}? This will also delete all associated custom models.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -266,7 +326,8 @@ class _CustomProvidersScreenState extends State<CustomProvidersScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
-              Provider.of<SettingsProvider>(context, listen: false).deleteCustomProvider(provider.id);
+              Provider.of<SettingsProvider>(context, listen: false)
+                  .deleteCustomProvider(provider.id);
               Navigator.pop(context);
             },
             child: const Text('Delete'),

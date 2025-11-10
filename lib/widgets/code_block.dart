@@ -14,11 +14,13 @@ import '../screens/desktop_preview_overlay.dart';
 class CodeBlock extends StatefulWidget {
   final String code;
   final String? language;
+  final bool isStreaming;
 
   const CodeBlock({
     super.key,
     required this.code,
     this.language,
+    this.isStreaming = false,
   });
 
   @override
@@ -26,11 +28,30 @@ class CodeBlock extends StatefulWidget {
 }
 
 class _CodeBlockState extends State<CodeBlock> {
+  bool _isExpanded = false;
   bool _isRunning = false;
   String? _output;
   String? _error;
   List<Map<String, dynamic>>? _results; // Store all result types
   bool _isCreatingPreview = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-expand if streaming
+    if (widget.isStreaming) {
+      _isExpanded = true;
+    }
+  }
+
+  @override
+  void didUpdateWidget(CodeBlock oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Auto-expand when streaming starts
+    if (widget.isStreaming && !oldWidget.isStreaming) {
+      _isExpanded = true;
+    }
+  }
 
   /// Check if the language starts with "codesandbox-"
   bool get _isCodesandboxPreview {
@@ -48,19 +69,19 @@ class _CodeBlockState extends State<CodeBlock> {
   /// Check if the code can be executed based on language support
   bool get _canRun {
     final lang = widget.language?.toLowerCase();
-    return lang == 'python' || 
-           lang == 'py' ||
-           lang == 'javascript' || 
-           lang == 'js' || 
-           lang == 'jsx' ||
-           lang == 'typescript' ||
-           lang == 'ts' ||
-           lang == 'tsx' ||
-           lang == 'react' ||
-           lang == 'r' ||
-           lang == 'java' ||
-           lang == 'bash' ||
-           lang == 'sh';
+    return lang == 'python' ||
+        lang == 'py' ||
+        lang == 'javascript' ||
+        lang == 'js' ||
+        lang == 'jsx' ||
+        lang == 'typescript' ||
+        lang == 'ts' ||
+        lang == 'tsx' ||
+        lang == 'react' ||
+        lang == 'r' ||
+        lang == 'java' ||
+        lang == 'bash' ||
+        lang == 'sh';
   }
 
   /// Map language to E2B language code
@@ -76,10 +97,9 @@ class _CodeBlockState extends State<CodeBlock> {
     return 'python'; // Default to Python
   }
 
-
   String get _displayLanguage {
     final lang = widget.language?.toLowerCase() ?? '';
-    
+
     // Handle codesandbox- prefix
     if (lang.startsWith('codesandbox-')) {
       final framework = lang.replaceFirst('codesandbox-', '');
@@ -90,7 +110,7 @@ class _CodeBlockState extends State<CodeBlock> {
       if (framework == 'html') return 'HTML (Preview)';
       return '${framework[0].toUpperCase()}${framework.substring(1)} (Preview)';
     }
-    
+
     if (lang == 'jsx' || lang == 'tsx' || lang == 'react') return 'React';
     if (lang == 'js' || lang == 'javascript') return 'JavaScript';
     if (lang == 'ts' || lang == 'typescript') return 'TypeScript';
@@ -125,7 +145,7 @@ class _CodeBlockState extends State<CodeBlock> {
       // E2B API returns: { "execution": { "results": [...] } }
       final execution = executionResult['execution'] as Map<String, dynamic>?;
       final results = execution?['results'] as List<dynamic>? ?? [];
-      
+
       // Process different result types: stdout, stderr, png, chart, text, error
       final List<Map<String, dynamic>> processedResults = [];
       String? combinedOutput;
@@ -134,11 +154,13 @@ class _CodeBlockState extends State<CodeBlock> {
       for (final result in results) {
         final resultMap = result as Map<String, dynamic>;
         final type = resultMap['type'] as String?;
-        
+
         switch (type) {
           case 'stdout':
           case 'text':
-            final text = resultMap['text'] as String? ?? resultMap['content'] as String? ?? '';
+            final text = resultMap['text'] as String? ??
+                resultMap['content'] as String? ??
+                '';
             if (text.isNotEmpty) {
               processedResults.add({'type': type, 'content': text});
               combinedOutput = (combinedOutput ?? '') + text + '\n';
@@ -146,7 +168,10 @@ class _CodeBlockState extends State<CodeBlock> {
             break;
           case 'stderr':
           case 'error':
-            final text = resultMap['text'] as String? ?? resultMap['content'] as String? ?? resultMap['error'] as String? ?? '';
+            final text = resultMap['text'] as String? ??
+                resultMap['content'] as String? ??
+                resultMap['error'] as String? ??
+                '';
             if (text.isNotEmpty) {
               processedResults.add({'type': type, 'content': text});
               combinedError = (combinedError ?? '') + text + '\n';
@@ -154,7 +179,8 @@ class _CodeBlockState extends State<CodeBlock> {
             break;
           case 'png':
             // Handle image outputs (charts, plots)
-            final base64 = resultMap['base64'] as String? ?? resultMap['content'] as String?;
+            final base64 = resultMap['base64'] as String? ??
+                resultMap['content'] as String?;
             if (base64 != null) {
               processedResults.add({'type': 'png', 'base64': base64});
               if (combinedOutput == null) {
@@ -164,7 +190,8 @@ class _CodeBlockState extends State<CodeBlock> {
             break;
           case 'chart':
             // Handle interactive chart data
-            final chartData = resultMap['chart'] as Map<String, dynamic>? ?? resultMap;
+            final chartData =
+                resultMap['chart'] as Map<String, dynamic>? ?? resultMap;
             processedResults.add({'type': 'chart', 'data': chartData});
             if (combinedOutput == null) {
               combinedOutput = '[Interactive chart generated]';
@@ -177,7 +204,7 @@ class _CodeBlockState extends State<CodeBlock> {
         _results = processedResults;
         _output = combinedOutput?.trim();
         _error = combinedError?.trim();
-        
+
         // If no output and no error, show success message
         if (_output == null && _error == null) {
           _output = 'Code executed successfully';
@@ -189,7 +216,8 @@ class _CodeBlockState extends State<CodeBlock> {
       });
     } on http.ClientException catch (e) {
       setState(() {
-        _error = 'Network error: ${e.message}\n\nPlease check your internet connection and ensure the backend server is accessible.';
+        _error =
+            'Network error: ${e.message}\n\nPlease check your internet connection and ensure the backend server is accessible.';
       });
     } catch (e) {
       setState(() {
@@ -217,7 +245,8 @@ class _CodeBlockState extends State<CodeBlock> {
       setState(() => _isCreatingPreview = false);
 
       // Check if we're on desktop
-      final isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+      final isDesktop =
+          Platform.isWindows || Platform.isMacOS || Platform.isLinux;
       final screenWidth = MediaQuery.of(context).size.width;
       final useOverlay = isDesktop && screenWidth > 1000;
 
@@ -254,7 +283,7 @@ class _CodeBlockState extends State<CodeBlock> {
       }
     } catch (e) {
       if (!mounted) return;
-      
+
       setState(() => _isCreatingPreview = false);
 
       // Show error
@@ -272,8 +301,159 @@ class _CodeBlockState extends State<CodeBlock> {
     }
   }
 
+  String get _previewText {
+    // Get first few lines of code for preview
+    final lines = widget.code.split('\n');
+    if (lines.length <= 3) {
+      return widget.code;
+    }
+    return '${lines.take(3).join('\n')}\n...';
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Show collapsed file card when not expanded
+    if (!_isExpanded) {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              _isExpanded = true;
+            });
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: widget.isStreaming
+                  ? const Color(0xFF1A1A1A).withOpacity(0.8)
+                  : const Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: widget.isStreaming
+                    ? Colors.blue.withOpacity(0.4)
+                    : Colors.grey.withOpacity(0.2),
+                width: widget.isStreaming ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                // File icon with loading animation overlay
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(
+                        _isCodesandboxPreview
+                            ? Icons.code
+                            : Icons.description_outlined,
+                        size: 20,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    if (widget.isStreaming)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Center(
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.blue,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                // File name and preview
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            _displayLanguage,
+                            style: TextStyle(
+                              color: widget.isStreaming
+                                  ? Colors.blue.withOpacity(0.9)
+                                  : Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (widget.isStreaming) ...[
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.blue,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Streaming...',
+                              style: TextStyle(
+                                color: Colors.blue.withOpacity(0.8),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _previewText,
+                        style: TextStyle(
+                          color: widget.isStreaming
+                              ? Colors.white.withOpacity(0.7)
+                              : Colors.white.withOpacity(0.6),
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                // Expand icon
+                Icon(
+                  Icons.chevron_right,
+                  color: widget.isStreaming
+                      ? Colors.blue.withOpacity(0.7)
+                      : Colors.white.withOpacity(0.5),
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Expanded view with full code
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
@@ -299,6 +479,14 @@ class _CodeBlockState extends State<CodeBlock> {
             ),
             child: Row(
               children: [
+                Icon(
+                  _isCodesandboxPreview
+                      ? Icons.code
+                      : Icons.description_outlined,
+                  size: 16,
+                  color: Colors.white70,
+                ),
+                const SizedBox(width: 8),
                 Text(
                   _displayLanguage,
                   style: const TextStyle(
@@ -307,7 +495,43 @@ class _CodeBlockState extends State<CodeBlock> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                if (widget.isStreaming) ...[
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.blue,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Streaming...',
+                    style: TextStyle(
+                      color: Colors.blue.withOpacity(0.9),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
                 const Spacer(),
+                // Collapse button
+                IconButton(
+                  icon: const Icon(Icons.expand_less, size: 18),
+                  color: Colors.white70,
+                  onPressed: () {
+                    setState(() {
+                      _isExpanded = false;
+                    });
+                  },
+                  tooltip: 'Collapse',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(width: 4),
                 if (_isCodesandboxPreview) ...[
                   IconButton(
                     icon: _isCreatingPreview
@@ -316,7 +540,8 @@ class _CodeBlockState extends State<CodeBlock> {
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10A37F)),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF10A37F)),
                             ),
                           )
                         : const Icon(Icons.play_circle_outline, size: 20),
@@ -335,7 +560,8 @@ class _CodeBlockState extends State<CodeBlock> {
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.blue),
                             ),
                           )
                         : const Icon(Icons.play_arrow, size: 20),
@@ -374,7 +600,7 @@ class _CodeBlockState extends State<CodeBlock> {
               child: HighlightView(
                 widget.code,
                 // Strip codesandbox- prefix for syntax highlighting
-                language: _isCodesandboxPreview 
+                language: _isCodesandboxPreview
                     ? (_codesandboxFramework == 'html' ? 'html' : 'javascript')
                     : (widget.language ?? 'plaintext'),
                 theme: atomOneDarkTheme,
@@ -387,7 +613,9 @@ class _CodeBlockState extends State<CodeBlock> {
             ),
           ),
           // Output/Error display
-          if (_output != null || _error != null || (_results != null && _results!.isNotEmpty))
+          if (_output != null ||
+              _error != null ||
+              (_results != null && _results!.isNotEmpty))
             Container(
               margin: const EdgeInsets.only(top: 8),
               padding: const EdgeInsets.all(12),
@@ -410,7 +638,9 @@ class _CodeBlockState extends State<CodeBlock> {
                   Row(
                     children: [
                       Icon(
-                        _error != null ? Icons.error_outline : Icons.check_circle_outline,
+                        _error != null
+                            ? Icons.error_outline
+                            : Icons.check_circle_outline,
                         size: 16,
                         color: _error != null ? Colors.red : Colors.green,
                       ),
@@ -430,14 +660,14 @@ class _CodeBlockState extends State<CodeBlock> {
                   if (_results != null && _results!.isNotEmpty)
                     ...(_results!.map((result) {
                       final type = result['type'] as String?;
-                      
+
                       if (type == 'png' && result['base64'] != null) {
                         // Display image/chart
                         try {
                           final base64 = result['base64'] as String;
                           // Remove data URL prefix if present
-                          final base64Data = base64.contains(',') 
-                              ? base64.split(',').last 
+                          final base64Data = base64.contains(',')
+                              ? base64.split(',').last
                               : base64;
                           final imageBytes = base64Decode(base64Data);
                           return Padding(
@@ -472,7 +702,8 @@ class _CodeBlockState extends State<CodeBlock> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.bar_chart, size: 16, color: Colors.blue),
+                                const Icon(Icons.bar_chart,
+                                    size: 16, color: Colors.blue),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Interactive chart generated',
@@ -489,7 +720,7 @@ class _CodeBlockState extends State<CodeBlock> {
                       return const SizedBox.shrink();
                     }).toList()),
                   // Display text output/error
-                  if ((_output != null && _output!.isNotEmpty) || 
+                  if ((_output != null && _output!.isNotEmpty) ||
                       (_error != null && _error!.isNotEmpty))
                     SelectableText(
                       _error ?? _output ?? '',
