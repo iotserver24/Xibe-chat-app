@@ -77,7 +77,18 @@ When creating interactive writing tools or demos, use codesandbox-{framework} la
 Code Presentation:
 - For UI/frontend code (React, Vue, HTML, etc.): Always use codesandbox-{framework} language tags
 - For backend/computational code (Python, Java, etc.): Use standard language tags with syntax highlighting
-- This enables live preview for UI code and execution for computational code''',
+- This enables live preview for UI code and execution for computational code
+- For multi-file UI projects (component + styles, multiple components): Use "// File: filename.ext" markers within ONE code block
+  Example:
+  ```codesandbox-react
+  // File: App.js
+  import React from 'react';
+  import './styles.css';
+  export default function App() { return <div>Hello</div>; }
+  
+  // File: styles.css
+  .container { padding: 20px; }
+  ```''',
         tags: ['coding', 'review', 'quality'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -98,7 +109,8 @@ Code Presentation:
 
 Code Sharing:
 - For UI/frontend code (React, Vue, Svelte, HTML, etc.): use codesandbox-{framework} language tags
-- For scripts/algorithms (Python, JavaScript, etc.): use standard language tags''',
+- For scripts/algorithms (Python, JavaScript, etc.): use standard language tags
+- For multi-file UI projects: Use "// File: filename.ext" markers in ONE code block''',
         tags: ['friendly', 'general', 'conversational'],
         isDefault: true,
         createdAt: DateTime.now(),
@@ -159,7 +171,8 @@ When creating interactive meditation timers or wellness tools, use codesandbox-{
 When providing bug fixes:
 - For UI bugs: use codesandbox-{framework} language tags for corrected code
 - For backend/algorithm bugs: use standard language tags
-- You can execute test code to verify fixes work correctly''',
+- You can execute test code to verify fixes work correctly
+- For multi-file projects: Use "// File: filename.ext" markers in ONE codesandbox block''',
         tags: ['coding', 'debugging', 'troubleshooting'],
         isDefault: true,
         createdAt: DateTime.now(),

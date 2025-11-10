@@ -134,7 +134,7 @@ class CodeSandboxService {
   ) {
     // If code already contains multiple file markers, parse them
     if (code.contains('// File:') || code.contains('/* File:')) {
-      return _parseMultiFileCode(code);
+      return _parseMultiFileCode(code, framework);
     }
 
     // Single file code - create appropriate structure based on framework
@@ -154,21 +154,38 @@ class CodeSandboxService {
     }
   }
 
-  static Map<String, Map<String, String>> _parseMultiFileCode(String code) {
-    final files = <String, Map<String, String>>{};
+  /// Parse multi-file code with framework-specific structure
+  static Map<String, Map<String, String>> _parseMultiFileCode(String code, String framework) {
+    final userFiles = <String, String>{};
     final fileRegex = RegExp(
       r'//\s*File:\s*(.+?)\n(.*?)(?=//\s*File:|$)',
       dotAll: true,
       multiLine: true,
     );
 
+    // Extract all user-defined files
     for (final match in fileRegex.allMatches(code)) {
       final fileName = match.group(1)?.trim() ?? 'index.js';
       final content = match.group(2)?.trim() ?? '';
-      files[fileName] = {'content': content};
+      userFiles[fileName] = content;
     }
 
-    return files.isNotEmpty ? files : _createVanillaJsFiles(code);
+    // If no files were extracted, fallback to single file
+    if (userFiles.isEmpty) {
+      return _createVanillaJsFiles(code);
+    }
+
+    // Build framework-specific structure with user files
+    switch (framework) {
+      case 'react':
+        return _createReactFilesFromMultiple(userFiles);
+      case 'vue':
+        return _createVueFilesFromMultiple(userFiles);
+      case 'html':
+        return _createHtmlFilesFromMultiple(userFiles);
+      default:
+        return _createVanillaJsFilesFromMultiple(userFiles);
+    }
   }
 
   static Map<String, Map<String, String>> _createReactFiles(String code) {
@@ -405,6 +422,221 @@ export default app;
         'content': code,
       },
     };
+  }
+
+  /// Create React project structure from multiple user files
+  static Map<String, Map<String, String>> _createReactFilesFromMultiple(Map<String, String> userFiles) {
+    final files = <String, Map<String, String>>{};
+    
+    // Add base package.json
+    files['package.json'] = {
+      'content': jsonEncode({
+        'name': 'ai-react-app',
+        'version': '1.0.0',
+        'description': 'AI Generated React App',
+        'main': 'src/index.js',
+        'dependencies': {
+          'react': '^18.2.0',
+          'react-dom': '^18.2.0',
+          'react-scripts': '5.0.1',
+        },
+        'scripts': {
+          'start': 'react-scripts start',
+          'build': 'react-scripts build',
+          'test': 'react-scripts test',
+          'eject': 'react-scripts eject',
+        },
+        'browserslist': {
+          'production': ['>0.2%', 'not dead', 'not op_mini all'],
+          'development': ['last 1 chrome version', 'last 1 firefox version', 'last 1 safari version'],
+        },
+      }),
+    };
+    
+    // Add base HTML
+    files['public/index.html'] = {
+      'content': '''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI React App</title>
+</head>
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+</body>
+</html>''',
+    };
+    
+    // Add base index.js if not provided
+    if (!userFiles.containsKey('index.js')) {
+      files['src/index.js'] = {
+        'content': '''import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);''',
+      };
+    }
+    
+    // Add all user files under src/ directory
+    userFiles.forEach((fileName, content) {
+      // If filename starts with /, remove it
+      final cleanFileName = fileName.startsWith('/') ? fileName.substring(1) : fileName;
+      
+      // Place files appropriately
+      if (cleanFileName.endsWith('.html')) {
+        files['public/$cleanFileName'] = {'content': content};
+      } else {
+        // Default to src/ directory for JS/CSS files
+        final filePath = cleanFileName.startsWith('src/') 
+            ? cleanFileName 
+            : 'src/$cleanFileName';
+        files[filePath] = {'content': content};
+      }
+    });
+    
+    return files;
+  }
+
+  /// Create Vue project structure from multiple user files
+  static Map<String, Map<String, String>> _createVueFilesFromMultiple(Map<String, String> userFiles) {
+    final files = <String, Map<String, String>>{};
+    
+    files['package.json'] = {
+      'content': jsonEncode({
+        'dependencies': {
+          'vue': '^3.3.0',
+        },
+      }),
+    };
+    
+    files['index.html'] = {
+      'content': '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
+''',
+    };
+    
+    // Add main.js if not provided
+    if (!userFiles.containsKey('main.js')) {
+      files['src/main.js'] = {
+        'content': '''
+import { createApp } from 'vue';
+import App from './App.vue';
+
+createApp(App).mount('#app');
+''',
+      };
+    }
+    
+    // Add all user files
+    userFiles.forEach((fileName, content) {
+      final cleanFileName = fileName.startsWith('/') ? fileName.substring(1) : fileName;
+      final filePath = cleanFileName.startsWith('src/') 
+          ? cleanFileName 
+          : 'src/$cleanFileName';
+      files[filePath] = {'content': content};
+    });
+    
+    return files;
+  }
+
+  /// Create HTML/CSS/JS project from multiple user files
+  static Map<String, Map<String, String>> _createHtmlFilesFromMultiple(Map<String, String> userFiles) {
+    final files = <String, Map<String, String>>{};
+    
+    // Add all user files directly
+    userFiles.forEach((fileName, content) {
+      final cleanFileName = fileName.startsWith('/') ? fileName.substring(1) : fileName;
+      files[cleanFileName] = {'content': content};
+    });
+    
+    // Ensure there's an index.html
+    if (!files.containsKey('index.html')) {
+      // Find the first .html file and use it as index
+      final htmlFile = files.keys.firstWhere(
+        (key) => key.endsWith('.html'),
+        orElse: () => '',
+      );
+      
+      if (htmlFile.isEmpty) {
+        // Create a basic index.html that loads other files
+        files['index.html'] = {
+          'content': '''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview</title>
+  ${files.containsKey('styles.css') ? '<link rel="stylesheet" href="/styles.css">' : ''}
+</head>
+<body>
+  <div id="root"></div>
+  ${files.containsKey('index.js') ? '<script src="/index.js"></script>' : ''}
+</body>
+</html>''',
+        };
+      }
+    }
+    
+    return files;
+  }
+
+  /// Create vanilla JS project from multiple user files
+  static Map<String, Map<String, String>> _createVanillaJsFilesFromMultiple(Map<String, String> userFiles) {
+    final files = <String, Map<String, String>>{};
+    
+    // Check if there's an HTML file
+    final hasHtml = userFiles.keys.any((key) => key.endsWith('.html'));
+    
+    if (!hasHtml) {
+      // Create index.html that includes CSS and JS files
+      final cssFiles = userFiles.keys.where((key) => key.endsWith('.css')).toList();
+      final jsFiles = userFiles.keys.where((key) => key.endsWith('.js')).toList();
+      
+      files['index.html'] = {
+        'content': '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview</title>
+  ${cssFiles.map((css) => '<link rel="stylesheet" href="/$css">').join('\n  ')}
+</head>
+<body>
+  <div id="root"></div>
+  ${jsFiles.map((js) => '<script src="/$js"></script>').join('\n  ')}
+</body>
+</html>
+''',
+      };
+    }
+    
+    // Add all user files
+    userFiles.forEach((fileName, content) {
+      final cleanFileName = fileName.startsWith('/') ? fileName.substring(1) : fileName;
+      files[cleanFileName] = {'content': content};
+    });
+    
+    return files;
   }
 }
 

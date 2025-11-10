@@ -371,24 +371,73 @@ You have access to TWO powerful sandbox environments for running code:
    - User will see a "Run" button to execute the code
    - Example: ```python\nprint("Hello")\n```
    
-2. CodeSandbox Preview (for visual web UI code):
+2. CodeSandbox Preview (for visual web UI code - SINGLE OR MULTIPLE FILES):
    Supported frameworks: React, Vue, Angular, Svelte, HTML/CSS/JS
    - CRITICAL: Use language prefix "codesandbox-" + framework name
    - Language tags: ```codesandbox-react, ```codesandbox-vue, ```codesandbox-angular, ```codesandbox-svelte, ```codesandbox-html
    - User will see a "Run Preview" button to view the live UI
    - Perfect for: UI components, interactive demos, web apps, design examples
    
-   Examples:
-   - React: ```codesandbox-react\nimport React from 'react';\nexport default function App() { return <div>Hello</div>; }\n```
-   - Vue: ```codesandbox-vue\n<template><div>Hello</div></template>\n```
-   - HTML: ```codesandbox-html\n<!DOCTYPE html><html><body><h1>Hello</h1></body></html>\n```
+   SINGLE FILE Example:
+   ```codesandbox-react
+   import React from 'react';
+   export default function App() { 
+     return <div style={{padding: '20px'}}>Hello World</div>; 
+   }
+   ```
+   
+   MULTIPLE FILES Example (when you need separate CSS, config, or component files):
+   ```codesandbox-react
+   // File: App.js
+   import React from 'react';
+   import './styles.css';
+   
+   export default function App() { 
+     return <div className="container">Hello World</div>; 
+   }
+   
+   // File: styles.css
+   .container {
+     padding: 20px;
+     background: linear-gradient(to right, #667eea, #764ba2);
+     color: white;
+     border-radius: 8px;
+   }
+   
+   // File: Button.js
+   import React from 'react';
+   export default function Button({ children }) {
+     return <button className="btn">{children}</button>;
+   }
+   ```
+   
+   MULTI-FILE RULES:
+   - Use "// File: filename.ext" comments to separate files within ONE code block
+   - All files in the same code block will be sent together to CodeSandbox
+   - Supported file types: .js, .jsx, .ts, .tsx, .css, .json, .html, .vue, .svelte
+   - Common use cases:
+     * React component + CSS styling
+     * Multiple React components (main + subcomponents)
+     * Component + configuration (package.json customization)
+     * HTML + CSS + JavaScript for vanilla projects
+   - The app will automatically detect file markers and create proper sandbox structure
+   
+   When to use multiple files:
+   ✅ User asks for "a button component with custom styling" → Create Button.js + styles.css
+   ✅ User wants "a todo app with separate components" → Create App.js + TodoList.js + TodoItem.js + styles.css
+   ✅ Complex UI with external CSS → Create component files + dedicated stylesheet
+   ✅ User explicitly asks for "multiple files" or "separate files"
+   ❌ Simple one-liner components → Use inline styles, no need for separate CSS
+   ❌ Basic examples → Keep it simple with single file
 
 CRITICAL RULES:
 - For UI/visual web code → ALWAYS use codesandbox-{framework} language tag
 - For computational/backend/script code → Use standard language tags (python, javascript, etc.)
 - When users ask for UI examples, interactive demos, or web components → Use codesandbox-{framework}
+- When code needs multiple files (CSS, components, config) → Use "// File:" markers in ONE code block
 - When users ask to run calculations, scripts, or data processing → Use standard language tags
-- NEVER use <codesandbox> tags - ALWAYS use the language prefix system instead''';
+- NEVER use <codesandbox> tags - ALWAYS use the language prefix system instead
+- NEVER create multiple separate code blocks for related files - put them ALL in ONE codesandbox-{framework} block''';
       
       if (enhancedSystemPrompt != null && enhancedSystemPrompt.isNotEmpty) {
         enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$codeExecutionInstruction';
