@@ -51,6 +51,7 @@
           <div>
             <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Advanced</h3>
             <ul class="space-y-2">
+              <li><a href="#custom-providers" class="block text-sm text-slate-300 hover:text-white transition-colors">Custom Providers</a></li>
               <li><a href="#mcp-servers" class="block text-sm text-slate-300 hover:text-white transition-colors">MCP Servers</a></li>
               <li><a href="#custom-endpoints" class="block text-sm text-slate-300 hover:text-white transition-colors">Custom Endpoints</a></li>
               <li><a href="#ollama" class="block text-sm text-slate-300 hover:text-white transition-colors">Local Models</a></li>
@@ -424,6 +425,112 @@
                 <div class="p-3 rounded-lg bg-slate-900/50 text-center">
                   <div class="text-2xl mb-1">💻</div>
                   <p class="text-sm font-medium text-white">Bash</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Custom Providers -->
+          <section id="custom-providers">
+            <h2 class="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+              <span class="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+                </svg>
+              </span>
+              Custom API Providers
+            </h2>
+            
+            <p class="text-slate-400 mb-6">Add your own API providers to use custom AI models with your API keys. Xibe Chat supports OpenAI, Anthropic, OpenRouter, and any OpenAI-compatible API.</p>
+            
+            <div class="space-y-6">
+              <div class="p-6 rounded-xl bg-slate-900/50 border border-slate-800">
+                <h3 class="text-xl font-semibold text-white mb-4">Built-in Providers</h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                  <div class="p-4 rounded-lg bg-slate-800/50 border border-blue-500/20">
+                    <h4 class="font-semibold text-blue-400 mb-2">OpenAI</h4>
+                    <p class="text-sm text-slate-400">GPT-4, GPT-3.5, and other OpenAI models</p>
+                    <p class="text-xs text-slate-500 mt-2">https://api.openai.com/v1</p>
+                  </div>
+                  <div class="p-4 rounded-lg bg-slate-800/50 border border-purple-500/20">
+                    <h4 class="font-semibold text-purple-400 mb-2">Anthropic</h4>
+                    <p class="text-sm text-slate-400">Claude 3.5 Sonnet, Haiku, and more</p>
+                    <p class="text-xs text-slate-500 mt-2">https://api.anthropic.com/v1</p>
+                  </div>
+                  <div class="p-4 rounded-lg bg-slate-800/50 border border-green-500/20">
+                    <h4 class="font-semibold text-green-400 mb-2">OpenRouter</h4>
+                    <p class="text-sm text-slate-400">Access to 100+ models from various providers</p>
+                    <p class="text-xs text-slate-500 mt-2">https://openrouter.ai/api/v1</p>
+                  </div>
+                  <div class="p-4 rounded-lg bg-slate-800/50 border border-yellow-500/20">
+                    <h4 class="font-semibold text-yellow-400 mb-2">Groq</h4>
+                    <p class="text-sm text-slate-400">Ultra-fast inference for open models</p>
+                    <p class="text-xs text-slate-500 mt-2">https://api.groq.com/openai/v1</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-6 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
+                <h3 class="text-xl font-semibold text-white mb-4">How to Add a Provider</h3>
+                <ol class="space-y-3 text-slate-300">
+                  <li class="flex gap-3">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-sm font-semibold text-indigo-400">1</span>
+                    <span>Navigate to <strong>Settings → Custom Providers → API Providers</strong></span>
+                  </li>
+                  <li class="flex gap-3">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-sm font-semibold text-indigo-400">2</span>
+                    <span>Select a built-in provider or click <strong>+</strong> to add custom one</span>
+                  </li>
+                  <li class="flex gap-3">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-sm font-semibold text-indigo-400">3</span>
+                    <span>Enter your <strong>API key</strong> for the provider</span>
+                  </li>
+                  <li class="flex gap-3">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-sm font-semibold text-indigo-400">4</span>
+                    <span>Click the <strong>list icon</strong> to add models</span>
+                  </li>
+                  <li class="flex gap-3">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-sm font-semibold text-indigo-400">5</span>
+                    <span>Configure model details: <strong>name, ID, capabilities</strong></span>
+                  </li>
+                  <li class="flex gap-3">
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-sm font-semibold text-indigo-400">6</span>
+                    <span>Use your custom model in any chat!</span>
+                  </li>
+                </ol>
+              </div>
+
+              <div class="p-6 rounded-xl bg-slate-900/50 border border-slate-800">
+                <h3 class="text-xl font-semibold text-white mb-4">Example: Adding OpenAI GPT-4</h3>
+                <div class="space-y-4">
+                  <div>
+                    <p class="text-sm text-slate-500 mb-2">1. Edit OpenAI provider and add your API key</p>
+                    <div class="p-3 rounded-lg bg-slate-800/50">
+                      <code class="text-sm text-slate-300">API Key: sk-proj-xxxxxxxxxxxxx</code>
+                    </div>
+                  </div>
+                  <div>
+                    <p class="text-sm text-slate-500 mb-2">2. Add a model:</p>
+                    <div class="p-3 rounded-lg bg-slate-800/50 space-y-2 text-sm">
+                      <div><span class="text-slate-500">Display Name:</span> <span class="text-slate-300">GPT-4 Turbo</span></div>
+                      <div><span class="text-slate-500">Model ID:</span> <span class="text-green-400">gpt-4-turbo-preview</span></div>
+                      <div><span class="text-slate-500">Description:</span> <span class="text-slate-300">Most capable GPT-4 model</span></div>
+                      <div><span class="text-slate-500">Supports Vision:</span> <span class="text-blue-400">✓</span></div>
+                      <div><span class="text-slate-500">Supports Streaming:</span> <span class="text-blue-400">✓</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-6 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <div class="flex gap-3">
+                  <svg class="w-6 h-6 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div>
+                    <h4 class="font-semibold text-amber-400 mb-2">Security Note</h4>
+                    <p class="text-sm text-slate-300">API keys are stored locally and encrypted. Never share your API keys with others.</p>
+                  </div>
                 </div>
               </div>
             </div>

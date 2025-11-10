@@ -417,6 +417,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(),
           _buildSection(
             context,
+            'Custom Providers',
+            [
+              ListTile(
+                title: const Text('API Providers'),
+                subtitle: const Text('Manage custom API providers and models'),
+                leading: const Icon(Icons.cloud_queue),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  Navigator.pushNamed(context, '/custom-providers');
+                },
+              ),
+            ],
+          ),
+          const Divider(),
+          _buildSection(
+            context,
             'Integrations',
             [
               ListTile(

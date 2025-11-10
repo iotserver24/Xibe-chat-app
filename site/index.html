@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xibe Chat - Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #e8eaed;
+            background: #0d0d0d;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .nav {
+            background: #1a1a1a;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav a {
+            color: #e8eaed;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav a:hover {
+            color: #667eea;
+        }
+
+        .section {
+            margin: 3rem 0;
+            padding: 2rem;
+            background: #1a1a1a;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+
+        .section h3 {
+            color: #8a9aef;
+            margin: 1.5rem 0 1rem;
+            font-size: 1.5rem;
+        }
+
+        .section p {
+            margin-bottom: 1rem;
+            color: #b8babd;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: #0a0a0a;
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid #2a2a2a;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+        }
+
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: transform 0.3s;
+            margin: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-secondary {
+            background: #2a2a2a;
+        }
+
+        .code-block {
+            background: #0a0a0a;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border: 1px solid #2a2a2a;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .code-block code {
+            color: #8aff80;
+            font-family: 'Courier New', monospace;
+        }
+
+        ul, ol {
+            margin: 1rem 0 1rem 2rem;
+            color: #b8babd;
+        }
+
+        li {
+            margin: 0.5rem 0;
+        }
+
+        .footer {
+            background: #1a1a1a;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 4rem;
+            border-top: 2px solid #667eea;
+        }
+
+        .footer p {
+            color: #8a8a8a;
+        }
+
+        a {
+            color: #667eea;
+        }
+
+        a:hover {
+            color: #8a9aef;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav ul {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Xibe Chat</h1>
+        <p>Modern AI Chat Application - Complete Documentation</p>
+    </div>
+
+    <nav class="nav">
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#installation">Installation</a></li>
+            <li><a href="#user-guide">User Guide</a></li>
+            <li><a href="#custom-providers">Custom Providers</a></li>
+            <li><a href="#development">Development</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <section id="overview" class="section">
+            <h2>📖 Overview</h2>
+            <p>
+                Xibe Chat is a powerful, cross-platform AI chat application built with Flutter. It provides a seamless experience
+                for chatting with multiple AI models, executing code, previewing UI components, and much more.
+            </p>
+            <p>
+                <strong>Platforms:</strong> Windows, macOS, Linux, Android, iOS, Web
+            </p>
+            <div style="margin-top: 2rem;">
+                <a href="../docs/README.md" class="btn">Read Full Docs</a>
+                <a href="https://github.com/yourusername/xibe-chat" class="btn btn-secondary">GitHub Repository</a>
+            </div>
+        </section>
+
+        <section id="features" class="section">
+            <h2>✨ Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>Multiple AI Models</h3>
+                    <p>Access various AI models from different providers including GPT, Claude, Gemini, and more.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔌</div>
+                    <h3>Custom Providers</h3>
+                    <p>Add your own API providers (OpenAI, Anthropic, OpenRouter) with custom API keys.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3>Streaming Responses</h3>
+                    <p>Real-time streaming responses for faster, more interactive conversations.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3>Long-Term Memory</h3>
+                    <p>AI remembers your preferences, context, and important information across sessions.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🖼️</div>
+                    <h3>Vision Support</h3>
+                    <p>Send images to vision-capable models for image analysis and understanding.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3>Web Search</h3>
+                    <p>Enable real-time web search for current information and fact-checking.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💻</div>
+                    <h3>Code Execution</h3>
+                    <p>Run code in Python, JavaScript, TypeScript, Java, R, and Bash directly in chat.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Live UI Previews</h3>
+                    <p>Preview React, Vue, Angular, and Svelte components with CodeSandbox integration.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎭</div>
+                    <h3>AI Profiles</h3>
+                    <p>Customize AI behavior with different personalities and system prompts.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔗</div>
+                    <h3>MCP Integration</h3>
+                    <p>Model Context Protocol support for external tools and resources.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Material 3 Theme</h3>
+                    <p>Beautiful, modern UI with multiple theme options and smooth animations.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔐</div>
+                    <h3>Secure & Private</h3>
+                    <p>Local data storage, encrypted API keys, and privacy-focused design.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="installation" class="section">
+            <h2>📥 Installation</h2>
+            <h3>Quick Start</h3>
+            <div class="code-block">
+                <code>
+# Clone the repository<br>
+git clone https://github.com/yourusername/xibe-chat.git<br>
+cd xibe-chat<br>
+<br>
+# Install dependencies<br>
+flutter pub get<br>
+<br>
+# Run on your platform<br>
+flutter run
+                </code>
+            </div>
+
+            <h3>Download Releases</h3>
+            <ul>
+                <li><strong>Windows:</strong> Download installer (.exe) or portable (.zip)</li>
+                <li><strong>macOS:</strong> Download DMG package</li>
+                <li><strong>Linux:</strong> Download .deb, .rpm, or AppImage</li>
+                <li><strong>Android:</strong> Download APK or get from Play Store</li>
+                <li><strong>iOS:</strong> Download from App Store (Coming Soon)</li>
+            </ul>
+
+            <p style="margin-top: 1.5rem;">
+                <a href="../docs/INSTALLATION.md" class="btn">Detailed Installation Guide</a>
+            </p>
+        </section>
+
+        <section id="user-guide" class="section">
+            <h2>📚 User Guide</h2>
+            <h3>Getting Started</h3>
+            <ol>
+                <li>Launch Xibe Chat</li>
+                <li>Start a new chat (automatic on first launch)</li>
+                <li>Select an AI model from the model selector</li>
+                <li>Type your message and press Enter/Send</li>
+                <li>View real-time streaming responses</li>
+            </ol>
+
+            <h3>Key Concepts</h3>
+            <ul>
+                <li><strong>Chat History:</strong> All chats are saved automatically</li>
+                <li><strong>Model Selection:</strong> Switch models anytime during conversation</li>
+                <li><strong>Image Input:</strong> Attach images for vision-capable models</li>
+                <li><strong>Web Search:</strong> Enable for current information</li>
+                <li><strong>Reasoning Mode:</strong> Get step-by-step explanations</li>
+            </ul>
+
+            <p style="margin-top: 1.5rem;">
+                <a href="../docs/USER_GUIDE.md" class="btn">Complete User Guide</a>
+            </p>
+        </section>
+
+        <section id="custom-providers" class="section">
+            <h2>🔌 Custom Providers</h2>
+            <p>
+                Xibe Chat supports custom API providers, allowing you to use your own API keys with various AI services.
+            </p>
+
+            <h3>Built-in Providers</h3>
+            <ul>
+                <li><strong>Xibe:</strong> Default provider with multiple models</li>
+                <li><strong>OpenAI:</strong> GPT-4, GPT-3.5, and other OpenAI models</li>
+                <li><strong>Anthropic:</strong> Claude 3.5 Sonnet, Haiku, and other models</li>
+                <li><strong>OpenRouter:</strong> Access to 100+ models from various providers</li>
+                <li><strong>Together AI:</strong> Open-source models with fast inference</li>
+                <li><strong>Groq:</strong> Ultra-fast inference for open models</li>
+            </ul>
+
+            <h3>Adding a Provider</h3>
+            <ol>
+                <li>Go to Settings → Custom Providers</li>
+                <li>Select a provider or add custom one</li>
+                <li>Enter your API key</li>
+                <li>Add models for the provider</li>
+                <li>Start using in chat</li>
+            </ol>
+
+            <p style="margin-top: 1.5rem;">
+                <a href="../docs/CUSTOM_PROVIDERS.md" class="btn">Custom Providers Guide</a>
+            </p>
+        </section>
+
+        <section id="development" class="section">
+            <h2>👨‍💻 Development</h2>
+            <h3>Prerequisites</h3>
+            <ul>
+                <li>Flutter SDK (>= 3.0.0)</li>
+                <li>Dart SDK (>= 3.0.0)</li>
+                <li>IDE (VS Code, Android Studio, or IntelliJ)</li>
+                <li>Platform-specific tools (Xcode for macOS/iOS, Android Studio for Android)</li>
+            </ul>
+
+            <h3>Development Setup</h3>
+            <div class="code-block">
+                <code>
+# Clone repository<br>
+git clone https://github.com/yourusername/xibe-chat.git<br>
+cd xibe-chat<br>
+<br>
+# Install dependencies<br>
+flutter pub get<br>
+<br>
+# Run in debug mode<br>
+flutter run<br>
+<br>
+# Hot reload: Press 'r' in terminal<br>
+# Hot restart: Press 'R' in terminal
+                </code>
+            </div>
+
+            <h3>Project Structure</h3>
+            <ul>
+                <li><code>lib/</code> - Main application code</li>
+                <li><code>lib/models/</code> - Data models</li>
+                <li><code>lib/providers/</code> - State management</li>
+                <li><code>lib/screens/</code> - UI screens</li>
+                <li><code>lib/services/</code> - API and services</li>
+                <li><code>lib/widgets/</code> - Reusable widgets</li>
+                <li><code>docs/</code> - Documentation</li>
+                <li><code>site/</code> - Documentation website</li>
+            </ul>
+
+            <h3>Building for Production</h3>
+            <div class="code-block">
+                <code>
+# Windows<br>
+flutter build windows --release<br>
+<br>
+# macOS<br>
+flutter build macos --release<br>
+<br>
+# Linux<br>
+flutter build linux --release<br>
+<br>
+# Android<br>
+flutter build apk --release<br>
+<br>
+# iOS<br>
+flutter build ios --release
+                </code>
+            </div>
+
+            <p style="margin-top: 1.5rem;">
+                <a href="../docs/DEVELOPMENT.md" class="btn">Development Guide</a>
+                <a href="../docs/ARCHITECTURE.md" class="btn btn-secondary">Architecture</a>
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>📖 Additional Documentation</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>Features Guide</h3>
+                    <p>Detailed documentation of all features</p>
+                    <a href="../docs/FEATURES.md" class="btn">Read More</a>
+                </div>
+
+                <div class="feature-card">
+                    <h3>API Reference</h3>
+                    <p>API integration and reference documentation</p>
+                    <a href="../docs/API_REFERENCE.md" class="btn">Read More</a>
+                </div>
+
+                <div class="feature-card">
+                    <h3>Architecture</h3>
+                    <p>Technical architecture and design patterns</p>
+                    <a href="../docs/ARCHITECTURE.md" class="btn">Read More</a>
+                </div>
+
+                <div class="feature-card">
+                    <h3>Contributing</h3>
+                    <p>How to contribute to the project</p>
+                    <a href="../docs/CONTRIBUTING.md" class="btn">Read More</a>
+                </div>
+
+                <div class="feature-card">
+                    <h3>FAQ</h3>
+                    <p>Frequently asked questions</p>
+                    <a href="../docs/FAQ.md" class="btn">Read More</a>
+                </div>
+
+                <div class="feature-card">
+                    <h3>Troubleshooting</h3>
+                    <p>Common issues and solutions</p>
+                    <a href="../docs/TROUBLESHOOTING.md" class="btn">Read More</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>🤝 Community & Support</h2>
+            <p>Get help, report issues, or contribute to the project:</p>
+            <ul>
+                <li><strong>GitHub Issues:</strong> <a href="https://github.com/yourusername/xibe-chat/issues">Report bugs or request features</a></li>
+                <li><strong>Discussions:</strong> <a href="https://github.com/yourusername/xibe-chat/discussions">Community discussions</a></li>
+                <li><strong>Donate:</strong> Support development via in-app donation feature</li>
+            </ul>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2024 Xibe Chat. Open Source Project.</p>
+        <p>Built with ❤️ using Flutter</p>
+    </footer>
+</body>
+</html>

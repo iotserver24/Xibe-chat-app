@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/memory.dart';
 import '../models/ai_profile.dart';
+import '../models/custom_provider.dart';
+import '../models/custom_model.dart';
 import '../services/database_service.dart';
 
 class SettingsProvider extends ChangeNotifier {
@@ -25,6 +27,8 @@ class SettingsProvider extends ChangeNotifier {
   int _cachedTotalMemoryCharacters = 0;
   List<AiProfile> _aiProfiles = [];
   String? _selectedAiProfileId;
+  List<CustomProvider> _customProviders = [];
+  List<CustomModel> _customModels = [];
 
   String? get apiKey => _apiKey;
   String? get systemPrompt => _systemPrompt;
@@ -39,11 +43,15 @@ class SettingsProvider extends ChangeNotifier {
   List<Memory> get memories => _memories;
   List<AiProfile> get aiProfiles => _aiProfiles;
   String? get selectedAiProfileId => _selectedAiProfileId;
+  List<CustomProvider> get customProviders => _customProviders;
+  List<CustomModel> get customModels => _customModels;
 
   SettingsProvider() {
     _loadSettings();
     _loadMemories();
     _loadAiProfiles();
+    _loadCustomProviders();
+    _loadCustomModels();
   }
 
   Future<void> _loadSettings() async {
@@ -264,5 +272,121 @@ class SettingsProvider extends ChangeNotifier {
       return selectedProfile.systemPrompt;
     }
     return _systemPrompt;
+  }
+
+  // Custom Provider management
+  Future<void> _loadCustomProviders() async {
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      final providersJson = _prefs?.getStringList('custom_providers') ?? [];
+      
+      if (providersJson.isEmpty) {
+        _customProviders = CustomProvider.getBuiltInProviders();
+        await _saveCustomProviders();
+      } else {
+        _customProviders = providersJson.map((json) => CustomProvider.fromJson(jsonDecode(json))).toList();
+      }
+      notifyListeners();
+    } catch (e) {
+      print('Error loading custom providers: $e');
+      _customProviders = CustomProvider.getBuiltInProviders();
+    }
+  }
+
+  Future<void> _saveCustomProviders() async {
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      final providersJson = _customProviders.map((p) => jsonEncode(p.toJson())).toList();
+      await _prefs?.setStringList('custom_providers', providersJson);
+    } catch (e) {
+      print('Error saving custom providers: $e');
+    }
+  }
+
+  Future<void> addCustomProvider(CustomProvider provider) async {
+    _customProviders.add(provider);
+    await _saveCustomProviders();
+    notifyListeners();
+  }
+
+  Future<void> updateCustomProvider(CustomProvider provider) async {
+    final index = _customProviders.indexWhere((p) => p.id == provider.id);
+    if (index != -1) {
+      _customProviders[index] = provider;
+      await _saveCustomProviders();
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteCustomProvider(String providerId) async {
+    _customProviders.removeWhere((p) => p.id == providerId);
+    _customModels.removeWhere((m) => m.providerId == providerId);
+    await _saveCustomProviders();
+    await _saveCustomModels();
+    notifyListeners();
+  }
+
+  CustomProvider? getProviderById(String providerId) {
+    try {
+      return _customProviders.firstWhere((p) => p.id == providerId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Custom Model management
+  Future<void> _loadCustomModels() async {
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      final modelsJson = _prefs?.getStringList('custom_models') ?? [];
+      _customModels = modelsJson.map((json) => CustomModel.fromJson(jsonDecode(json))).toList();
+      notifyListeners();
+    } catch (e) {
+      print('Error loading custom models: $e');
+      _customModels = [];
+    }
+  }
+
+  Future<void> _saveCustomModels() async {
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      final modelsJson = _customModels.map((m) => jsonEncode(m.toJson())).toList();
+      await _prefs?.setStringList('custom_models', modelsJson);
+    } catch (e) {
+      print('Error saving custom models: $e');
+    }
+  }
+
+  Future<void> addCustomModel(CustomModel model) async {
+    _customModels.add(model);
+    await _saveCustomModels();
+    notifyListeners();
+  }
+
+  Future<void> updateCustomModel(CustomModel model) async {
+    final index = _customModels.indexWhere((m) => m.id == model.id);
+    if (index != -1) {
+      _customModels[index] = model;
+      await _saveCustomModels();
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteCustomModel(String modelId) async {
+    _customModels.removeWhere((m) => m.id == modelId);
+    await _saveCustomModels();
+    notifyListeners();
+  }
+
+  CustomModel? getModelById(String modelId) {
+    try {
+      return _customModels.firstWhere((m) => m.id == modelId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  List<CustomModel> getModelsByProvider(String providerId) {
+    return _customModels.where((m) => m.providerId == providerId).toList();
   }
 }

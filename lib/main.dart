@@ -11,6 +11,7 @@ import 'screens/mcp_servers_screen.dart';
 import 'screens/memory_screen.dart';
 import 'screens/ai_profiles_screen.dart';
 import 'screens/splash_screen.dart';
+import 'screens/custom_providers_screen.dart';
 import 'services/mcp_config_service.dart';
 import 'services/update_service.dart';
 import 'services/deep_link_service.dart';
@@ -61,6 +62,7 @@ class XibeChatApp extends StatelessWidget {
             if (previous != null) {
               previous.updateApiKey(settings.apiKey);
               previous.updateSystemPrompt(settings.getCombinedSystemPrompt());
+              previous.updateCustomProviders(settings.customProviders, settings.customModels);
               return previous;
             }
             return ChatProvider(
@@ -94,6 +96,7 @@ class XibeChatApp extends StatelessWidget {
               '/mcp-servers': (context) => const McpServersScreen(),
               '/memory': (context) => const MemoryScreen(),
               '/ai-profiles': (context) => const AiProfilesScreen(),
+              '/custom-providers': (context) => const CustomProvidersScreen(),
             },
             onUnknownRoute: (settings) {
               // Handle unknown routes - always return to home

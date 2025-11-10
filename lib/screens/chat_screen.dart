@@ -101,7 +101,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   chatProvider.setSelectedModel(model);
                 },
                 itemBuilder: (BuildContext context) {
-                  if (chatProvider.availableModels.isEmpty) {
+                  final allModels = chatProvider.getAllModels();
+                  if (allModels.isEmpty) {
                     return const [
                       PopupMenuItem<String>(
                         enabled: false,
@@ -109,10 +110,10 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ];
                   }
-                  return chatProvider.availableModels.map((model) {
-                    final isSelected = chatProvider.selectedModel == model.name;
+                  return allModels.map((model) {
+                    final isSelected = chatProvider.selectedModel == model['id'];
                     return PopupMenuItem<String>(
-                      value: model.name,
+                      value: model['id'],
                       child: Row(
                         children: [
                           if (isSelected)
@@ -123,13 +124,13 @@ class _ChatScreenState extends State<ChatScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  model.name,
+                                  model['name'] ?? '',
                                   style: TextStyle(
                                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                   ),
                                 ),
                                 Text(
-                                  model.description,
+                                  model['provider'] ?? '',
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: Colors.grey,
@@ -513,7 +514,8 @@ class _ChatScreenState extends State<ChatScreen> {
                               chatProvider.setSelectedModel(model);
                             },
                             itemBuilder: (BuildContext context) {
-                              if (chatProvider.availableModels.isEmpty) {
+                              final allModels = chatProvider.getAllModels();
+                              if (allModels.isEmpty) {
                                 return [
                                   const PopupMenuItem<String>(
                                     enabled: false,
@@ -521,10 +523,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                   ),
                                 ];
                               }
-                              return chatProvider.availableModels.map((model) {
-                                final isSelected = model.name == chatProvider.selectedModel;
+                              return allModels.map((model) {
+                                final isSelected = model['id'] == chatProvider.selectedModel;
                                 return PopupMenuItem<String>(
-                                  value: model.name,
+                                  value: model['id'],
                                   child: Row(
                                     children: [
                                       if (isSelected)
@@ -538,13 +540,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Text(
-                                              model.name,
+                                              model['name'] ?? '',
                                               style: TextStyle(
                                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                               ),
                                             ),
                                             Text(
-                                              model.description,
+                                              model['provider'] ?? '',
                                               style: const TextStyle(
                                                 fontSize: 11,
                                                 color: Colors.grey,
