@@ -43,6 +43,23 @@ class ChatProvider extends ChangeNotifier {
   String? get pendingPrompt => _pendingPrompt;
   
   bool get selectedModelSupportsVision {
+    // Check if it's a custom model first
+    final customModel = _customModels.firstWhere(
+      (m) => m.modelId == _selectedModel,
+      orElse: () => CustomModel(
+        id: '',
+        name: '',
+        modelId: '',
+        providerId: '',
+        description: '',
+      ),
+    );
+    
+    if (customModel.modelId.isNotEmpty) {
+      return customModel.supportsVision;
+    }
+    
+    // Otherwise check Xibe models
     final model = _availableModels.firstWhere(
       (m) => m.name == _selectedModel,
       orElse: () => AiModel(
@@ -184,7 +201,7 @@ class ChatProvider extends ChangeNotifier {
         ),
       );
       models.add({
-        'id': customModel.id,
+        'id': customModel.modelId,
         'name': customModel.name,
         'provider': provider.name,
       });
@@ -531,7 +548,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
       
       // Check if selectedModel is a custom model
       final customModel = _customModels.firstWhere(
-        (m) => m.id == _selectedModel,
+        (m) => m.modelId == _selectedModel,
         orElse: () => CustomModel(
           id: '',
           name: '',
@@ -548,7 +565,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
       
       Stream<String> responseStream;
       
-      if (customModel.id.isNotEmpty) {
+      if (customModel.modelId.isNotEmpty) {
         // Use custom provider
         final provider = _customProviders.firstWhere(
           (p) => p.id == customModel.providerId,
