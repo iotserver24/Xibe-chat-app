@@ -200,7 +200,7 @@ jobs:
           Write-Host "Installing NSIS and ImageMagick via Chocolatey..."
           choco install nsis imagemagick -y --no-progress
           
-          Write-Host "Verifying NSIS installation..."
+          Write-Host "`nVerifying NSIS installation..."
           # Check common NSIS installation paths
           $nsisPaths = @(
             "C:\Program Files (x86)\NSIS\makensis.exe",
@@ -209,21 +209,37 @@ jobs:
             "$env:ProgramFiles\NSIS\makensis.exe"
           )
           
-          $nsisFound = $false
+          $nsisPath = $null
           foreach ($path in $nsisPaths) {
             if (Test-Path $path) {
               Write-Host "✅ NSIS found at: $path"
               & $path /VERSION
-              $nsisFound = $true
+              $nsisPath = $path
               break
             }
           }
           
-          if (-not $nsisFound) {
-            Write-Host "❌ NSIS not found in any expected location"
-            Write-Host "Searching for NSIS installation..."
-            Get-ChildItem -Path "C:\Program Files*" -Filter "makensis.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 5 | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+          if (-not $nsisPath) {
+            Write-Host "⚠️  NSIS not found in expected locations, searching..."
+            $searchResults = Get-ChildItem -Path "C:\Program Files*" -Filter "makensis.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($searchResults) {
+              $nsisPath = $searchResults.FullName
+              Write-Host "✅ Found NSIS at: $nsisPath"
+            } else {
+              Write-Host "❌ NSIS installation failed"
+              exit 1
+            }
           }
+          
+          # Add NSIS directory to PATH for subsequent steps
+          $nsisDir = Split-Path -Parent $nsisPath
+          Write-Host "`nAdding NSIS to PATH: $nsisDir"
+          echo "$nsisDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          
+          # Also set for current session
+          $env:PATH = "$nsisDir;$env:PATH"
+          
+          Write-Host "`n✅ NSIS installation verified and added to PATH"
         shell: powershell
 
       - name: Convert logo to NSIS format
@@ -327,43 +343,78 @@ jobs:
           }
           
           if ($missingFiles.Count -gt 0) {
-            Write-Host "Warning: Missing files for NSIS: $($missingFiles -join ', ')"
+            Write-Host "⚠️  Warning: Missing files for NSIS: $($missingFiles -join ', ')"
             Write-Host "NSIS may use default images"
           } else {
-            Write-Host "All required files present for NSIS installer"
+            Write-Host "✅ All required files present for NSIS installer"
           }
           
-          # Find NSIS installation
-          $nsisPaths = @(
-            "C:\Program Files (x86)\NSIS\makensis.exe",
-            "C:\Program Files\NSIS\makensis.exe",
-            "$env:ProgramFiles(x86)\NSIS\makensis.exe",
-            "$env:ProgramFiles\NSIS\makensis.exe"
-          )
-          
+          # Try to find NSIS using 'where' command first (checks PATH)
+          Write-Host "`nLocating NSIS..."
           $nsisPath = $null
-          foreach ($path in $nsisPaths) {
-            if (Test-Path $path) {
-              $nsisPath = $path
+          
+          try {
+            $whereResult = where.exe makensis.exe 2>$null
+            if ($whereResult -and (Test-Path $whereResult[0])) {
+              $nsisPath = $whereResult[0]
+              Write-Host "✅ Found NSIS in PATH: $nsisPath"
+            }
+          } catch {
+            Write-Host "NSIS not found in PATH, checking standard locations..."
+          }
+          
+          # Fallback to checking standard locations
+          if (-not $nsisPath) {
+            $nsisPaths = @(
+              "C:\Program Files (x86)\NSIS\makensis.exe",
+              "C:\Program Files\NSIS\makensis.exe",
+              "$env:ProgramFiles(x86)\NSIS\makensis.exe",
+              "$env:ProgramFiles\NSIS\makensis.exe"
+            )
+            
+            foreach ($path in $nsisPaths) {
+              if (Test-Path $path) {
+                $nsisPath = $path
+                Write-Host "✅ Found NSIS at: $nsisPath"
+                break
+              }
+            }
+          }
+          
+          # Last resort: search the filesystem
+          if (-not $nsisPath) {
+            Write-Host "⚠️  Performing filesystem search for NSIS..."
+            $searchResults = Get-ChildItem -Path "C:\Program Files*" -Filter "makensis.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($searchResults) {
+              $nsisPath = $searchResults.FullName
               Write-Host "✅ Found NSIS at: $nsisPath"
-              break
             }
           }
           
           if ($nsisPath) {
-            Write-Host "Building NSIS installer..."
+            Write-Host "`nBuilding NSIS installer..."
+            Write-Host "Using: $nsisPath"
             & $nsisPath xibe-chat-installer.nsi
             
             if ($LASTEXITCODE -eq 0) {
               Write-Host "✅ NSIS installer created successfully"
+              
+              # Verify the installer was created
+              $expectedInstaller = "xibe-chat-installer-v${{ inputs.version }}-${{ inputs.build_number }}.exe"
+              if (Test-Path $expectedInstaller) {
+                $installerSize = (Get-Item $expectedInstaller).Length / 1MB
+                Write-Host "✅ Installer file exists: $expectedInstaller ($([math]::Round($installerSize, 2)) MB)"
+              } else {
+                Write-Host "⚠️  Warning: Installer executable not found at expected location"
+              }
             } else {
               Write-Host "❌ NSIS installer build failed with exit code: $LASTEXITCODE"
               exit 1
             }
           } else {
-            Write-Host "❌ NSIS not found in any expected location"
-            Write-Host "Searched paths:"
-            $nsisPaths | ForEach-Object { Write-Host "  - $_" }
+            Write-Host "❌ NSIS not found in any location"
+            Write-Host "This should not happen as NSIS was installed in a previous step."
+            Write-Host "Please check the 'Install NSIS and ImageMagick' step logs."
             exit 1
           }
         shell: powershell
