@@ -9,7 +9,7 @@ import 'dart:io';
 import '../services/e2b_service.dart';
 import '../services/codesandbox_service.dart';
 import '../screens/codesandbox_preview_screen.dart';
-import '../screens/split_view_preview_screen.dart';
+import '../screens/desktop_preview_overlay.dart';
 
 class CodeBlock extends StatefulWidget {
   final String code;
@@ -216,21 +216,26 @@ class _CodeBlockState extends State<CodeBlock> {
 
       setState(() => _isCreatingPreview = false);
 
-      // Check if we're on desktop and if the screen is wide enough for split view
+      // Check if we're on desktop
       final isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
       final screenWidth = MediaQuery.of(context).size.width;
-      final useSplitView = isDesktop && screenWidth > 1000;
+      final useOverlay = isDesktop && screenWidth > 1000;
 
-      if (useSplitView) {
-        // Use split-view for desktop with wide screens
+      if (useOverlay) {
+        // Use right-side overlay for desktop with wide screens
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => SplitViewPreviewScreen(
-              embedUrl: preview.embedUrl,
-              previewUrl: preview.previewUrl,
-              title: 'Code Preview',
-              framework: preview.framework,
-            ),
+          PageRouteBuilder(
+            opaque: false, // Makes the route transparent
+            barrierDismissible: true,
+            barrierColor: Colors.transparent,
+            pageBuilder: (context, animation, secondaryAnimation) {
+              return DesktopPreviewOverlay(
+                embedUrl: preview.embedUrl,
+                previewUrl: preview.previewUrl,
+                title: 'Code Preview',
+                framework: preview.framework,
+              );
+            },
           ),
         );
       } else {
