@@ -44,8 +44,8 @@
             <ul class="space-y-2">
               <li><a href="#ai-models" class="block text-sm text-slate-300 hover:text-white transition-colors">AI Models</a></li>
               <li><a href="#profiles" class="block text-sm text-slate-300 hover:text-white transition-colors">Profiles</a></li>
-              <li><a href="#deep-links" class="block text-sm text-slate-300 hover:text-white transition-colors">Deep Links</a></li>
               <li><a href="#code-execution" class="block text-sm text-slate-300 hover:text-white transition-colors">Code Execution</a></li>
+              <li><a href="#privacy" class="block text-sm text-slate-300 hover:text-white transition-colors">Privacy & Security</a></li>
             </ul>
           </div>
           <div>
@@ -330,60 +330,69 @@
             </div>
           </section>
 
-          <!-- Deep Links -->
-          <section id="deep-links">
+          <!-- Privacy & Security -->
+          <section id="privacy">
             <h2 class="text-3xl font-bold text-white mb-6 flex items-center gap-3">
               <span class="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
                 <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </span>
-              Deep Links
+              Privacy & Security
             </h2>
             
-            <p class="text-slate-400 mb-6">Deep links allow you to launch Xibe Chat with specific actions pre-configured.</p>
+            <p class="text-slate-400 mb-6">Xibe Chat is designed with privacy as a core principle. Your data stays on your device.</p>
             
             <div class="space-y-6">
+              <div class="p-6 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20">
+                <h3 class="text-xl font-semibold text-white mb-4">Local-First Architecture</h3>
+                <ul class="space-y-3 text-slate-400">
+                  <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-green-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    All conversations stored locally in SQLite database
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-green-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    No cloud sync or external data collection
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-green-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    Complete control over your data - export or delete anytime
+                  </li>
+                </ul>
+              </div>
+
               <div class="p-6 rounded-xl bg-slate-900/50 border border-slate-800">
-                <h3 class="text-xl font-semibold text-white mb-4">URL Schemes</h3>
-                <div class="space-y-4">
-                  <div>
-                    <p class="text-sm text-slate-500 mb-2">Open new chat:</p>
-                    <code class="block p-3 rounded bg-slate-800/50 text-cyan-400">xibechat://new</code>
-                  </div>
-                  <div>
-                    <p class="text-sm text-slate-500 mb-2">Open with message:</p>
-                    <code class="block p-3 rounded bg-slate-800/50 text-purple-400">xibechat://mes/YOUR_MESSAGE_HERE</code>
-                  </div>
-                  <div>
-                    <p class="text-sm text-slate-500 mb-2">Open settings:</p>
-                    <code class="block p-3 rounded bg-slate-800/50 text-blue-400">xibechat://settings</code>
-                  </div>
-                </div>
+                <h3 class="text-xl font-semibold text-white mb-4">API Key Security</h3>
+                <p class="text-slate-400 mb-4">Your API keys are stored securely on your device:</p>
+                <ul class="space-y-2 text-slate-400">
+                  <li class="flex items-start gap-2">
+                    <span class="text-blue-400">•</span>
+                    Never transmitted to Xibe Chat servers (we don't have any!)
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-blue-400">•</span>
+                    Used only to authenticate directly with AI providers
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-blue-400">•</span>
+                    Stored in encrypted local storage
+                  </li>
+                </ul>
               </div>
 
               <div class="p-6 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
-                <h3 class="text-lg font-semibold text-white mb-3">Use Cases</h3>
-                <ul class="space-y-3 text-slate-400">
-                  <li class="flex items-start gap-2">
-                    <svg class="w-5 h-5 text-indigo-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Add deep links in documentation to help users ask AI about topics
-                  </li>
-                  <li class="flex items-start gap-2">
-                    <svg class="w-5 h-5 text-indigo-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                    Share prompts with team members via Slack, email, or other tools
-                  </li>
-                  <li class="flex items-start gap-2">
-                    <svg class="w-5 h-5 text-indigo-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Create QR codes that open specific conversations
-                  </li>
-                </ul>
+                <h3 class="text-lg font-semibold text-white mb-3">Open Source Transparency</h3>
+                <p class="text-slate-400">
+                  Xibe Chat is 100% open source. You can review the code on <a href="https://github.com/iotserver24/Xibe-chat-app" target="_blank" class="text-blue-400 hover:text-blue-300 underline">GitHub</a> to verify our privacy claims. 
+                  Read our full <NuxtLink to="/privacy" class="text-blue-400 hover:text-blue-300 underline">Privacy Policy</NuxtLink>.
+                </p>
               </div>
             </div>
           </section>
@@ -578,11 +587,15 @@
 
 <script setup>
 useHead({
-  title: 'Documentation - Xibe Chat',
+  title: 'Documentation - Xibe Chat | User Guide & Tutorials',
   meta: [
     {
       name: 'description',
-      content: 'Complete documentation for Xibe Chat. Learn how to install, configure, and use all features including AI models, profiles, deep links, and more.',
+      content: 'Complete documentation for Xibe Chat. Learn how to install, configure, and use all features including AI models, profiles, code execution, privacy settings, and more.',
+    },
+    {
+      name: 'keywords',
+      content: 'Xibe Chat documentation, AI chat guide, user manual, setup guide, API configuration, AI models tutorial',
     },
   ],
 })

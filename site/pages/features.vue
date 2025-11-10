@@ -154,13 +154,13 @@
           </div>
         </section>
 
-        <!-- Deep Linking -->
+        <!-- Code Execution -->
         <section>
           <div class="flex flex-col md:flex-row items-center gap-12">
             <div class="flex-1">
-              <h2 class="text-4xl font-bold text-white mb-6">Deep Link Integration</h2>
+              <h2 class="text-4xl font-bold text-white mb-6">Code Execution & Preview</h2>
               <p class="text-lg text-slate-400 mb-6">
-                Share prompts and workflows seamlessly with deep linking support. Perfect for documentation, tutorials, and team collaboration.
+                Execute code in multiple programming languages and preview web UI components directly in the chat. Perfect for developers and learners.
               </p>
               <ul class="space-y-4">
                 <li class="flex items-start gap-3">
@@ -170,8 +170,8 @@
                     </svg>
                   </div>
                   <div>
-                    <h4 class="font-semibold text-white mb-1">Custom URI Scheme</h4>
-                    <p class="text-slate-400 text-sm">Launch the app with <code class="px-2 py-1 rounded bg-slate-800 text-blue-400">xibechat://</code> links</p>
+                    <h4 class="font-semibold text-white mb-1">Multi-Language Execution</h4>
+                    <p class="text-slate-400 text-sm">Run Python, JavaScript, TypeScript, Java, R, and Bash code safely</p>
                   </div>
                 </li>
                 <li class="flex items-start gap-3">
@@ -181,8 +181,8 @@
                     </svg>
                   </div>
                   <div>
-                    <h4 class="font-semibold text-white mb-1">HTTPS Deep Links</h4>
-                    <p class="text-slate-400 text-sm">Universal links that work from any web page</p>
+                    <h4 class="font-semibold text-white mb-1">Live UI Previews</h4>
+                    <p class="text-slate-400 text-sm">Preview React, Vue, Angular, Svelte, and HTML/CSS/JS instantly</p>
                   </div>
                 </li>
                 <li class="flex items-start gap-3">
@@ -192,8 +192,8 @@
                     </svg>
                   </div>
                   <div>
-                    <h4 class="font-semibold text-white mb-1">Pre-filled Prompts</h4>
-                    <p class="text-slate-400 text-sm">Share conversations with prompts ready to send</p>
+                    <h4 class="font-semibold text-white mb-1">Sandboxed Environment</h4>
+                    <p class="text-slate-400 text-sm">Secure isolated execution with E2B and CodeSandbox integration</p>
                   </div>
                 </li>
               </ul>
@@ -202,16 +202,16 @@
               <div class="p-6 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 backdrop-blur-sm">
                 <div class="space-y-3">
                   <div class="p-4 rounded-xl bg-slate-900/50">
-                    <p class="text-xs text-slate-500 mb-2">New chat</p>
-                    <code class="text-blue-400 text-sm break-all">xibechat://new</code>
+                    <p class="text-xs text-slate-500 mb-2">Python Execution</p>
+                    <code class="text-blue-400 text-sm break-all">print("Hello, World!")</code>
                   </div>
                   <div class="p-4 rounded-xl bg-slate-900/50">
-                    <p class="text-xs text-slate-500 mb-2">With prompt</p>
-                    <code class="text-purple-400 text-sm break-all">xibechat://mes/Explain quantum computing</code>
+                    <p class="text-xs text-slate-500 mb-2">JavaScript Execution</p>
+                    <code class="text-purple-400 text-sm break-all">console.log("AI Assistant")</code>
                   </div>
                   <div class="p-4 rounded-xl bg-slate-900/50">
-                    <p class="text-xs text-slate-500 mb-2">HTTPS link</p>
-                    <code class="text-cyan-400 text-sm break-all">https://xibechat.app/app/mes/Hello</code>
+                    <p class="text-xs text-slate-500 mb-2">React Preview</p>
+                    <code class="text-cyan-400 text-sm break-all">function App() &#123; return &lt;h1&gt;Hello&lt;/h1&gt; &#125;</code>
                   </div>
                 </div>
               </div>
@@ -433,11 +433,15 @@
 
 <script setup>
 useHead({
-  title: 'Features - Xibe Chat',
+  title: 'Features - Xibe Chat | AI Chat Application Features',
   meta: [
     {
       name: 'description',
-      content: 'Explore all the powerful features of Xibe Chat: multiple AI models, deep linking, customizable profiles, privacy-first architecture, and cross-platform support.',
+      content: 'Explore all the powerful features of Xibe Chat: multiple AI models, code execution, customizable profiles, privacy-first architecture, local storage, and cross-platform support for Windows, macOS, Linux, Android & iOS.',
+    },
+    {
+      name: 'keywords',
+      content: 'Xibe Chat features, AI chat features, multi-model AI, code execution, AI profiles, privacy-focused, local storage, cross-platform',
     },
   ],
 })
