@@ -41,7 +41,7 @@ class CustomProviderService {
       if (provider.type == 'anthropic') {
         final messages = [
           ...history.map((m) => {
-                'role': m.isUser ? 'user' : 'assistant',
+                'role': m.role,
                 'content': m.content,
               }),
           {'role': 'user', 'content': message},
