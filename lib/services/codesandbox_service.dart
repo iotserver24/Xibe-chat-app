@@ -100,7 +100,8 @@ class CodeSandboxService {
         
         // Construct the embed and preview URLs
         final embedUrl = 'https://codesandbox.io/embed/$sandboxId?view=preview&hidenavigation=1&theme=dark';
-        final previewUrl = 'https://codesandbox.io/s/$sandboxId';
+        // Use the actual preview URL (.csb.app domain) instead of editor URL
+        final previewUrl = 'https://$sandboxId.csb.app/';
         
         return CodeSandboxPreview(
           success: true,

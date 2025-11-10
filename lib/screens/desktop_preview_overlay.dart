@@ -3,42 +3,60 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io' show Platform;
-import 'chat_screen.dart';
 
-/// A split-view screen that shows the chat on the left
-/// and the CodeSandbox preview on the right (for desktop/larger screens)
-class SplitViewPreviewScreen extends StatefulWidget {
+/// Desktop overlay that shows preview on the right side of the screen
+class DesktopPreviewOverlay extends StatefulWidget {
   final String embedUrl;
   final String previewUrl;
   final String title;
   final String framework;
 
-  const SplitViewPreviewScreen({
+  const DesktopPreviewOverlay({
     super.key,
     required this.embedUrl,
     required this.previewUrl,
-    required this.title,
-    required this.framework,
+    this.title = 'Preview',
+    this.framework = 'Code',
   });
 
   @override
-  State<SplitViewPreviewScreen> createState() => _SplitViewPreviewScreenState();
+  State<DesktopPreviewOverlay> createState() => _DesktopPreviewOverlayState();
 }
 
-class _SplitViewPreviewScreenState extends State<SplitViewPreviewScreen> {
+class _DesktopPreviewOverlayState extends State<DesktopPreviewOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _slideController;
+  late Animation<Offset> _slideAnimation;
   bool _isLoading = true;
   late WebViewController? _webViewController;
+  double _widthFraction = 0.5; // Default to 50% of screen width
+  bool _isResizing = false;
 
   @override
   void initState() {
     super.initState();
-    
-    // Initialize WebView controller for mobile/desktop
-    if (!kIsWeb) {
+
+    _slideController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(1, 0), // Slide in from right
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeInOut,
+    ));
+
+    // Start the slide-in animation
+    _slideController.forward();
+
+    // Initialize WebView controller for desktop
+    if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
       _webViewController = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
         ..setBackgroundColor(const Color(0xFF0F0F0F))
-        // Enable better gesture recognition for scrolling
         ..enableZoom(true)
         ..setNavigationDelegate(
           NavigationDelegate(
@@ -60,12 +78,18 @@ class _SplitViewPreviewScreenState extends State<SplitViewPreviewScreen> {
             },
           ),
         );
-      
-      // Load the URL after a short delay to ensure WebView is ready
+
+      // Load the URL
       Future.delayed(const Duration(milliseconds: 100), () {
         _webViewController?.loadRequest(Uri.parse(widget.embedUrl));
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _slideController.dispose();
+    super.dispose();
   }
 
   Future<void> _openInBrowser() async {
@@ -97,37 +121,94 @@ class _SplitViewPreviewScreenState extends State<SplitViewPreviewScreen> {
     }
   }
 
+  void _close() {
+    _slideController.reverse().then((_) {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Responsive layout based on screen width
     final screenWidth = MediaQuery.of(context).size.width;
-    final isWideScreen = screenWidth > 1200;
-    
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      body: Row(
+    final previewWidth = screenWidth * _widthFraction;
+
+    return Material(
+      color: Colors.transparent,
+      child: Stack(
         children: [
-          // Left side - Chat/App content
-          Expanded(
-            // Adjust flex based on screen size
-            flex: isWideScreen ? 3 : 1,
-            child: const ChatScreen(),
+          // Dimmed background - tap to close
+          GestureDetector(
+            onTap: _close,
+            child: Container(
+              color: Colors.black.withOpacity(0.3),
+            ),
           ),
-          // Divider
-          Container(
-            width: 1,
-            color: Colors.white.withOpacity(0.1),
-          ),
-          // Right side - Preview
-          Expanded(
-            flex: isWideScreen ? 2 : 1,
-            child: Column(
-              children: [
-                _buildPreviewHeader(),
-                Expanded(
-                  child: _buildWebView(),
-                ),
-              ],
+          // Preview panel on the right
+          Align(
+            alignment: Alignment.centerRight,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  // Resize handle
+                  GestureDetector(
+                    onHorizontalDragUpdate: (details) {
+                      setState(() {
+                        _isResizing = true;
+                        // Calculate new width fraction
+                        final delta = -details.primaryDelta! / screenWidth;
+                        _widthFraction = (_widthFraction + delta).clamp(0.3, 0.8);
+                      });
+                    },
+                    onHorizontalDragEnd: (_) {
+                      setState(() => _isResizing = false);
+                    },
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.resizeLeftRight,
+                      child: Container(
+                        width: 8,
+                        height: double.infinity,
+                        color: Colors.transparent,
+                        child: Center(
+                          child: Container(
+                            width: 2,
+                            height: double.infinity,
+                            color: _isResizing
+                                ? const Color(0xFF10A37F)
+                                : Colors.white.withOpacity(0.2),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Preview content
+                  Container(
+                    width: previewWidth - 8,
+                    height: double.infinity,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0A0A0A),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.5),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        _buildHeader(),
+                        Expanded(
+                          child: _buildWebView(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -135,7 +216,7 @@ class _SplitViewPreviewScreenState extends State<SplitViewPreviewScreen> {
     );
   }
 
-  Widget _buildPreviewHeader() {
+  Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -220,7 +301,7 @@ class _SplitViewPreviewScreenState extends State<SplitViewPreviewScreen> {
           Tooltip(
             message: 'Close Preview',
             child: InkWell(
-              onTap: () => Navigator.of(context).pop(),
+              onTap: _close,
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding: const EdgeInsets.all(8),
@@ -242,53 +323,13 @@ class _SplitViewPreviewScreenState extends State<SplitViewPreviewScreen> {
   }
 
   Widget _buildWebView() {
-    if (kIsWeb) {
-      return Container(
-        color: const Color(0xFF0F0F0F),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.open_in_new,
-                color: Colors.white54,
-                size: 48,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Preview in Browser',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                widget.embedUrl,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
-                  fontSize: 12,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _openInBrowser,
-                icon: const Icon(Icons.open_in_browser),
-                label: const Text('Open in Browser'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Mobile and desktop platforms
     if (_webViewController != null) {
       return Stack(
         children: [
-          WebViewWidget(controller: _webViewController!),
+          Container(
+            color: const Color(0xFF0F0F0F),
+            child: WebViewWidget(controller: _webViewController!),
+          ),
           if (_isLoading)
             const Center(
               child: CircularProgressIndicator(
