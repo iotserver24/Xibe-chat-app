@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io' show Platform;
+import 'package:webview_windows/webview_windows.dart' as webview_windows;
 
 /// Desktop overlay that shows preview on the right side of the screen
 class DesktopPreviewOverlay extends StatefulWidget {
@@ -28,7 +29,16 @@ class _DesktopPreviewOverlayState extends State<DesktopPreviewOverlay>
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
   bool _isLoading = true;
-  late WebViewController? _webViewController;
+
+  // For mobile platforms (iOS, Android)
+  WebViewController? _mobileWebViewController;
+
+  // For Windows desktop
+  final webview_windows.WebviewController _windowsWebViewController =
+      webview_windows.WebviewController();
+  bool _isWindowsWebViewInitialized = false;
+  String? _webViewError;
+
   double _widthFraction = 0.5; // Default to 50% of screen width
   bool _isResizing = false;
 
@@ -52,43 +62,91 @@ class _DesktopPreviewOverlayState extends State<DesktopPreviewOverlay>
     // Start the slide-in animation
     _slideController.forward();
 
-    // Initialize WebView controller for desktop
-    if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
-      _webViewController = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setBackgroundColor(const Color(0xFF0F0F0F))
-        ..enableZoom(true)
-        ..setNavigationDelegate(
-          NavigationDelegate(
-            onPageStarted: (String url) {
-              if (mounted) {
-                setState(() => _isLoading = true);
-              }
-            },
-            onPageFinished: (String url) {
-              if (mounted) {
-                setState(() => _isLoading = false);
-              }
-            },
-            onWebResourceError: (WebResourceError error) {
-              debugPrint('WebView error: ${error.description}');
-              if (mounted) {
-                setState(() => _isLoading = false);
-              }
-            },
-          ),
-        );
+    // Initialize appropriate WebView based on platform
+    _initializeWebView();
+  }
 
-      // Load the URL
-      Future.delayed(const Duration(milliseconds: 100), () {
-        _webViewController?.loadRequest(Uri.parse(widget.embedUrl));
-      });
+  Future<void> _initializeWebView() async {
+    if (!kIsWeb) {
+      if (Platform.isWindows) {
+        // Initialize Windows WebView
+        try {
+          // Check if WebView2 runtime is available
+          final version =
+              await webview_windows.WebviewController.getWebViewVersion();
+          debugPrint('WebView2 version: $version');
+
+          if (version == null || version.isEmpty) {
+            throw Exception(
+                'WebView2 runtime is not installed. Please install Microsoft Edge WebView2 runtime.');
+          }
+
+          await _windowsWebViewController.initialize();
+          await _windowsWebViewController.loadUrl(widget.embedUrl);
+
+          _windowsWebViewController.loadingState.listen((state) {
+            if (mounted) {
+              setState(() {
+                _isLoading = state == webview_windows.LoadingState.loading;
+              });
+            }
+          });
+
+          if (mounted) {
+            setState(() {
+              _isWindowsWebViewInitialized = true;
+              _isLoading = false;
+            });
+          }
+        } catch (e) {
+          debugPrint('Error initializing Windows WebView: $e');
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _isWindowsWebViewInitialized = false;
+              _webViewError = e.toString();
+            });
+          }
+        }
+      } else if (Platform.isAndroid || Platform.isIOS) {
+        // Initialize mobile WebView
+        _mobileWebViewController = WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..setBackgroundColor(const Color(0xFF0F0F0F))
+          ..enableZoom(true)
+          ..setNavigationDelegate(
+            NavigationDelegate(
+              onPageStarted: (String url) {
+                if (mounted) {
+                  setState(() => _isLoading = true);
+                }
+              },
+              onPageFinished: (String url) {
+                if (mounted) {
+                  setState(() => _isLoading = false);
+                }
+              },
+              onWebResourceError: (WebResourceError error) {
+                debugPrint('WebView error: ${error.description}');
+                if (mounted) {
+                  setState(() => _isLoading = false);
+                }
+              },
+            ),
+          );
+
+        // Load the URL
+        await _mobileWebViewController?.loadRequest(Uri.parse(widget.embedUrl));
+      }
     }
   }
 
   @override
   void dispose() {
     _slideController.dispose();
+    if (!kIsWeb && Platform.isWindows && _isWindowsWebViewInitialized) {
+      _windowsWebViewController.dispose();
+    }
     super.dispose();
   }
 
@@ -160,7 +218,8 @@ class _DesktopPreviewOverlayState extends State<DesktopPreviewOverlay>
                         _isResizing = true;
                         // Calculate new width fraction
                         final delta = -details.primaryDelta! / screenWidth;
-                        _widthFraction = (_widthFraction + delta).clamp(0.3, 0.8);
+                        _widthFraction =
+                            (_widthFraction + delta).clamp(0.3, 0.8);
                       });
                     },
                     onHorizontalDragEnd: (_) {
@@ -323,31 +382,172 @@ class _DesktopPreviewOverlayState extends State<DesktopPreviewOverlay>
   }
 
   Widget _buildWebView() {
-    if (_webViewController != null) {
-      return Stack(
-        children: [
-          Container(
+    if (!kIsWeb) {
+      if (Platform.isWindows) {
+        // Windows WebView
+        if (_isWindowsWebViewInitialized) {
+          return Stack(
+            children: [
+              Container(
+                color: const Color(0xFF0F0F0F),
+                child: webview_windows.Webview(_windowsWebViewController),
+              ),
+              if (_isLoading)
+                const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFF10A37F),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        } else if (_webViewError != null) {
+          // Error initializing WebView
+          return Container(
             color: const Color(0xFF0F0F0F),
-            child: WebViewWidget(controller: _webViewController!),
-          ),
-          if (_isLoading)
-            const Center(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.red,
+                    size: 64,
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'WebView initialization failed',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      _webViewError!,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Make sure WebView2 runtime is installed',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: _openInBrowser,
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('Open in Browser'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10A37F),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        } else {
+          // Still initializing
+          return Container(
+            color: const Color(0xFF0F0F0F),
+            child: const Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(
                   Color(0xFF10A37F),
                 ),
               ),
             ),
-        ],
-      );
+          );
+        }
+      } else if (Platform.isAndroid || Platform.isIOS) {
+        // Mobile WebView
+        if (_mobileWebViewController != null) {
+          return Stack(
+            children: [
+              Container(
+                color: const Color(0xFF0F0F0F),
+                child: WebViewWidget(controller: _mobileWebViewController!),
+              ),
+              if (_isLoading)
+                const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFF10A37F),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        }
+      }
     }
 
+    // Fallback UI for unsupported platforms
     return Container(
       color: const Color(0xFF0F0F0F),
-      child: const Center(
-        child: Text(
-          'WebView not available',
-          style: TextStyle(color: Colors.white54),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.web,
+              color: Colors.white54,
+              size: 64,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Preview not available',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'WebView is not supported on this platform',
+              style: TextStyle(
+                color: Colors.white54,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: _openInBrowser,
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('Open in Browser'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10A37F),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
