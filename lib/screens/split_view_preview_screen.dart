@@ -38,6 +38,8 @@ class _SplitViewPreviewScreenState extends State<SplitViewPreviewScreen> {
       _webViewController = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
         ..setBackgroundColor(const Color(0xFF0F0F0F))
+        // Enable better gesture recognition for scrolling
+        ..enableZoom(true)
         ..setNavigationDelegate(
           NavigationDelegate(
             onPageStarted: (String url) {
@@ -97,13 +99,18 @@ class _SplitViewPreviewScreenState extends State<SplitViewPreviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Responsive layout based on screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 1200;
+    
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
       body: Row(
         children: [
           // Left side - Chat/App content
           Expanded(
-            flex: 1,
+            // Adjust flex based on screen size
+            flex: isWideScreen ? 3 : 1,
             child: const ChatScreen(),
           ),
           // Divider
@@ -113,7 +120,7 @@ class _SplitViewPreviewScreenState extends State<SplitViewPreviewScreen> {
           ),
           // Right side - Preview
           Expanded(
-            flex: 1,
+            flex: isWideScreen ? 2 : 1,
             child: Column(
               children: [
                 _buildPreviewHeader(),
@@ -191,8 +198,9 @@ class _SplitViewPreviewScreenState extends State<SplitViewPreviewScreen> {
           // Open in browser button
           Tooltip(
             message: 'Open in Browser',
-            child: GestureDetector(
+            child: InkWell(
               onTap: _openInBrowser,
+              borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -211,8 +219,9 @@ class _SplitViewPreviewScreenState extends State<SplitViewPreviewScreen> {
           // Close button
           Tooltip(
             message: 'Close Preview',
-            child: GestureDetector(
+            child: InkWell(
               onTap: () => Navigator.of(context).pop(),
+              borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(

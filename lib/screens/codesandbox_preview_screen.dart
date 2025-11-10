@@ -52,6 +52,8 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
       _webViewController = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
         ..setBackgroundColor(const Color(0xFF0F0F0F))
+        // Enable better gesture recognition for scrolling
+        ..enableZoom(true)
         ..setNavigationDelegate(
           NavigationDelegate(
             onPageStarted: (String url) {
@@ -84,10 +86,14 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
   }
 
   void _handleDragUpdate(DragUpdateDetails details) {
-    setState(() {
-      _dragOffset += details.primaryDelta ?? 0;
-      if (_dragOffset < 0) _dragOffset = 0; // Prevent dragging up
-    });
+    // Only handle drag if it's a significant downward motion
+    final delta = details.primaryDelta ?? 0;
+    if (delta > 0) {
+      setState(() {
+        _dragOffset += delta;
+        if (_dragOffset < 0) _dragOffset = 0;
+      });
+    }
   }
 
   void _handleDragEnd(DragEndDetails details) {
@@ -139,49 +145,50 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
       position: _slideAnimation,
       child: Scaffold(
         backgroundColor: const Color(0xFF0A0A0A),
-        body: GestureDetector(
-          // Only enable drag gestures on mobile
-          onVerticalDragUpdate: isDesktop ? null : _handleDragUpdate,
-          onVerticalDragEnd: isDesktop ? null : _handleDragEnd,
-          child: SafeArea(
-            child: Column(
-              children: [
-                // Custom app bar with drag handle (only show drag handle on mobile)
-                _buildAppBar(showDragHandle: !isDesktop),
-                // WebView content
-                Expanded(
-                  child: Transform.translate(
-                    offset: Offset(0, _dragOffset),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0F0F0F),
-                        borderRadius: isDesktop 
-                            ? BorderRadius.zero 
-                            : const BorderRadius.vertical(top: Radius.circular(20)),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: isDesktop 
-                            ? BorderRadius.zero 
-                            : const BorderRadius.vertical(top: Radius.circular(20)),
-                        child: Stack(
-                          children: [
-                            _buildWebView(),
-                            if (_isLoading)
-                              const Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Color(0xFF10A37F),
-                                  ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Custom app bar with drag handle (only show drag handle on mobile)
+              // Apply gesture detector only to the app bar, not the webview
+              GestureDetector(
+                // Only enable drag gestures on mobile and on the app bar
+                onVerticalDragUpdate: isDesktop ? null : _handleDragUpdate,
+                onVerticalDragEnd: isDesktop ? null : _handleDragEnd,
+                child: _buildAppBar(showDragHandle: !isDesktop),
+              ),
+              // WebView content - no gesture detector here to allow scrolling
+              Expanded(
+                child: Transform.translate(
+                  offset: Offset(0, _dragOffset),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F0F0F),
+                      borderRadius: isDesktop 
+                          ? BorderRadius.zero 
+                          : const BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: isDesktop 
+                          ? BorderRadius.zero 
+                          : const BorderRadius.vertical(top: Radius.circular(20)),
+                      child: Stack(
+                        children: [
+                          _buildWebView(),
+                          if (_isLoading)
+                            const Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF10A37F),
                                 ),
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -189,8 +196,15 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
   }
 
   Widget _buildAppBar({bool showDragHandle = true}) {
+    // Responsive sizing based on screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmallScreen ? 12 : 16,
+        vertical: 12,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFF0A0A0A),
         border: Border(
@@ -216,44 +230,45 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
           // Title bar
           Row(
             children: [
-              // Framework badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10A37F).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: const Color(0xFF10A37F).withOpacity(0.4),
-                    width: 1,
+              // Framework badge - hide on very small screens
+              if (!isSmallScreen || screenWidth > 360)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10A37F).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: const Color(0xFF10A37F).withOpacity(0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.code,
+                        size: 14,
+                        color: Color(0xFF10A37F),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        widget.framework.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF10A37F),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.code,
-                      size: 14,
-                      color: Color(0xFF10A37F),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      widget.framework.toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF10A37F),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
+              if (!isSmallScreen || screenWidth > 360) const SizedBox(width: 12),
               // Title
               Expanded(
                 child: Text(
                   widget.title,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 14 : 16,
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
@@ -261,22 +276,23 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               // Open in browser button
               Tooltip(
                 message: 'Open in Browser',
-                child: GestureDetector(
+                child: InkWell(
                   onTap: _openInBrowser,
+                  borderRadius: BorderRadius.circular(8),
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.open_in_new,
                       color: Colors.white,
-                      size: 20,
+                      size: isSmallScreen ? 18 : 20,
                     ),
                   ),
                 ),
@@ -285,18 +301,19 @@ class _CodeSandboxPreviewScreenState extends State<CodeSandboxPreviewScreen>
               // Close button
               Tooltip(
                 message: 'Close Preview',
-                child: GestureDetector(
+                child: InkWell(
                   onTap: () => Navigator.of(context).pop(),
+                  borderRadius: BorderRadius.circular(8),
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.close,
                       color: Colors.white,
-                      size: 20,
+                      size: isSmallScreen ? 18 : 20,
                     ),
                   ),
                 ),
