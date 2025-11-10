@@ -1,75 +1,92 @@
-# Nuxt Minimal Starter
+# Xibe Chat Documentation Website
 
-# Xibe Chat Website
+This is the static documentation website for Xibe Chat.
 
-This is the official website for Xibe Chat, built with Nuxt 3.
+## Viewing the Website
+
+### Local Development
+
+Simply open `index.html` in your web browser:
+
+```bash
+# Option 1: Direct file open
+open index.html  # macOS
+xdg-open index.html  # Linux
+start index.html  # Windows
+
+# Option 2: Using Python HTTP server
+python3 -m http.server 8000
+# Then visit http://localhost:8000
+
+# Option 3: Using Node.js http-server
+npx http-server
+# Then visit http://localhost:8080
+```
+
+### Deploying
+
+#### GitHub Pages
+
+1. Push to repository
+2. Go to Settings → Pages
+3. Select source branch
+4. Site will be available at `https://yourusername.github.io/xibe-chat`
+
+#### Netlify
+
+1. Drag and drop the `site` folder to Netlify
+2. Or connect GitHub repository
+3. Site will be deployed automatically
+
+#### Vercel
+
+1. Install Vercel CLI: `npm i -g vercel`
+2. Run `vercel` in this directory
+3. Follow the prompts
+
+## Structure
+
+- `index.html` - Main documentation page
+- `../docs/` - Markdown documentation files
+- Links to detailed guides in the docs folder
 
 ## Features
 
-- 📱 **Deep Link Integration**: Handles deep links to open the Xibe Chat app
-- 🎨 **Modern UI**: Built with Tailwind CSS
-- 🔗 **URL Routing**: 
-  - `/app/new` - Open app with new chat
-  - `/app/mes/{prompt}` - Open app with pre-filled message
-  - `/app/settings` - Open app settings
-- 📖 **App Information**: Showcases all features of Xibe Chat
+- Responsive design (mobile-friendly)
+- Dark theme matching app design
+- Smooth animations and transitions
+- Easy navigation
+- Feature showcase
+- Installation guides
+- User documentation
+- Developer resources
 
-## Setup
+## Customization
 
-Install dependencies:
+Edit `index.html` to customize:
 
-```bash
-npm install
-```
+- Colors (see CSS variables in `<style>`)
+- Content sections
+- Feature cards
+- Links and navigation
 
-## Development
+## Maintenance
 
-Start the development server on `http://localhost:3000`:
+When updating documentation:
 
-```bash
-npm run dev
-```
+1. Update markdown files in `../docs/`
+2. Update `index.html` if adding new sections
+3. Test responsive design
+4. Deploy changes
 
-## Production
+## Technologies
 
-Build the application for production:
+- Pure HTML, CSS, JavaScript
+- No build step required
+- No dependencies
+- Works offline
+- Fast and lightweight
 
-```bash
-npm run build
-```
+---
 
-Generate static site:
-
-```bash
-npm run generate
-```
-
-Preview production build:
-
-```bash
-npm run preview
-```
-
-## Deep Link Examples
-
-When the app is installed, these URLs will open the app:
-
-- `https://xibechat.app/app/new` - New chat
-- `https://xibechat.app/app/mes/Tell%20me%20a%20joke` - New chat with prompt
-- `https://xibechat.app/app/settings` - Settings screen
-- `xibechat://mes/What%20is%20AI?` - Custom URI scheme
-
-## Deployment
-
-This site can be deployed to:
-- Vercel
-- Netlify
-- GitHub Pages (with static generation)
-- Any static hosting provider
-
-For static generation, use:
-```bash
-npm run generate
-```
-
-The output will be in the `.output/public` directory.
+For more information, see the main [README](../docs/README.md).

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import '../models/chat.dart';
 import '../models/message.dart';
 import '../models/ai_model.dart';
+import '../models/custom_provider.dart';
+import '../models/custom_model.dart';
 import '../services/database_service.dart';
 import '../services/api_service.dart';
+import '../services/custom_provider_service.dart';
 import '../services/mcp_client_service.dart';
 
 class ChatProvider extends ChangeNotifier {
@@ -19,6 +22,8 @@ class ChatProvider extends ChangeNotifier {
   String? _error;
   String _streamingContent = '';
   List<AiModel> _availableModels = [];
+  List<CustomProvider> _customProviders = [];
+  List<CustomModel> _customModels = [];
   String _selectedModel = 'gemini'; // Default model
   String? _systemPrompt;
   String Function()? _memoryContextGetter;
@@ -147,6 +152,45 @@ class ChatProvider extends ChangeNotifier {
   void setSelectedModel(String model) {
     _selectedModel = model;
     notifyListeners();
+  }
+
+  void updateCustomProviders(List<CustomProvider> providers, List<CustomModel> models) {
+    _customProviders = providers;
+    _customModels = models;
+    _loadModels();
+    notifyListeners();
+  }
+
+  List<Map<String, String>> getAllModels() {
+    final models = <Map<String, String>>[];
+    
+    for (var xibeModel in _availableModels) {
+      models.add({
+        'id': xibeModel.name,
+        'name': xibeModel.description.isNotEmpty ? xibeModel.description : xibeModel.name,
+        'provider': 'Xibe',
+      });
+    }
+    
+    for (var customModel in _customModels) {
+      final provider = _customProviders.firstWhere(
+        (p) => p.id == customModel.providerId,
+        orElse: () => CustomProvider(
+          id: '',
+          name: 'Unknown',
+          baseUrl: '',
+          apiKey: '',
+          type: 'openai',
+        ),
+      );
+      models.add({
+        'id': customModel.id,
+        'name': customModel.name,
+        'provider': provider.name,
+      });
+    }
+    
+    return models;
   }
 
   void setPendingPrompt(String? prompt) {
@@ -436,18 +480,64 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         modelToUse = 'gemini-search';
       }
       
+      // Check if selectedModel is a custom model
+      final customModel = _customModels.firstWhere(
+        (m) => m.id == _selectedModel,
+        orElse: () => CustomModel(
+          id: '',
+          name: '',
+          modelId: '',
+          providerId: '',
+          description: '',
+        ),
+      );
+      
       // Stream the response
       String fullResponseContent = '';
       String streamingDisplayContent = '';
       bool firstChunk = true;
-      await for (final chunk in _apiService.sendMessageStream(
-        message: content,
-        history: historyForApi,
-        model: modelToUse,
-        systemPrompt: enhancedSystemPrompt,
-        reasoning: reasoning,
-        mcpTools: _mcpClientService.getAllTools(),
-      )) {
+      
+      Stream<String> responseStream;
+      
+      if (customModel.id.isNotEmpty) {
+        // Use custom provider
+        final provider = _customProviders.firstWhere(
+          (p) => p.id == customModel.providerId,
+          orElse: () => CustomProvider(
+            id: '',
+            name: '',
+            baseUrl: '',
+            apiKey: '',
+            type: 'openai',
+          ),
+        );
+        
+        if (provider.id.isEmpty) {
+          throw Exception('Provider not found for custom model');
+        }
+        
+        final providerService = CustomProviderService(provider: provider);
+        responseStream = providerService.sendMessageStream(
+          message: content,
+          history: historyForApi,
+          modelId: customModel.modelId,
+          systemPrompt: enhancedSystemPrompt,
+          reasoning: reasoning,
+          mcpTools: _mcpClientService.getAllTools(),
+        );
+      } else {
+        // Use default Xibe API
+        responseStream = _apiService.sendMessageStream(
+          message: content,
+          history: historyForApi,
+          model: modelToUse,
+          systemPrompt: enhancedSystemPrompt,
+          reasoning: reasoning,
+          mcpTools: _mcpClientService.getAllTools(),
+        );
+      }
+      
+      await for (final chunk in responseStream) {
         // On first chunk, switch from loading to streaming
         if (firstChunk) {
           _isStreaming = true;
