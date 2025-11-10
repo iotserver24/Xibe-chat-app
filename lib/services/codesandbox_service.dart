@@ -133,6 +133,7 @@ class CodeSandboxService {
     String framework,
   ) {
     // If code already contains multiple file markers, parse them
+    // Support both JavaScript (//) and CSS (/* */) comment styles
     if (code.contains('// File:') || code.contains('/* File:')) {
       return _parseMultiFileCode(code, framework);
     }
@@ -157,17 +158,27 @@ class CodeSandboxService {
   /// Parse multi-file code with framework-specific structure
   static Map<String, Map<String, String>> _parseMultiFileCode(String code, String framework) {
     final userFiles = <String, String>{};
-    final fileRegex = RegExp(
-      r'//\s*File:\s*(.+?)\n(.*?)(?=//\s*File:|$)',
-      dotAll: true,
-      multiLine: true,
-    );
-
-    // Extract all user-defined files
-    for (final match in fileRegex.allMatches(code)) {
-      final fileName = match.group(1)?.trim() ?? 'index.js';
-      final content = match.group(2)?.trim() ?? '';
-      userFiles[fileName] = content;
+    
+    // Split by file markers (both // File: and /* File: */ styles)
+    // Use lookahead to split while keeping the marker in each part
+    final parts = code.split(RegExp(r'(?=(?://|/\*)\s*File:)'));
+    
+    for (final part in parts) {
+      final trimmed = part.trim();
+      if (trimmed.isEmpty) continue;
+      
+      // Match the file marker at the start of this part
+      final match = RegExp(
+        r'^(?://\s*File:\s*|/\*\s*File:\s*)(.+?)(?:\s*\*/|)\n',
+        multiLine: true,
+      ).firstMatch(trimmed);
+      
+      if (match != null) {
+        final fileName = match.group(1)?.trim() ?? 'index.js';
+        // Get everything after the file marker line
+        final content = trimmed.substring(match.end).trim();
+        userFiles[fileName] = content;
+      }
     }
 
     // If no files were extracted, fallback to single file
