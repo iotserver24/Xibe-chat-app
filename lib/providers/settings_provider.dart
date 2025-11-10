@@ -16,6 +16,7 @@ class SettingsProvider extends ChangeNotifier {
   String? _apiKey;
   String? _systemPrompt;
   String? _defaultModel; // Default model for new chats
+  String? _imageGenerationModel; // Image generation model
   String? _e2bApiKey; // Kept for backward compatibility, not required anymore
   String? _e2bBackendUrl; // Backend URL (optional - can use env var)
   double _temperature = 0.7;
@@ -34,6 +35,7 @@ class SettingsProvider extends ChangeNotifier {
   String? get apiKey => _apiKey;
   String? get systemPrompt => _systemPrompt;
   String? get defaultModel => _defaultModel;
+  String get imageGenerationModel => _imageGenerationModel ?? 'flux';
   String? get e2bApiKey =>
       _e2bApiKey; // Deprecated - kept for backward compatibility
   String? get e2bBackendUrl => _e2bBackendUrl;
@@ -62,6 +64,7 @@ class SettingsProvider extends ChangeNotifier {
     _apiKey = _prefs?.getString('xibe_api_key');
     _systemPrompt = _prefs?.getString('system_prompt');
     _defaultModel = _prefs?.getString('default_model');
+    _imageGenerationModel = _prefs?.getString('image_generation_model');
     _e2bApiKey = _prefs?.getString('e2b_api_key'); // Deprecated
     _e2bBackendUrl = _prefs?.getString('e2b_backend_url');
     _temperature = _prefs?.getDouble('temperature') ?? 0.7;
@@ -100,6 +103,12 @@ class SettingsProvider extends ChangeNotifier {
     } else {
       await _prefs?.remove('default_model');
     }
+    notifyListeners();
+  }
+
+  Future<void> setImageGenerationModel(String model) async {
+    _imageGenerationModel = model;
+    await _prefs?.setString('image_generation_model', model);
     notifyListeners();
   }
 

@@ -5,7 +5,12 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 
 class ChatInput extends StatefulWidget {
-  final Function(String, {String? imageBase64, String? imagePath, bool webSearch, bool reasoning}) onSendMessage;
+  final Function(String,
+      {String? imageBase64,
+      String? imagePath,
+      bool webSearch,
+      bool reasoning,
+      bool imageGeneration}) onSendMessage;
   final bool isLoading;
   final bool supportsVision;
   final String? initialText;
@@ -32,7 +37,7 @@ class _ChatInputState extends State<ChatInput> {
   String? _imageBase64;
   bool _webSearchEnabled = false;
   bool _reasoningEnabled = false;
-  
+
   bool get _isDesktop {
     return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
   }
@@ -68,7 +73,7 @@ class _ChatInputState extends State<ChatInput> {
         maxHeight: 1920,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         // Read the image file and convert to base64
         final bytes = await image.readAsBytes();
@@ -94,7 +99,7 @@ class _ChatInputState extends State<ChatInput> {
         maxHeight: 1920,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         // Read the image file and convert to base64
         final bytes = await image.readAsBytes();
@@ -126,125 +131,24 @@ class _ChatInputState extends State<ChatInput> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-              // Drag handle
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // Reasoning Options
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'AI Options',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: _reasoningEnabled 
-                        ? const Color(0xFF10B981).withOpacity(0.1)
-                        : Colors.grey.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.psychology,
-                    color: _reasoningEnabled ? const Color(0xFF10B981) : Colors.grey,
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                title: const Text('Think Mode'),
-                subtitle: Text(
-                  _reasoningEnabled 
-                      ? 'Enabled - AI will show reasoning process'
-                      : 'Disabled - Enable for deeper reasoning',
-                ),
-                trailing: Switch(
-                  value: _reasoningEnabled,
-                  onChanged: (value) {
-                    setState(() {
-                      _reasoningEnabled = value;
-                      if (value) {
-                        _webSearchEnabled = false; // Disable web search when thinking is enabled
-                      }
-                    });
-                    Navigator.pop(context);
-                  },
-                  activeThumbColor: const Color(0xFF10B981),
-                ),
-                onTap: () {
-                  setState(() {
-                    _reasoningEnabled = !_reasoningEnabled;
-                    if (_reasoningEnabled) {
-                      _webSearchEnabled = false; // Disable web search when thinking is enabled
-                    }
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _webSearchEnabled 
-                        ? const Color(0xFF3B82F6).withOpacity(0.1)
-                        : Colors.grey.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.language,
-                    color: _webSearchEnabled ? const Color(0xFF3B82F6) : Colors.grey,
-                  ),
-                ),
-                title: const Text('Web Search'),
-                subtitle: Text(
-                  _webSearchEnabled 
-                      ? 'Enabled - AI will search the web for current information'
-                      : 'Disabled - Enable to search the web',
-                ),
-                trailing: Switch(
-                  value: _webSearchEnabled,
-                  onChanged: (value) {
-                    setState(() {
-                      _webSearchEnabled = value;
-                      if (value) {
-                        _reasoningEnabled = false; // Disable thinking when web search is enabled
-                      }
-                    });
-                    Navigator.pop(context);
-                  },
-                  activeThumbColor: const Color(0xFF3B82F6),
-                ),
-                onTap: () {
-                  setState(() {
-                    _webSearchEnabled = !_webSearchEnabled;
-                    if (_webSearchEnabled) {
-                      _reasoningEnabled = false; // Disable thinking when web search is enabled
-                    }
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              if (widget.supportsVision) ...[
-                const Divider(height: 16),
+                // Reasoning Options
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Image Options',
+                      'AI Options',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -257,76 +161,189 @@ class _ChatInputState extends State<ChatInput> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6).withOpacity(0.1),
+                      color: _reasoningEnabled
+                          ? const Color(0xFF10B981).withOpacity(0.1)
+                          : Colors.grey.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
-                      Icons.photo_library,
-                      color: Color(0xFF3B82F6),
+                    child: Icon(
+                      Icons.psychology,
+                      color: _reasoningEnabled
+                          ? const Color(0xFF10B981)
+                          : Colors.grey,
                     ),
                   ),
-                  title: const Text('Choose from gallery'),
-                  subtitle: const Text('Pick an image from your device'),
+                  title: const Text('Think Mode'),
+                  subtitle: Text(
+                    _reasoningEnabled
+                        ? 'Enabled - AI will show reasoning process'
+                        : 'Disabled - Enable for deeper reasoning',
+                  ),
+                  trailing: Switch(
+                    value: _reasoningEnabled,
+                    onChanged: (value) {
+                      setState(() {
+                        _reasoningEnabled = value;
+                        if (value) {
+                          _webSearchEnabled =
+                              false; // Disable web search when thinking is enabled
+                        }
+                      });
+                      Navigator.pop(context);
+                    },
+                    activeThumbColor: const Color(0xFF10B981),
+                  ),
                   onTap: () {
+                    setState(() {
+                      _reasoningEnabled = !_reasoningEnabled;
+                      if (_reasoningEnabled) {
+                        _webSearchEnabled =
+                            false; // Disable web search when thinking is enabled
+                      }
+                    });
                     Navigator.pop(context);
-                    _pickImage();
                   },
                 ),
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6).withOpacity(0.1),
+                      color: _webSearchEnabled
+                          ? const Color(0xFF3B82F6).withOpacity(0.1)
+                          : Colors.grey.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.language,
+                      color: _webSearchEnabled
+                          ? const Color(0xFF3B82F6)
+                          : Colors.grey,
+                    ),
+                  ),
+                  title: const Text('Web Search'),
+                  subtitle: Text(
+                    _webSearchEnabled
+                        ? 'Enabled - AI will search the web for current information'
+                        : 'Disabled - Enable to search the web',
+                  ),
+                  trailing: Switch(
+                    value: _webSearchEnabled,
+                    onChanged: (value) {
+                      setState(() {
+                        _webSearchEnabled = value;
+                        if (value) {
+                          _reasoningEnabled =
+                              false; // Disable thinking when web search is enabled
+                        }
+                      });
+                      Navigator.pop(context);
+                    },
+                    activeThumbColor: const Color(0xFF3B82F6),
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _webSearchEnabled = !_webSearchEnabled;
+                      if (_webSearchEnabled) {
+                        _reasoningEnabled =
+                            false; // Disable thinking when web search is enabled
+                      }
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+                if (widget.supportsVision) ...[
+                  const Divider(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 6),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Image Options',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3B82F6).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.photo_library,
+                        color: Color(0xFF3B82F6),
+                      ),
+                    ),
+                    title: const Text('Choose from gallery'),
+                    subtitle: const Text('Pick an image from your device'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage();
+                    },
+                  ),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3B82F6).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        color: Color(0xFF3B82F6),
+                      ),
+                    ),
+                    title: const Text('Take a photo'),
+                    subtitle: const Text('Capture using camera'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImageFromCamera();
+                    },
+                  ),
+                  const Divider(height: 16),
+                ],
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'MCP Connections',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
-                      Icons.camera_alt,
-                      color: Color(0xFF3B82F6),
+                      Icons.dns_outlined,
+                      color: Colors.purple,
                     ),
                   ),
-                  title: const Text('Take a photo'),
-                  subtitle: const Text('Capture using camera'),
+                  title: const Text('Manage MCP Servers'),
+                  subtitle:
+                      const Text('Configure Model Context Protocol servers'),
                   onTap: () {
                     Navigator.pop(context);
-                    _pickImageFromCamera();
+                    Navigator.pushNamed(context, '/mcp-servers');
                   },
                 ),
-                const Divider(height: 16),
-              ],
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'MCP Connections',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.dns_outlined,
-                    color: Colors.purple,
-                  ),
-                ),
-                title: const Text('Manage MCP Servers'),
-                subtitle: const Text('Configure Model Context Protocol servers'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/mcp-servers');
-                },
-              ),
-              const SizedBox(height: 4),
+                const SizedBox(height: 4),
               ],
             ),
           ),
@@ -350,6 +367,8 @@ class _ChatInputState extends State<ChatInput> {
         imagePath: _selectedImage?.path,
         webSearch: _webSearchEnabled,
         reasoning: _reasoningEnabled,
+        imageGeneration:
+            false, // No longer used - always enabled via system prompt
       );
       _controller.clear();
       setState(() {
@@ -363,9 +382,9 @@ class _ChatInputState extends State<ChatInput> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 600;
-    
+
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isWideScreen ? 32 : 20,
@@ -394,7 +413,8 @@ class _ChatInputState extends State<ChatInput> {
                 },
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF10B981), Color(0xFF059669)],
@@ -460,7 +480,8 @@ class _ChatInputState extends State<ChatInput> {
                 },
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
@@ -585,7 +606,9 @@ class _ChatInputState extends State<ChatInput> {
                       ),
                       child: Icon(
                         Icons.add,
-                        color: widget.isLoading ? Colors.grey.withOpacity(0.5) : Colors.white,
+                        color: widget.isLoading
+                            ? Colors.grey.withOpacity(0.5)
+                            : Colors.white,
                         size: 20,
                       ),
                     ),
@@ -595,7 +618,7 @@ class _ChatInputState extends State<ChatInput> {
                 // Container(
                 //   margin: const EdgeInsets.only(right: 8),
                 //   decoration: BoxDecoration(
-                //     color: _webSearchEnabled 
+                //     color: _webSearchEnabled
                 //         ? const Color(0xFF3B82F6).withOpacity(0.3)
                 //         : const Color(0xFF1A1A1A),
                 //     shape: BoxShape.circle,
@@ -603,7 +626,7 @@ class _ChatInputState extends State<ChatInput> {
                 //   child: IconButton(
                 //     icon: Icon(
                 //       Icons.search,
-                //       color: _webSearchEnabled 
+                //       color: _webSearchEnabled
                 //           ? const Color(0xFF3B82F6)
                 //           : Colors.white70,
                 //     ),
@@ -612,8 +635,8 @@ class _ChatInputState extends State<ChatInput> {
                 //         _webSearchEnabled = !_webSearchEnabled;
                 //       });
                 //     },
-                //     tooltip: _webSearchEnabled 
-                //         ? 'Web search enabled' 
+                //     tooltip: _webSearchEnabled
+                //         ? 'Web search enabled'
                 //         : 'Enable web search',
                 //   ),
                 // ),
@@ -625,7 +648,7 @@ class _ChatInputState extends State<ChatInput> {
                       if (_isDesktop && event is KeyDownEvent) {
                         if (event.logicalKey == LogicalKeyboardKey.enter) {
                           // If no modifier keys, send message
-                          if (!HardwareKeyboard.instance.isShiftPressed && 
+                          if (!HardwareKeyboard.instance.isShiftPressed &&
                               !HardwareKeyboard.instance.isControlPressed) {
                             _sendMessage();
                           }
@@ -639,7 +662,9 @@ class _ChatInputState extends State<ChatInput> {
                       enabled: !widget.isLoading,
                       maxLines: null,
                       minLines: 1,
-                      textInputAction: _isDesktop ? TextInputAction.newline : TextInputAction.send,
+                      textInputAction: _isDesktop
+                          ? TextInputAction.newline
+                          : TextInputAction.send,
                       keyboardType: TextInputType.multiline,
                       decoration: InputDecoration(
                         hintText: 'Message...',
@@ -689,20 +714,27 @@ class _ChatInputState extends State<ChatInput> {
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: (_hasText || _selectedImage != null) && !widget.isLoading ? _sendMessage : null,
+                    onTap: (_hasText || _selectedImage != null) &&
+                            !widget.isLoading
+                        ? _sendMessage
+                        : null,
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: (_hasText || _selectedImage != null) && !widget.isLoading
+                        color: (_hasText || _selectedImage != null) &&
+                                !widget.isLoading
                             ? theme.colorScheme.primary
                             : const Color(0xFF0A0A0A),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        widget.isLoading ? Icons.hourglass_empty : Icons.send_rounded,
-                        color: (_hasText || _selectedImage != null) && !widget.isLoading
+                        widget.isLoading
+                            ? Icons.hourglass_empty
+                            : Icons.send_rounded,
+                        color: (_hasText || _selectedImage != null) &&
+                                !widget.isLoading
                             ? Colors.white
                             : Colors.white.withOpacity(0.5),
                         size: 18,

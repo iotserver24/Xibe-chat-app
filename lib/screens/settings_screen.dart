@@ -6,6 +6,7 @@ import '../providers/theme_provider.dart' show ThemeProvider, AppTheme;
 import '../providers/chat_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/update_service.dart';
+import '../services/image_generation_service.dart';
 import '../widgets/update_dialog.dart';
 import 'mcp_servers_screen.dart';
 import 'memory_screen.dart';
@@ -45,6 +46,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _appVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
     });
+  }
+
+  Future<List<String>> _getImageModels() async {
+    final service = ImageGenerationService();
+    return await service.getAvailableModels();
   }
 
   @override
@@ -238,7 +244,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Default Model',
+                          'Default Text Generation Model',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -246,7 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Select the default AI model for new chats. Leave empty to use the last selected model.',
+                          'Select the default AI model for text generation in new chats. Leave empty to use the last selected model.',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey,
@@ -264,9 +270,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             return DropdownButtonFormField<String>(
                               value: currentDefault,
                               decoration: const InputDecoration(
-                                labelText: 'Default Model',
-                                hintText: 'Select default model',
+                                labelText: 'Default Text Model',
+                                hintText: 'Select default text model',
                                 border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.chat_bubble_outline),
                               ),
                               items: [
                                 const DropdownMenuItem<String>(
@@ -287,14 +294,101 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         listen: false);
                                 await settingsProvider.setDefaultModel(value);
                                 if (context.mounted) {
+                                  final modelName = value != null
+                                      ? allModels.firstWhere(
+                                          (m) => m['id'] == value,
+                                          orElse: () => {'name': 'Unknown'},
+                                        )['name']
+                                      : 'None';
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Default model saved successfully'),
-                                      duration: Duration(seconds: 2),
+                                    SnackBar(
+                                      content: Text(value != null
+                                          ? 'Default text model set to $modelName'
+                                          : 'Default text model cleared'),
+                                      duration: const Duration(seconds: 2),
                                     ),
                                   );
                                 }
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Default Image Generation Model',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Select the default AI model to use for image generation when Image Generation mode is enabled.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Consumer<SettingsProvider>(
+                          builder: (context, settingsProvider, child) {
+                            return FutureBuilder<List<String>>(
+                              future: _getImageModels(),
+                              builder: (context, snapshot) {
+                                final models = snapshot.data ??
+                                    ['flux', 'kontext', 'turbo', 'gptimage'];
+                                final currentModel =
+                                    settingsProvider.imageGenerationModel;
+
+                                return DropdownButtonFormField<String>(
+                                  value: currentModel,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Default Image Model',
+                                    hintText: 'Select default image model',
+                                    border: OutlineInputBorder(),
+                                    prefixIcon: Icon(Icons.image),
+                                  ),
+                                  items: models.map((model) {
+                                    return DropdownMenuItem<String>(
+                                      value: model,
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.image, size: 18),
+                                          const SizedBox(width: 8),
+                                          Text(model),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? value) async {
+                                    if (value != null) {
+                                      final settingsProvider =
+                                          Provider.of<SettingsProvider>(context,
+                                              listen: false);
+                                      await settingsProvider
+                                          .setImageGenerationModel(value);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                'Default image generation model set to $value'),
+                                            duration:
+                                                const Duration(seconds: 2),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                );
                               },
                             );
                           },

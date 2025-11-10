@@ -11,6 +11,10 @@ class Message {
   final bool isThinking; // Whether AI is in thinking mode
   final int? responseTimeMs; // Response time in milliseconds
   final String? reaction; // User reaction: 'thumbs_up' or 'thumbs_down'
+  final String? generatedImageBase64; // Base64 encoded generated image data
+  final String? generatedImagePrompt; // Prompt used to generate the image
+  final String? generatedImageModel; // Model used for image generation
+  final bool isGeneratingImage; // Whether image is currently being generated
 
   Message({
     this.id,
@@ -25,6 +29,10 @@ class Message {
     this.isThinking = false,
     this.responseTimeMs,
     this.reaction,
+    this.generatedImageBase64,
+    this.generatedImagePrompt,
+    this.generatedImageModel,
+    this.isGeneratingImage = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -41,6 +49,10 @@ class Message {
       'isThinking': isThinking ? 1 : 0,
       'responseTimeMs': responseTimeMs,
       'reaction': reaction,
+      'generatedImageBase64': generatedImageBase64,
+      'generatedImagePrompt': generatedImagePrompt,
+      'generatedImageModel': generatedImageModel,
+      'isGeneratingImage': isGeneratingImage ? 1 : 0,
     };
   }
 
@@ -58,6 +70,11 @@ class Message {
       isThinking: map['isThinking'] != null && map['isThinking'] == 1,
       responseTimeMs: map['responseTimeMs'] as int?,
       reaction: map['reaction'] as String?,
+      generatedImageBase64: map['generatedImageBase64'] as String?,
+      generatedImagePrompt: map['generatedImagePrompt'] as String?,
+      generatedImageModel: map['generatedImageModel'] as String?,
+      isGeneratingImage:
+          map['isGeneratingImage'] != null && map['isGeneratingImage'] == 1,
     );
   }
 
@@ -80,7 +97,7 @@ class Message {
         ],
       };
     }
-    
+
     // Standard text-only message
     return {
       'role': role,

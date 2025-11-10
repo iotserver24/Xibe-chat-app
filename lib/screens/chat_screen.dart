@@ -351,13 +351,15 @@ class _ChatScreenState extends State<ChatScreen> {
                     {String? imageBase64,
                     String? imagePath,
                     bool webSearch = false,
-                    bool reasoning = false}) {
+                    bool reasoning = false,
+                    bool imageGeneration = false}) {
                   chatProvider.sendMessage(
                     message,
                     imageBase64: imageBase64,
                     imagePath: imagePath,
                     webSearch: webSearch,
                     reasoning: reasoning,
+                    imageGeneration: imageGeneration,
                   );
                 },
                 isLoading: chatProvider.isLoading,
@@ -769,13 +771,21 @@ class _ChatScreenState extends State<ChatScreen> {
                           {String? imageBase64,
                           String? imagePath,
                           bool webSearch = false,
-                          bool reasoning = false}) {
+                          bool reasoning = false,
+                          bool imageGeneration = false}) {
+                        final settingsProvider = Provider.of<SettingsProvider>(
+                            context,
+                            listen: false);
                         chatProvider.sendMessage(
                           message,
                           imageBase64: imageBase64,
                           imagePath: imagePath,
                           webSearch: webSearch,
                           reasoning: reasoning,
+                          imageGeneration: imageGeneration,
+                          imageGenerationModel: imageGeneration
+                              ? settingsProvider.imageGenerationModel
+                              : null,
                         );
                       },
                       isLoading: chatProvider.isLoading,

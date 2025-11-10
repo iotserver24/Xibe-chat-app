@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/chat.dart';
 import '../models/message.dart';
@@ -8,11 +9,14 @@ import '../services/database_service.dart';
 import '../services/api_service.dart';
 import '../services/custom_provider_service.dart';
 import '../services/mcp_client_service.dart';
+import '../services/image_generation_service.dart';
 
 class ChatProvider extends ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService();
   late ApiService _apiService;
   final McpClientService _mcpClientService = McpClientService();
+  final ImageGenerationService _imageGenerationService =
+      ImageGenerationService();
 
   List<Chat> _chats = [];
   Chat? _currentChat;
@@ -279,7 +283,9 @@ class ChatProvider extends ChangeNotifier {
       {String? imageBase64,
       String? imagePath,
       bool webSearch = false,
-      bool reasoning = false}) async {
+      bool reasoning = false,
+      bool imageGeneration = false,
+      String? imageGenerationModel}) async {
     if (_currentChat == null) {
       await createNewChat();
     }
@@ -371,7 +377,8 @@ class ChatProvider extends ChangeNotifier {
       }
 
       // Base system prompt - always included to inform AI about the app context
-      const baseSystemPrompt =
+      final imageModel = imageGenerationModel ?? 'flux';
+      String baseSystemPrompt =
           '''You are running in Xibe Chat, a modern AI chat application created by the user.
 
 APP CONTEXT & CAPABILITIES:
@@ -383,6 +390,18 @@ APP CONTEXT & CAPABILITIES:
 - The app includes a memory system to remember important information across conversations
 - Web search capabilities are available when enabled
 - Code previews appear in a side panel with live rendering
+
+IMAGE GENERATION:
+- You can generate images! When the user requests image generation, respond with: <img-gen>{enhanced_prompt}</img-gen>
+- CRITICAL: You MUST use the exact tag format: <img-gen>your prompt here</img-gen>
+- DO NOT use <enhanced_prompt> or any other tag format - ONLY use <img-gen>
+- The {enhanced_prompt} should be a detailed, descriptive prompt that you create
+- Refine and enhance the user's request to be specific about style, colors, composition, mood, and important details
+- The default model is $imageModel (flux: high quality, kontext, turbo: fast, gptimage)
+- Example: User asks "make me a cat" → You respond: "Here's a beautiful cat image for you: <img-gen>A majestic fluffy orange tabby cat with bright green eyes, sitting elegantly on a velvet cushion, studio lighting, photorealistic, high detail</img-gen>"
+- The image will be automatically generated and displayed to the user
+- You can add context before and after the <img-gen> tag to enhance the response
+- Use this whenever users ask you to create, draw, generate, make, or visualize images
 
 IMPORTANT: Always be aware that you're helping users within this specialized application environment. When providing code examples, leverage the app's built-in execution and preview features to give users the best experience.''';
 
@@ -599,6 +618,9 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         ),
       );
 
+      // Get available tools (no longer need to add image generation tool since we use <img-gen> tags)
+      List<McpTool> availableTools = _mcpClientService.getAllTools();
+
       // Stream the response
       String fullResponseContent = '';
       String streamingDisplayContent = '';
@@ -631,7 +653,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
           endpointUrl: customModel.endpointUrl,
           systemPrompt: enhancedSystemPrompt,
           reasoning: reasoning,
-          mcpTools: _mcpClientService.getAllTools(),
+          mcpTools: availableTools,
         );
       } else {
         // Use default Xibe API
@@ -641,7 +663,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
           model: modelToUse,
           systemPrompt: enhancedSystemPrompt,
           reasoning: reasoning,
-          mcpTools: _mcpClientService.getAllTools(),
+          mcpTools: availableTools,
         );
       }
 
@@ -654,11 +676,33 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
 
         fullResponseContent += chunk;
 
+        // Filter out img-gen tags immediately during streaming
+        String tempContent = fullResponseContent;
+        final imgGenPatternStream = RegExp(r'<img-gen>.*?</img-gen>',
+            caseSensitive: false, dotAll: true);
+        final enhancedPromptPatternStream = RegExp(
+            r'<enhanced_prompt>.*?</enhanced_prompt>',
+            caseSensitive: false,
+            dotAll: true);
+        if (imgGenPatternStream.hasMatch(tempContent)) {
+          // Replace with loading placeholder
+          tempContent = tempContent.replaceAll(
+            imgGenPatternStream,
+            '\n\n*[Generating image...]*\n',
+          );
+        }
+        // Also handle <enhanced_prompt> as fallback
+        if (enhancedPromptPatternStream.hasMatch(tempContent)) {
+          tempContent = tempContent.replaceAll(
+            enhancedPromptPatternStream,
+            '\n\n*[Generating image...]*\n',
+          );
+        }
+
         // For first message, filter out chat name JSON from display in real-time
         if (isFirstMessage) {
           // Look for JSON pattern that might appear at the end
           // Try multiple patterns to catch the JSON
-          String tempContent = fullResponseContent;
 
           // Pattern 1: Full JSON object with chat_name
           final jsonPattern1 =
@@ -686,12 +730,108 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
 
           streamingDisplayContent = tempContent;
         } else {
-          streamingDisplayContent = fullResponseContent;
+          streamingDisplayContent = tempContent;
         }
 
-        // Update streaming content for display (without chat name JSON)
+        // Update streaming content for display (without chat name JSON and img-gen tags)
         _streamingContent = streamingDisplayContent;
         notifyListeners();
+      }
+
+      // Extract image generation request if present using XML-style tags
+      String? generatedImageBase64;
+      String? generatedImagePrompt;
+      String? generatedImageModel;
+      bool isGeneratingImage = false;
+
+      // Try <img-gen> tag first (preferred format)
+      final imgGenPattern = RegExp(r'<img-gen>(.*?)</img-gen>',
+          caseSensitive: false, dotAll: true);
+      Match? imgGenMatch = imgGenPattern.firstMatch(fullResponseContent);
+
+      // Fallback to <enhanced_prompt> if AI uses that format
+      if (imgGenMatch == null) {
+        final enhancedPromptPattern = RegExp(
+            r'<enhanced_prompt>(.*?)</enhanced_prompt>',
+            caseSensitive: false,
+            dotAll: true);
+        imgGenMatch = enhancedPromptPattern.firstMatch(fullResponseContent);
+        // If we found enhanced_prompt, also update the pattern for replacement
+        if (imgGenMatch != null) {
+          // Use enhanced_prompt pattern for replacement
+          final enhancedPattern = RegExp(
+              r'<enhanced_prompt>.*?</enhanced_prompt>',
+              caseSensitive: false,
+              dotAll: true);
+          fullResponseContent = fullResponseContent
+              .replaceFirst(
+                enhancedPattern,
+                '\n\n*[Generated Image]*\n',
+              )
+              .trim();
+        }
+      }
+
+      if (imgGenMatch != null) {
+        generatedImagePrompt = imgGenMatch.group(1)?.trim();
+        if (generatedImagePrompt != null && generatedImagePrompt.isNotEmpty) {
+          // Mark that we're generating an image
+          isGeneratingImage = true;
+
+          // Update the message in the list to show loading state
+          // Note: We'll update it again after processing is complete
+          // For now, just mark that we're generating
+
+          try {
+            // Get the image generation model from settings
+            generatedImageModel = imageGenerationModel ?? 'flux';
+
+            // Generate the image
+            final result = await _imageGenerationService.generateImage(
+              prompt: generatedImagePrompt,
+              model: generatedImageModel,
+              width: 1024,
+              height: 1024,
+            );
+
+            if (result['success'] == true && result['imageBytes'] != null) {
+              // Convert image bytes to base64
+              generatedImageBase64 = base64Encode(result['imageBytes']);
+              isGeneratingImage = false;
+
+              // Remove the img-gen tag from the response and replace with a placeholder
+              // Check if we already replaced it (for enhanced_prompt case)
+              if (fullResponseContent.contains('<img-gen>') ||
+                  fullResponseContent.contains('</img-gen>')) {
+                fullResponseContent = fullResponseContent
+                    .replaceFirst(
+                      imgGenPattern,
+                      '\n\n*[Generated Image]*\n',
+                    )
+                    .trim();
+              }
+            } else {
+              // Image generation failed, show error message
+              isGeneratingImage = false;
+              fullResponseContent = fullResponseContent
+                  .replaceFirst(
+                    imgGenPattern,
+                    '\n\n*[Image generation failed: ${result['error'] ?? 'Unknown error'}]*\n',
+                  )
+                  .trim();
+            }
+          } catch (e) {
+            print('Error generating image: $e');
+            isGeneratingImage = false;
+            // Replace with error message
+            fullResponseContent = fullResponseContent
+                .replaceFirst(
+                  imgGenPattern,
+                  '\n\n*[Image generation error: $e]*\n',
+                )
+                .trim();
+          }
+        }
       }
 
       // Extract sources from web search if present using XML-style tags
@@ -859,6 +999,10 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         webSearchUsed: webSearch,
         chatId: _currentChat!.id!,
         responseTimeMs: responseTimeMs,
+        generatedImageBase64: generatedImageBase64,
+        generatedImagePrompt: generatedImagePrompt,
+        generatedImageModel: generatedImageModel,
+        isGeneratingImage: isGeneratingImage,
       );
 
       final assistantInsertedId =
@@ -871,6 +1015,10 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         webSearchUsed: assistantMessage.webSearchUsed,
         chatId: assistantMessage.chatId,
         responseTimeMs: assistantMessage.responseTimeMs,
+        generatedImageBase64: assistantMessage.generatedImageBase64,
+        generatedImagePrompt: assistantMessage.generatedImagePrompt,
+        generatedImageModel: assistantMessage.generatedImageModel,
+        isGeneratingImage: assistantMessage.isGeneratingImage,
       );
       _messages.add(assistantMessageWithId);
 
@@ -955,6 +1103,10 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         isThinking: message.isThinking,
         responseTimeMs: message.responseTimeMs,
         reaction: reaction,
+        generatedImageBase64: message.generatedImageBase64,
+        generatedImagePrompt: message.generatedImagePrompt,
+        generatedImageModel: message.generatedImageModel,
+        isGeneratingImage: message.isGeneratingImage,
       );
       notifyListeners();
     }

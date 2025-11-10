@@ -7,13 +7,13 @@ import '../models/message.dart';
 import '../models/memory.dart';
 
 class DatabaseService {
-  static const int _databaseVersion = 5;
+  static const int _databaseVersion = 7;
   static Database? _database;
   static bool _initialized = false;
 
   static void _initializeDatabaseFactory() {
     if (_initialized) return;
-    
+
     // Initialize FFI for desktop platforms
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       try {
@@ -35,7 +35,7 @@ class DatabaseService {
 
   Future<Database> _initDatabase() async {
     _initializeDatabaseFactory();
-    
+
     String path;
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       // For desktop platforms, use application documents directory
@@ -47,7 +47,7 @@ class DatabaseService {
       // For mobile platforms, use default databases path
       path = join(await getDatabasesPath(), 'xibe_chat.db');
     }
-    
+
     return await openDatabase(
       path,
       version: _databaseVersion,
@@ -74,6 +74,10 @@ class DatabaseService {
             isThinking INTEGER NOT NULL DEFAULT 0,
             responseTimeMs INTEGER,
             reaction TEXT,
+            generatedImageBase64 TEXT,
+            generatedImagePrompt TEXT,
+            generatedImageModel TEXT,
+            isGeneratingImage INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (chatId) REFERENCES chats (id) ON DELETE CASCADE
           )
         ''');
@@ -95,10 +99,13 @@ class DatabaseService {
         if (oldVersion < 3) {
           // Add thinking columns for version 3
           // SQLite doesn't support NOT NULL with DEFAULT in ALTER TABLE, so we make it nullable
-          await db.execute('ALTER TABLE messages ADD COLUMN thinkingContent TEXT');
-          await db.execute('ALTER TABLE messages ADD COLUMN isThinking INTEGER DEFAULT 0');
+          await db
+              .execute('ALTER TABLE messages ADD COLUMN thinkingContent TEXT');
+          await db.execute(
+              'ALTER TABLE messages ADD COLUMN isThinking INTEGER DEFAULT 0');
           // Update existing rows to have isThinking = 0
-          await db.update('messages', {'isThinking': 0}, where: 'isThinking IS NULL');
+          await db.update('messages', {'isThinking': 0},
+              where: 'isThinking IS NULL');
         }
         if (oldVersion < 4) {
           // Add memories table for version 4
@@ -113,8 +120,23 @@ class DatabaseService {
         }
         if (oldVersion < 5) {
           // Add UI enhancements: response time and reactions for version 5
-          await db.execute('ALTER TABLE messages ADD COLUMN responseTimeMs INTEGER');
+          await db.execute(
+              'ALTER TABLE messages ADD COLUMN responseTimeMs INTEGER');
           await db.execute('ALTER TABLE messages ADD COLUMN reaction TEXT');
+        }
+        if (oldVersion < 6) {
+          // Add image generation fields for version 6
+          await db.execute(
+              'ALTER TABLE messages ADD COLUMN generatedImageBase64 TEXT');
+          await db.execute(
+              'ALTER TABLE messages ADD COLUMN generatedImagePrompt TEXT');
+          await db.execute(
+              'ALTER TABLE messages ADD COLUMN generatedImageModel TEXT');
+        }
+        if (oldVersion < 7) {
+          // Add isGeneratingImage field for version 7
+          await db.execute(
+              'ALTER TABLE messages ADD COLUMN isGeneratingImage INTEGER DEFAULT 0');
         }
       },
     );
