@@ -271,11 +271,15 @@
 import { ref, onMounted } from 'vue'
 
 useHead({
-  title: 'Download - Xibe Chat',
+  title: 'Download Xibe Chat - Free AI Chat App for All Platforms',
   meta: [
     {
       name: 'description',
-      content: 'Download Xibe Chat for your platform. Available for Windows, macOS, Linux, and Android with stable and beta releases.',
+      content: 'Download Xibe Chat for free - available for Windows, macOS, Linux, Android & iOS. Get the latest stable or beta releases of this open-source AI chat application.',
+    },
+    {
+      name: 'keywords',
+      content: 'download Xibe Chat, download AI chat app, free AI app download, Windows AI app, macOS AI app, Linux AI app, Android AI app, iOS AI app',
     },
   ],
 })
