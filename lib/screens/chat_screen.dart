@@ -353,6 +353,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     bool webSearch = false,
                     bool reasoning = false,
                     bool imageGeneration = false}) {
+                  final settingsProvider =
+                      Provider.of<SettingsProvider>(context, listen: false);
                   chatProvider.sendMessage(
                     message,
                     imageBase64: imageBase64,
@@ -360,6 +362,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     webSearch: webSearch,
                     reasoning: reasoning,
                     imageGeneration: imageGeneration,
+                    imageGenerationModel: settingsProvider.imageGenerationModel,
                   );
                 },
                 isLoading: chatProvider.isLoading,
@@ -783,9 +786,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           webSearch: webSearch,
                           reasoning: reasoning,
                           imageGeneration: imageGeneration,
-                          imageGenerationModel: imageGeneration
-                              ? settingsProvider.imageGenerationModel
-                              : null,
+                          imageGenerationModel:
+                              settingsProvider.imageGenerationModel,
                         );
                       },
                       isLoading: chatProvider.isLoading,

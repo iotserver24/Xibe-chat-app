@@ -35,7 +35,7 @@ class SettingsProvider extends ChangeNotifier {
   String? get apiKey => _apiKey;
   String? get systemPrompt => _systemPrompt;
   String? get defaultModel => _defaultModel;
-  String get imageGenerationModel => _imageGenerationModel ?? 'flux';
+  String get imageGenerationModel => _imageGenerationModel ?? 'turbo';
   String? get e2bApiKey =>
       _e2bApiKey; // Deprecated - kept for backward compatibility
   String? get e2bBackendUrl => _e2bBackendUrl;
