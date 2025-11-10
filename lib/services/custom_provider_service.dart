@@ -14,14 +14,18 @@ class CustomProviderService {
     required String message,
     required List<Message> history,
     required String modelId,
+    required String endpointUrl, // Full endpoint URL from model
     String? systemPrompt,
     bool reasoning = false,
     List<McpTool>? mcpTools,
   }) async* {
     try {
-      final endpoint = provider.type == 'anthropic'
-          ? '${provider.baseUrl}/messages'
-          : '${provider.baseUrl}/chat/completions';
+      // Use the endpointUrl from the model, or fallback to constructing it
+      final endpoint = endpointUrl.isNotEmpty
+          ? endpointUrl
+          : (provider.type == 'anthropic'
+              ? '${provider.baseUrl}/messages'
+              : '${provider.baseUrl}/chat/completions');
 
       final request = http.Request('POST', Uri.parse(endpoint));
 
@@ -92,8 +96,7 @@ class CustomProviderService {
       }
 
       String buffer = '';
-      await for (var chunk
-          in streamedResponse.stream.transform(utf8.decoder)) {
+      await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
         buffer += chunk;
 
         while (buffer.contains('\n')) {

@@ -4,6 +4,7 @@ class CustomModel {
   final String modelId;
   final String providerId;
   final String description;
+  final String endpointUrl; // Full URL including /chat/completions or /messages
   final bool supportsVision;
   final bool supportsStreaming;
   final bool supportsTools;
@@ -15,6 +16,7 @@ class CustomModel {
     required this.modelId,
     required this.providerId,
     required this.description,
+    required this.endpointUrl,
     this.supportsVision = false,
     this.supportsStreaming = true,
     this.supportsTools = false,
@@ -28,6 +30,8 @@ class CustomModel {
       modelId: json['modelId'] as String,
       providerId: json['providerId'] as String,
       description: json['description'] as String,
+      endpointUrl:
+          json['endpointUrl'] as String? ?? '', // Backward compatibility
       supportsVision: json['supportsVision'] as bool? ?? false,
       supportsStreaming: json['supportsStreaming'] as bool? ?? true,
       supportsTools: json['supportsTools'] as bool? ?? false,
@@ -42,6 +46,7 @@ class CustomModel {
       'modelId': modelId,
       'providerId': providerId,
       'description': description,
+      'endpointUrl': endpointUrl,
       'supportsVision': supportsVision,
       'supportsStreaming': supportsStreaming,
       'supportsTools': supportsTools,
@@ -55,6 +60,7 @@ class CustomModel {
     String? modelId,
     String? providerId,
     String? description,
+    String? endpointUrl,
     bool? supportsVision,
     bool? supportsStreaming,
     bool? supportsTools,
@@ -66,6 +72,7 @@ class CustomModel {
       modelId: modelId ?? this.modelId,
       providerId: providerId ?? this.providerId,
       description: description ?? this.description,
+      endpointUrl: endpointUrl ?? this.endpointUrl,
       supportsVision: supportsVision ?? this.supportsVision,
       supportsStreaming: supportsStreaming ?? this.supportsStreaming,
       supportsTools: supportsTools ?? this.supportsTools,

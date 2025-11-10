@@ -41,7 +41,7 @@ class ChatProvider extends ChangeNotifier {
   String get selectedModel => _selectedModel;
   String? get systemPrompt => _systemPrompt;
   String? get pendingPrompt => _pendingPrompt;
-  
+
   bool get selectedModelSupportsVision {
     // Check if it's a custom model first
     final customModel = _customModels.firstWhere(
@@ -52,13 +52,14 @@ class ChatProvider extends ChangeNotifier {
         modelId: '',
         providerId: '',
         description: '',
+        endpointUrl: '',
       ),
     );
-    
+
     if (customModel.modelId.isNotEmpty) {
       return customModel.supportsVision;
     }
-    
+
     // Otherwise check Xibe models
     final model = _availableModels.firstWhere(
       (m) => m.name == _selectedModel,
@@ -70,8 +71,7 @@ class ChatProvider extends ChangeNotifier {
         aliases: [],
       ),
     );
-    return model.vision == true || 
-           model.inputModalities.contains('image');
+    return model.vision == true || model.inputModalities.contains('image');
   }
 
   ChatProvider({String? apiKey, String? systemPrompt}) {
@@ -129,7 +129,7 @@ class ChatProvider extends ChangeNotifier {
   Future<void> _loadModels() async {
     try {
       _availableModels = await _apiService.fetchModels();
-      
+
       // Add custom Claude 4.5 Haiku model
       final claudeModel = AiModel(
         name: 'claudyclaude', // Model ID used in API calls
@@ -140,21 +140,22 @@ class ChatProvider extends ChangeNotifier {
         vision: true,
         tools: false,
       );
-      
+
       // Check if model already exists to avoid duplicates
       if (!_availableModels.any((m) => m.name == 'claudyclaude')) {
         _availableModels.add(claudeModel);
       }
-      
+
       notifyListeners();
     } catch (e) {
       // Silently fail, use default model
       _availableModels = [];
-      
+
       // Add custom Claude model even if API fetch fails
       final claudeModel = AiModel(
         name: 'claudyclaude',
-        description: 'Claude 4.5 Haiku - Fast and efficient model with vision support',
+        description:
+            'Claude 4.5 Haiku - Fast and efficient model with vision support',
         inputModalities: ['text', 'image'],
         outputModalities: ['text'],
         aliases: ['claude 4.5 haiku', 'claude-haiku', 'claude-4.5-haiku'],
@@ -171,7 +172,8 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateCustomProviders(List<CustomProvider> providers, List<CustomModel> models) {
+  void updateCustomProviders(
+      List<CustomProvider> providers, List<CustomModel> models) {
     _customProviders = providers;
     _customModels = models;
     _loadModels();
@@ -180,15 +182,17 @@ class ChatProvider extends ChangeNotifier {
 
   List<Map<String, String>> getAllModels() {
     final models = <Map<String, String>>[];
-    
+
     for (var xibeModel in _availableModels) {
       models.add({
         'id': xibeModel.name,
-        'name': xibeModel.description.isNotEmpty ? xibeModel.description : xibeModel.name,
+        'name': xibeModel.description.isNotEmpty
+            ? xibeModel.description
+            : xibeModel.name,
         'provider': 'Xibe',
       });
     }
-    
+
     for (var customModel in _customModels) {
       final provider = _customProviders.firstWhere(
         (p) => p.id == customModel.providerId,
@@ -206,7 +210,7 @@ class ChatProvider extends ChangeNotifier {
         'provider': provider.name,
       });
     }
-    
+
     return models;
   }
 
@@ -239,10 +243,16 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> createNewChat() async {
+  Future<void> createNewChat({String? defaultModel}) async {
     final now = DateTime.now();
     // Create a temporary chat that's not yet saved to database
     // It will be saved when the user sends the first message
+
+    // Use default model if provided, otherwise keep current selection
+    if (defaultModel != null && defaultModel.isNotEmpty) {
+      _selectedModel = defaultModel;
+    }
+
     _currentChat = Chat(
       id: null, // null indicates this chat hasn't been saved yet
       title: 'New Chat',
@@ -254,7 +264,7 @@ class ChatProvider extends ChangeNotifier {
     _isLoading = false;
     _isStreaming = false;
     _streamingContent = '';
-    
+
     notifyListeners();
   }
 
@@ -265,7 +275,11 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> sendMessage(String content, {String? imageBase64, String? imagePath, bool webSearch = false, bool reasoning = false}) async {
+  Future<void> sendMessage(String content,
+      {String? imageBase64,
+      String? imagePath,
+      bool webSearch = false,
+      bool reasoning = false}) async {
     if (_currentChat == null) {
       await createNewChat();
     }
@@ -310,28 +324,30 @@ class ChatProvider extends ChangeNotifier {
       imagePath: userMessage.imagePath,
     );
     _messages.add(messageWithId);
-    
+
     // Immediately notify listeners to show the user message in UI
     notifyListeners();
-    
+
     final isFirstMessage = _messages.length == 1;
 
     // Set loading state first to show typing indicator
     _isLoading = true;
     _isStreaming = false;
     _streamingContent = '';
-    
+
     // Track response start time
     final responseStartTime = DateTime.now();
-    
+
     // Notify to show typing indicator
     notifyListeners();
 
     try {
       // Get all messages except the user message we just added (last one in the list)
       final history = _messages.where((m) => m.role != 'system').toList();
-      final historyForApi = history.length > 1 ? history.sublist(0, history.length - 1) : <Message>[];
-      
+      final historyForApi = history.length > 1
+          ? history.sublist(0, history.length - 1)
+          : <Message>[];
+
       // Get MCP context (available tools and resources)
       String? mcpContext;
       try {
@@ -354,27 +370,49 @@ class ChatProvider extends ChangeNotifier {
         }
       }
 
-      // Combine system prompt with memory context and MCP context if available
-      String? enhancedSystemPrompt = _systemPrompt;
-      
+      // Base system prompt - always included to inform AI about the app context
+      const baseSystemPrompt =
+          '''You are running in Xibe Chat, a modern AI chat application created by the user.
+
+APP CONTEXT & CAPABILITIES:
+- You are operating within the Xibe Chat desktop/mobile application
+- The app provides integrated code execution and preview capabilities
+- Users can run code directly within the app interface
+- The app supports both computational code execution (E2B sandbox) and visual web previews (CodeSandbox)
+- Users have access to MCP (Model Context Protocol) servers for extended functionality
+- The app includes a memory system to remember important information across conversations
+- Web search capabilities are available when enabled
+- Code previews appear in a side panel with live rendering
+
+IMPORTANT: Always be aware that you're helping users within this specialized application environment. When providing code examples, leverage the app's built-in execution and preview features to give users the best experience.''';
+
+      // Combine base prompt with user's custom system prompt
+      String? enhancedSystemPrompt;
+      if (_systemPrompt != null && _systemPrompt!.isNotEmpty) {
+        enhancedSystemPrompt =
+            '$baseSystemPrompt\n\nUSER CUSTOM SYSTEM PROMPT:\n$_systemPrompt';
+      } else {
+        enhancedSystemPrompt = baseSystemPrompt;
+      }
+
       // Add memory context first (most important)
       if (memoryContext != null && memoryContext.isNotEmpty) {
-        if (enhancedSystemPrompt != null && enhancedSystemPrompt.isNotEmpty) {
-          enhancedSystemPrompt = '$memoryContext\n\n$_systemPrompt';
+        if (enhancedSystemPrompt.isNotEmpty) {
+          enhancedSystemPrompt = '$memoryContext\n\n$enhancedSystemPrompt';
         } else {
           enhancedSystemPrompt = memoryContext;
         }
       }
-      
+
       // Add MCP context
       if (mcpContext != null && mcpContext.isNotEmpty) {
-        if (enhancedSystemPrompt != null && enhancedSystemPrompt.isNotEmpty) {
+        if (enhancedSystemPrompt.isNotEmpty) {
           enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$mcpContext';
         } else {
           enhancedSystemPrompt = mcpContext;
         }
       }
-      
+
       // Add code execution and preview capabilities instruction
       const codeExecutionInstruction = '''
 CODE EXECUTION & PREVIEW CAPABILITIES:
@@ -455,13 +493,14 @@ CRITICAL RULES:
 - When users ask to run calculations, scripts, or data processing → Use standard language tags
 - NEVER use <codesandbox> tags - ALWAYS use the language prefix system instead
 - NEVER create multiple separate code blocks for related files - put them ALL in ONE codesandbox-{framework} block''';
-      
-      if (enhancedSystemPrompt != null && enhancedSystemPrompt.isNotEmpty) {
-        enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$codeExecutionInstruction';
+
+      if (enhancedSystemPrompt.isNotEmpty) {
+        enhancedSystemPrompt =
+            '$enhancedSystemPrompt\n\n$codeExecutionInstruction';
       } else {
         enhancedSystemPrompt = codeExecutionInstruction;
       }
-      
+
       // Add web search instruction if web search is enabled
       if (webSearch) {
         const webSearchInstruction = '''
@@ -479,14 +518,15 @@ Important:
 - The <sources> section should be the last thing in your response
 - Do not mention the <sources> tag in your visible response text
 ''';
-        
-        if (enhancedSystemPrompt != null && enhancedSystemPrompt.isNotEmpty) {
-          enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$webSearchInstruction';
+
+        if (enhancedSystemPrompt.isNotEmpty) {
+          enhancedSystemPrompt =
+              '$enhancedSystemPrompt\n\n$webSearchInstruction';
         } else {
           enhancedSystemPrompt = webSearchInstruction;
         }
       }
-      
+
       // Add memory management instruction
       const memoryInstruction = '''
 MEMORY MANAGEMENT:
@@ -516,12 +556,12 @@ GUIDELINES:
   
 Be proactive but intelligent - save information that will help personalize future conversations and improve your assistance.''';
 
-      if (enhancedSystemPrompt != null && enhancedSystemPrompt.isNotEmpty) {
+      if (enhancedSystemPrompt.isNotEmpty) {
         enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$memoryInstruction';
       } else {
         enhancedSystemPrompt = memoryInstruction;
       }
-      
+
       // For first message, append instruction to generate chat name
       // The AI should generate a descriptive chat name based on the conversation topic
       // and append it as JSON at the very end, which will be extracted and saved
@@ -536,16 +576,16 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
 6. Example: If user asks "How do I bake a cake?", you might use chat_name: "Cake Baking Guide"
 7. The JSON must be the last thing in your response
 8. If you're also saving a memory, use the <save memory> tag anywhere in your response, and put the JSON after it''';
-        
+
         enhancedSystemPrompt = '$enhancedSystemPrompt\n\n$chatNameInstruction';
       }
-      
+
       // Determine which model to use - use gemini-search if web search is enabled
       String modelToUse = _selectedModel;
       if (webSearch) {
         modelToUse = 'gemini-search';
       }
-      
+
       // Check if selectedModel is a custom model
       final customModel = _customModels.firstWhere(
         (m) => m.modelId == _selectedModel,
@@ -555,16 +595,17 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
           modelId: '',
           providerId: '',
           description: '',
+          endpointUrl: '',
         ),
       );
-      
+
       // Stream the response
       String fullResponseContent = '';
       String streamingDisplayContent = '';
       bool firstChunk = true;
-      
+
       Stream<String> responseStream;
-      
+
       if (customModel.modelId.isNotEmpty) {
         // Use custom provider
         final provider = _customProviders.firstWhere(
@@ -577,16 +618,17 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
             type: 'openai',
           ),
         );
-        
+
         if (provider.id.isEmpty) {
           throw Exception('Provider not found for custom model');
         }
-        
+
         final providerService = CustomProviderService(provider: provider);
         responseStream = providerService.sendMessageStream(
           message: content,
           history: historyForApi,
           modelId: customModel.modelId,
+          endpointUrl: customModel.endpointUrl,
           systemPrompt: enhancedSystemPrompt,
           reasoning: reasoning,
           mcpTools: _mcpClientService.getAllTools(),
@@ -602,28 +644,29 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
           mcpTools: _mcpClientService.getAllTools(),
         );
       }
-      
+
       await for (final chunk in responseStream) {
         // On first chunk, switch from loading to streaming
         if (firstChunk) {
           _isStreaming = true;
           firstChunk = false;
         }
-        
+
         fullResponseContent += chunk;
-        
+
         // For first message, filter out chat name JSON from display in real-time
         if (isFirstMessage) {
           // Look for JSON pattern that might appear at the end
           // Try multiple patterns to catch the JSON
           String tempContent = fullResponseContent;
-          
+
           // Pattern 1: Full JSON object with chat_name
-          final jsonPattern1 = RegExp(r'\{"chat_name"\s*:\s*"[^"]*"\}', caseSensitive: false);
+          final jsonPattern1 =
+              RegExp(r'\{"chat_name"\s*:\s*"[^"]*"\}', caseSensitive: false);
           if (jsonPattern1.hasMatch(tempContent)) {
             tempContent = tempContent.replaceAll(jsonPattern1, '').trim();
           }
-          
+
           // Pattern 2: Look for {"chat_name" at the start of JSON
           final jsonPattern2 = RegExp(r'\{"chat_name"', caseSensitive: false);
           if (jsonPattern2.hasMatch(tempContent)) {
@@ -633,18 +676,19 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
               tempContent = tempContent.substring(0, match.start).trim();
             }
           }
-          
+
           // Pattern 3: Look for any remaining JSON-like patterns at the end
-          final jsonPattern3 = RegExp(r'\{[^}]*"chat_name"[^}]*\}', caseSensitive: false);
+          final jsonPattern3 =
+              RegExp(r'\{[^}]*"chat_name"[^}]*\}', caseSensitive: false);
           if (jsonPattern3.hasMatch(tempContent)) {
             tempContent = tempContent.replaceAll(jsonPattern3, '').trim();
           }
-          
+
           streamingDisplayContent = tempContent;
         } else {
           streamingDisplayContent = fullResponseContent;
         }
-        
+
         // Update streaming content for display (without chat name JSON)
         _streamingContent = streamingDisplayContent;
         notifyListeners();
@@ -653,9 +697,10 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
       // Extract sources from web search if present using XML-style tags
       List<String> extractedSources = [];
       if (webSearch) {
-        final sourcesPattern = RegExp(r'<sources>(.*?)</sources>', caseSensitive: false, dotAll: true);
+        final sourcesPattern = RegExp(r'<sources>(.*?)</sources>',
+            caseSensitive: false, dotAll: true);
         final sourcesMatch = sourcesPattern.firstMatch(fullResponseContent);
-        
+
         if (sourcesMatch != null) {
           final sourcesContent = sourcesMatch.group(1)?.trim();
           if (sourcesContent != null && sourcesContent.isNotEmpty) {
@@ -663,35 +708,44 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
             extractedSources = sourcesContent
                 .split('\n')
                 .map((line) => line.trim())
-                .where((line) => line.isNotEmpty && (line.startsWith('http://') || line.startsWith('https://')))
+                .where((line) =>
+                    line.isNotEmpty &&
+                    (line.startsWith('http://') || line.startsWith('https://')))
                 .toList();
-            
+
             // Remove the sources tag from the response
-            fullResponseContent = fullResponseContent.replaceFirst(sourcesPattern, '').trim();
-            
+            fullResponseContent =
+                fullResponseContent.replaceFirst(sourcesPattern, '').trim();
+
             // Add formatted sources to the end of the response
             if (extractedSources.isNotEmpty) {
-              final sourcesFormatted = '\n\n**Sources:**\n${extractedSources.map((url) => '• $url').join('\n')}';
+              final sourcesFormatted =
+                  '\n\n**Sources:**\n${extractedSources.map((url) => '• $url').join('\n')}';
               fullResponseContent = '$fullResponseContent$sourcesFormatted';
             }
           }
         }
       }
-      
+
       // Extract memory from full response if present using XML-style tags
       String? extractedMemory;
       // Try to find memory tag - look for the first occurrence
-      final memoryPattern = RegExp(r'<save\s+memory>(.*?)</save\s+memory>', caseSensitive: false, dotAll: true);
+      final memoryPattern = RegExp(r'<save\s+memory>(.*?)</save\s+memory>',
+          caseSensitive: false, dotAll: true);
       final memoryMatch = memoryPattern.firstMatch(fullResponseContent);
-      
+
       if (memoryMatch != null) {
         extractedMemory = memoryMatch.group(1)?.trim();
         // Replace the memory tag with a visible confirmation message
         final confirmationMessage = '✅ *Memory saved: "$extractedMemory"*';
-        fullResponseContent = fullResponseContent.replaceFirst(memoryPattern, confirmationMessage).trim();
-        
+        fullResponseContent = fullResponseContent
+            .replaceFirst(memoryPattern, confirmationMessage)
+            .trim();
+
         // Save memory if callback is set and within character limit
-        if (_onMemoryExtracted != null && extractedMemory != null && extractedMemory.isNotEmpty) {
+        if (_onMemoryExtracted != null &&
+            extractedMemory != null &&
+            extractedMemory.isNotEmpty) {
           try {
             await _onMemoryExtracted!(extractedMemory);
           } catch (e) {
@@ -699,62 +753,76 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
           }
         }
       }
-      
+
       // Extract chat name from full response if it's the first message
       String displayContent = fullResponseContent;
       String? extractedChatName;
-      
+
       if (isFirstMessage) {
         // Try multiple patterns to extract chat name from JSON
         // Pattern 1: Standard JSON format {"chat_name": "name"}
-        RegExp jsonPattern1 = RegExp(r'\{"chat_name"\s*:\s*"([^"]+)"\}', caseSensitive: false);
+        RegExp jsonPattern1 =
+            RegExp(r'\{"chat_name"\s*:\s*"([^"]+)"\}', caseSensitive: false);
         Match? match = jsonPattern1.firstMatch(fullResponseContent);
-        
+
         if (match != null) {
           extractedChatName = match.group(1);
           // Remove the JSON part from display content
           displayContent = fullResponseContent.substring(0, match.start).trim();
         } else {
           // Pattern 2: JSON with potential whitespace variations
-          RegExp jsonPattern2 = RegExp(r'\{\s*"chat_name"\s*:\s*"([^"]+)"\s*\}', caseSensitive: false);
+          RegExp jsonPattern2 = RegExp(r'\{\s*"chat_name"\s*:\s*"([^"]+)"\s*\}',
+              caseSensitive: false);
           match = jsonPattern2.firstMatch(fullResponseContent);
-          
+
           if (match != null) {
             extractedChatName = match.group(1);
-            displayContent = fullResponseContent.substring(0, match.start).trim();
+            displayContent =
+                fullResponseContent.substring(0, match.start).trim();
           } else {
             // Pattern 3: Look for chat_name with any quotes
-            RegExp jsonPattern3 = RegExp(r'"chat_name"\s*:\s*"([^"]+)"', caseSensitive: false);
+            RegExp jsonPattern3 =
+                RegExp(r'"chat_name"\s*:\s*"([^"]+)"', caseSensitive: false);
             match = jsonPattern3.firstMatch(fullResponseContent);
-            
+
             if (match != null) {
               extractedChatName = match.group(1);
-              displayContent = fullResponseContent.substring(0, match.start).trim();
+              displayContent =
+                  fullResponseContent.substring(0, match.start).trim();
             } else {
               // Pattern 4: Single quotes
-              RegExp jsonPattern4 = RegExp(r"'chat_name'\s*:\s*'([^']+)'", caseSensitive: false);
+              RegExp jsonPattern4 =
+                  RegExp(r"'chat_name'\s*:\s*'([^']+)'", caseSensitive: false);
               match = jsonPattern4.firstMatch(fullResponseContent);
-              
+
               if (match != null) {
                 extractedChatName = match.group(1);
-                displayContent = fullResponseContent.substring(0, match.start).trim();
+                displayContent =
+                    fullResponseContent.substring(0, match.start).trim();
               }
             }
           }
         }
-        
+
         // Clean up display content - remove any remaining JSON artifacts
         displayContent = displayContent
-            .replaceAll(RegExp(r'\{"chat_name"[^\}]*\}', caseSensitive: false), '')
-            .replaceAll(RegExp(r'\{[^}]*"chat_name"[^}]*\}', caseSensitive: false), '')
-            .replaceAll(RegExp(r'\{[^}]*chat_name[^}]*\}', caseSensitive: false), '')
+            .replaceAll(
+                RegExp(r'\{"chat_name"[^\}]*\}', caseSensitive: false), '')
+            .replaceAll(
+                RegExp(r'\{[^}]*"chat_name"[^}]*\}', caseSensitive: false), '')
+            .replaceAll(
+                RegExp(r'\{[^}]*chat_name[^}]*\}', caseSensitive: false), '')
             .trim();
-        
+
         // If no chat name was extracted, generate one based on the response content
         // This ensures we always have a meaningful name, not the user's input
         if (extractedChatName == null || extractedChatName.isEmpty) {
           // Generate a name from the first sentence or key words in the response
-          final words = displayContent.split(RegExp(r'\s+')).where((w) => w.length > 3).take(4).toList();
+          final words = displayContent
+              .split(RegExp(r'\s+'))
+              .where((w) => w.length > 3)
+              .take(4)
+              .toList();
           if (words.isNotEmpty) {
             extractedChatName = words.join(' ');
             // Limit length
@@ -766,7 +834,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
             extractedChatName = 'New Conversation';
           }
         }
-        
+
         // Update chat title with extracted/generated name (never show user's input as title)
         _currentChat = Chat(
           id: _currentChat!.id,
@@ -780,8 +848,9 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
 
       // Calculate response time
       final responseEndTime = DateTime.now();
-      final responseTimeMs = responseEndTime.difference(responseStartTime).inMilliseconds;
-      
+      final responseTimeMs =
+          responseEndTime.difference(responseStartTime).inMilliseconds;
+
       // Save the response with cleaned content (without chat name JSON)
       final assistantMessage = Message(
         role: 'assistant',
@@ -792,7 +861,8 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         responseTimeMs: responseTimeMs,
       );
 
-      final assistantInsertedId = await _databaseService.insertMessage(assistantMessage);
+      final assistantInsertedId =
+          await _databaseService.insertMessage(assistantMessage);
       final assistantMessageWithId = Message(
         id: assistantInsertedId,
         role: assistantMessage.role,
@@ -815,7 +885,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         await _databaseService.updateChat(_currentChat!);
         await _loadChats();
       }
-      
+
       _streamingContent = '';
     } catch (e) {
       _error = e.toString();

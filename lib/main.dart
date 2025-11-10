@@ -19,15 +19,15 @@ import 'widgets/update_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize MCP configuration with defaults
   final mcpConfigService = McpConfigService();
   await mcpConfigService.initializeDefaultConfig();
-  
+
   // Configure window for desktop platforms
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     await windowManager.ensureInitialized();
-    
+
     const windowOptions = WindowOptions(
       size: Size(1200, 800),
       minimumSize: Size(800, 600),
@@ -37,13 +37,13 @@ void main() async {
       titleBarStyle: TitleBarStyle.normal,
       title: 'Xibe Chat',
     );
-    
+
     windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();
     });
   }
-  
+
   runApp(const XibeChatApp());
 }
 
@@ -62,7 +62,8 @@ class XibeChatApp extends StatelessWidget {
             if (previous != null) {
               previous.updateApiKey(settings.apiKey);
               previous.updateSystemPrompt(settings.getCombinedSystemPrompt());
-              previous.updateCustomProviders(settings.customProviders, settings.customModels);
+              previous.updateCustomProviders(
+                  settings.customProviders, settings.customModels);
               return previous;
             }
             return ChatProvider(
@@ -75,16 +76,19 @@ class XibeChatApp extends StatelessWidget {
       child: Consumer2<ThemeProvider, SettingsProvider>(
         builder: (context, themeProvider, settingsProvider, child) {
           // Connect memory context getter and memory extraction callback to chat provider
-          final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-          chatProvider.setMemoryContextGetter(() => settingsProvider.getMemoriesContext());
+          final chatProvider =
+              Provider.of<ChatProvider>(context, listen: false);
+          chatProvider.setMemoryContextGetter(
+              () => settingsProvider.getMemoriesContext());
           chatProvider.setOnMemoryExtracted((memory) async {
             // Check if adding this memory would exceed the limit
             final currentTotal = settingsProvider.getTotalMemoryCharacters();
-            if (currentTotal + memory.length <= SettingsProvider.maxTotalMemoryCharacters) {
+            if (currentTotal + memory.length <=
+                SettingsProvider.maxTotalMemoryCharacters) {
               await settingsProvider.addMemory(memory);
             }
           });
-          
+
           return MaterialApp(
             key: const ValueKey('xibe_chat_app'),
             title: 'Xibe Chat',
@@ -137,7 +141,7 @@ class _SplashWrapperState extends State<SplashWrapper> {
       _deepLinkService.onDeepLinkReceived = (Uri uri) {
         _handleDeepLink(uri);
       };
-      
+
       // Initialize the service
       await _deepLinkService.initialize();
     } catch (e) {
@@ -147,7 +151,7 @@ class _SplashWrapperState extends State<SplashWrapper> {
 
   void _handleDeepLink(Uri uri) {
     final deepLinkData = _deepLinkService.parseDeepLink(uri);
-    
+
     if (deepLinkData == null) {
       debugPrint('Could not parse deep link: $uri');
       return;
@@ -157,7 +161,7 @@ class _SplashWrapperState extends State<SplashWrapper> {
 
     // If splash is still showing, store the data for later
     if (_showSplash) {
-      if (deepLinkData.type == DeepLinkType.message && 
+      if (deepLinkData.type == DeepLinkType.message &&
           deepLinkData.messagePrompt != null) {
         _pendingPrompt = deepLinkData.messagePrompt;
       }
@@ -186,13 +190,19 @@ class _SplashWrapperState extends State<SplashWrapper> {
 
   void _navigateToNewChat() {
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    chatProvider.createNewChat();
+    final settingsProvider =
+        Provider.of<SettingsProvider>(context, listen: false);
+    chatProvider.createNewChat(defaultModel: settingsProvider.defaultModel);
   }
 
   void _navigateToNewChatWithPrompt(String prompt) {
     // Create a new chat and set the prompt
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    chatProvider.createNewChat().then((_) {
+    final settingsProvider =
+        Provider.of<SettingsProvider>(context, listen: false);
+    chatProvider
+        .createNewChat(defaultModel: settingsProvider.defaultModel)
+        .then((_) {
       // The prompt will be set in ChatScreen via the provider
       chatProvider.setPendingPrompt(prompt);
     });
@@ -201,23 +211,25 @@ class _SplashWrapperState extends State<SplashWrapper> {
   Future<void> _checkForUpdatesAfterDelay() async {
     // Wait for splash screen to complete
     await Future.delayed(const Duration(seconds: 3));
-    
+
     if (!mounted) return;
-    
+
     _checkForUpdates();
   }
 
   Future<void> _checkForUpdates() async {
     try {
       // Get the user's preferred update channel from settings
-      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      final settingsProvider =
+          Provider.of<SettingsProvider>(context, listen: false);
       final updateChannel = settingsProvider.updateChannel;
-      
+
       final updateService = UpdateService();
-      final updateInfo = await updateService.checkForUpdate(channel: updateChannel);
-      
+      final updateInfo =
+          await updateService.checkForUpdate(channel: updateChannel);
+
       if (!mounted) return;
-      
+
       if (updateInfo['available'] == true) {
         // Show update dialog
         showUpdateDialog(context, updateInfo, updateService);
@@ -242,7 +254,7 @@ class _SplashWrapperState extends State<SplashWrapper> {
           setState(() {
             _showSplash = false;
           });
-          
+
           // Handle any pending deep link after splash
           if (_pendingPrompt != null) {
             Future.delayed(const Duration(milliseconds: 500), () {

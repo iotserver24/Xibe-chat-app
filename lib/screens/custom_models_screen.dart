@@ -43,7 +43,8 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
               itemBuilder: (context, index) {
                 final model = models[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: ListTile(
                     leading: const Icon(Icons.smart_toy, color: Colors.purple),
                     title: Text(model.name),
@@ -60,21 +61,27 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
                           children: [
                             if (model.supportsVision)
                               const Chip(
-                                label: Text('Vision', style: TextStyle(fontSize: 10)),
+                                label: Text('Vision',
+                                    style: TextStyle(fontSize: 10)),
                                 padding: EdgeInsets.all(2),
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
                               ),
                             if (model.supportsStreaming)
                               const Chip(
-                                label: Text('Streaming', style: TextStyle(fontSize: 10)),
+                                label: Text('Streaming',
+                                    style: TextStyle(fontSize: 10)),
                                 padding: EdgeInsets.all(2),
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
                               ),
                             if (model.supportsTools)
                               const Chip(
-                                label: Text('Tools', style: TextStyle(fontSize: 10)),
+                                label: Text('Tools',
+                                    style: TextStyle(fontSize: 10)),
                                 padding: EdgeInsets.all(2),
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
                               ),
                           ],
                         ),
@@ -104,9 +111,18 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
     final nameController = TextEditingController();
     final modelIdController = TextEditingController();
     final descriptionController = TextEditingController();
+    final endpointUrlController = TextEditingController();
     bool supportsVision = false;
     bool supportsStreaming = true;
     bool supportsTools = false;
+
+    // Get provider to show example endpoint URL
+    final settingsProvider =
+        Provider.of<SettingsProvider>(context, listen: false);
+    final provider = settingsProvider.getProviderById(widget.providerId);
+    final exampleUrl = provider?.type == 'anthropic'
+        ? '${provider?.baseUrl}/messages'
+        : '${provider?.baseUrl}/chat/completions';
 
     showDialog(
       context: context,
@@ -130,6 +146,17 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Model ID',
                     hintText: 'e.g., gpt-4-turbo-preview',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: endpointUrlController,
+                  decoration: InputDecoration(
+                    labelText: 'Full Endpoint URL *',
+                    hintText: exampleUrl,
+                    helperText:
+                        'Enter the complete API endpoint URL including /chat/completions or /messages. Different providers may use different endpoints.',
+                    helperMaxLines: 3,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -179,18 +206,22 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                if (nameController.text.isNotEmpty && modelIdController.text.isNotEmpty) {
+                if (nameController.text.isNotEmpty &&
+                    modelIdController.text.isNotEmpty &&
+                    endpointUrlController.text.isNotEmpty) {
                   final model = CustomModel(
                     id: const Uuid().v4(),
                     name: nameController.text,
                     modelId: modelIdController.text,
                     providerId: widget.providerId,
                     description: descriptionController.text,
+                    endpointUrl: endpointUrlController.text.trim(),
                     supportsVision: supportsVision,
                     supportsStreaming: supportsStreaming,
                     supportsTools: supportsTools,
                   );
-                  Provider.of<SettingsProvider>(context, listen: false).addCustomModel(model);
+                  Provider.of<SettingsProvider>(context, listen: false)
+                      .addCustomModel(model);
                   Navigator.pop(context);
                 }
               },
@@ -205,10 +236,21 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
   void _showEditModelDialog(BuildContext context, CustomModel model) {
     final nameController = TextEditingController(text: model.name);
     final modelIdController = TextEditingController(text: model.modelId);
-    final descriptionController = TextEditingController(text: model.description);
+    final descriptionController =
+        TextEditingController(text: model.description);
+    final endpointUrlController =
+        TextEditingController(text: model.endpointUrl);
     bool supportsVision = model.supportsVision;
     bool supportsStreaming = model.supportsStreaming;
     bool supportsTools = model.supportsTools;
+
+    // Get provider to show example endpoint URL
+    final settingsProvider =
+        Provider.of<SettingsProvider>(context, listen: false);
+    final provider = settingsProvider.getProviderById(widget.providerId);
+    final exampleUrl = provider?.type == 'anthropic'
+        ? '${provider?.baseUrl}/messages'
+        : '${provider?.baseUrl}/chat/completions';
 
     showDialog(
       context: context,
@@ -227,6 +269,17 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
                 TextField(
                   controller: modelIdController,
                   decoration: const InputDecoration(labelText: 'Model ID'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: endpointUrlController,
+                  decoration: InputDecoration(
+                    labelText: 'Full Endpoint URL *',
+                    hintText: exampleUrl,
+                    helperText:
+                        'Enter the complete API endpoint URL including /chat/completions or /messages.',
+                    helperMaxLines: 2,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -272,16 +325,20 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                final updatedModel = model.copyWith(
-                  name: nameController.text,
-                  modelId: modelIdController.text,
-                  description: descriptionController.text,
-                  supportsVision: supportsVision,
-                  supportsStreaming: supportsStreaming,
-                  supportsTools: supportsTools,
-                );
-                Provider.of<SettingsProvider>(context, listen: false).updateCustomModel(updatedModel);
-                Navigator.pop(context);
+                if (endpointUrlController.text.isNotEmpty) {
+                  final updatedModel = model.copyWith(
+                    name: nameController.text,
+                    modelId: modelIdController.text,
+                    description: descriptionController.text,
+                    endpointUrl: endpointUrlController.text.trim(),
+                    supportsVision: supportsVision,
+                    supportsStreaming: supportsStreaming,
+                    supportsTools: supportsTools,
+                  );
+                  Provider.of<SettingsProvider>(context, listen: false)
+                      .updateCustomModel(updatedModel);
+                  Navigator.pop(context);
+                }
               },
               child: const Text('Save'),
             ),
@@ -305,7 +362,8 @@ class _CustomModelsScreenState extends State<CustomModelsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
-              Provider.of<SettingsProvider>(context, listen: false).deleteCustomModel(model.id);
+              Provider.of<SettingsProvider>(context, listen: false)
+                  .deleteCustomModel(model.id);
               Navigator.pop(context);
             },
             child: const Text('Delete'),

@@ -15,6 +15,7 @@ class SettingsProvider extends ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService();
   String? _apiKey;
   String? _systemPrompt;
+  String? _defaultModel; // Default model for new chats
   String? _e2bApiKey; // Kept for backward compatibility, not required anymore
   String? _e2bBackendUrl; // Backend URL (optional - can use env var)
   double _temperature = 0.7;
@@ -32,7 +33,9 @@ class SettingsProvider extends ChangeNotifier {
 
   String? get apiKey => _apiKey;
   String? get systemPrompt => _systemPrompt;
-  String? get e2bApiKey => _e2bApiKey; // Deprecated - kept for backward compatibility
+  String? get defaultModel => _defaultModel;
+  String? get e2bApiKey =>
+      _e2bApiKey; // Deprecated - kept for backward compatibility
   String? get e2bBackendUrl => _e2bBackendUrl;
   double get temperature => _temperature;
   int get maxTokens => _maxTokens;
@@ -58,6 +61,7 @@ class SettingsProvider extends ChangeNotifier {
     _prefs = await SharedPreferences.getInstance();
     _apiKey = _prefs?.getString('xibe_api_key');
     _systemPrompt = _prefs?.getString('system_prompt');
+    _defaultModel = _prefs?.getString('default_model');
     _e2bApiKey = _prefs?.getString('e2b_api_key'); // Deprecated
     _e2bBackendUrl = _prefs?.getString('e2b_backend_url');
     _temperature = _prefs?.getDouble('temperature') ?? 0.7;
@@ -85,6 +89,16 @@ class SettingsProvider extends ChangeNotifier {
       await _prefs?.setString('system_prompt', prompt);
     } else {
       await _prefs?.remove('system_prompt');
+    }
+    notifyListeners();
+  }
+
+  Future<void> setDefaultModel(String? modelId) async {
+    _defaultModel = modelId;
+    if (modelId != null && modelId.isNotEmpty) {
+      await _prefs?.setString('default_model', modelId);
+    } else {
+      await _prefs?.remove('default_model');
     }
     notifyListeners();
   }
@@ -155,7 +169,8 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   void _updateCachedTotalCharacters() {
-    _cachedTotalMemoryCharacters = _memories.fold(0, (sum, memory) => sum + memory.content.length);
+    _cachedTotalMemoryCharacters =
+        _memories.fold(0, (sum, memory) => sum + memory.content.length);
   }
 
   Future<void> addMemory(String content) async {
@@ -190,7 +205,7 @@ class SettingsProvider extends ChangeNotifier {
 
   String getMemoriesContext() {
     if (_memories.isEmpty) return '';
-    
+
     final memoryPoints = _memories.map((m) => '- ${m.content}').join('\n');
     return 'User Memory (Important context about the user):\n$memoryPoints';
   }
@@ -200,7 +215,7 @@ class SettingsProvider extends ChangeNotifier {
     try {
       _prefs ??= await SharedPreferences.getInstance();
       final profilesJson = _prefs?.getStringList('ai_profiles') ?? [];
-      
+
       if (profilesJson.isEmpty) {
         // Initialize with default profiles
         final defaultProfiles = AiProfile.getDefaultProfiles();
@@ -209,7 +224,9 @@ class SettingsProvider extends ChangeNotifier {
         // Don't auto-select a profile on first load - make it optional
         _selectedAiProfileId = null;
       } else {
-        _aiProfiles = profilesJson.map((json) => AiProfile.fromJson(jsonDecode(json))).toList();
+        _aiProfiles = profilesJson
+            .map((json) => AiProfile.fromJson(jsonDecode(json)))
+            .toList();
         _selectedAiProfileId = _prefs?.getString('selected_ai_profile_id');
         // If empty string was stored, treat as null
         if (_selectedAiProfileId != null && _selectedAiProfileId!.isEmpty) {
@@ -226,7 +243,8 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> _saveAiProfiles() async {
     try {
       _prefs ??= await SharedPreferences.getInstance();
-      final profilesJson = _aiProfiles.map((p) => jsonEncode(p.toJson())).toList();
+      final profilesJson =
+          _aiProfiles.map((p) => jsonEncode(p.toJson())).toList();
       await _prefs?.setStringList('ai_profiles', profilesJson);
     } catch (e) {
       print('Error saving AI profiles: $e');
@@ -242,8 +260,10 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> deleteAiProfile(String profileId) async {
     _aiProfiles.removeWhere((p) => p.id == profileId);
     if (_selectedAiProfileId == profileId) {
-      _selectedAiProfileId = _aiProfiles.isNotEmpty ? _aiProfiles.first.id : null;
-      await _prefs?.setString('selected_ai_profile_id', _selectedAiProfileId ?? '');
+      _selectedAiProfileId =
+          _aiProfiles.isNotEmpty ? _aiProfiles.first.id : null;
+      await _prefs?.setString(
+          'selected_ai_profile_id', _selectedAiProfileId ?? '');
     }
     await _saveAiProfiles();
     notifyListeners();
@@ -266,7 +286,9 @@ class SettingsProvider extends ChangeNotifier {
 
   String? getCombinedSystemPrompt() {
     final selectedProfile = getSelectedAiProfile();
-    if (selectedProfile != null && _systemPrompt != null && _systemPrompt!.isNotEmpty) {
+    if (selectedProfile != null &&
+        _systemPrompt != null &&
+        _systemPrompt!.isNotEmpty) {
       return '${selectedProfile.systemPrompt}\n\n$_systemPrompt';
     } else if (selectedProfile != null) {
       return selectedProfile.systemPrompt;
@@ -279,12 +301,14 @@ class SettingsProvider extends ChangeNotifier {
     try {
       _prefs ??= await SharedPreferences.getInstance();
       final providersJson = _prefs?.getStringList('custom_providers') ?? [];
-      
+
       if (providersJson.isEmpty) {
         _customProviders = CustomProvider.getBuiltInProviders();
         await _saveCustomProviders();
       } else {
-        _customProviders = providersJson.map((json) => CustomProvider.fromJson(jsonDecode(json))).toList();
+        _customProviders = providersJson
+            .map((json) => CustomProvider.fromJson(jsonDecode(json)))
+            .toList();
       }
       notifyListeners();
     } catch (e) {
@@ -296,7 +320,8 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> _saveCustomProviders() async {
     try {
       _prefs ??= await SharedPreferences.getInstance();
-      final providersJson = _customProviders.map((p) => jsonEncode(p.toJson())).toList();
+      final providersJson =
+          _customProviders.map((p) => jsonEncode(p.toJson())).toList();
       await _prefs?.setStringList('custom_providers', providersJson);
     } catch (e) {
       print('Error saving custom providers: $e');
@@ -339,7 +364,9 @@ class SettingsProvider extends ChangeNotifier {
     try {
       _prefs ??= await SharedPreferences.getInstance();
       final modelsJson = _prefs?.getStringList('custom_models') ?? [];
-      _customModels = modelsJson.map((json) => CustomModel.fromJson(jsonDecode(json))).toList();
+      _customModels = modelsJson
+          .map((json) => CustomModel.fromJson(jsonDecode(json)))
+          .toList();
       notifyListeners();
     } catch (e) {
       print('Error loading custom models: $e');
@@ -350,7 +377,8 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> _saveCustomModels() async {
     try {
       _prefs ??= await SharedPreferences.getInstance();
-      final modelsJson = _customModels.map((m) => jsonEncode(m.toJson())).toList();
+      final modelsJson =
+          _customModels.map((m) => jsonEncode(m.toJson())).toList();
       await _prefs?.setStringList('custom_models', modelsJson);
     } catch (e) {
       print('Error saving custom models: $e');
