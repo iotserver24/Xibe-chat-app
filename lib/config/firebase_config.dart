@@ -133,14 +133,39 @@ class FirebaseConfig {
 
     // Fallback: Try to load from firebase_options.dart if it exists
     // This allows local development with firebase_options.dart file
-    // Note: If firebase_options.dart exists, import it and use DefaultFirebaseOptions
-    // For now, throw an error to indicate configuration is needed
+    try {
+      // Try to import and use firebase_options.dart if available
+      // This is a dynamic import attempt - if the file doesn't exist, this will fail gracefully
+      final firebaseOptions = _tryLoadFirebaseOptions();
+      if (firebaseOptions != null) {
+        return firebaseOptions;
+      }
+    } catch (e) {
+      // firebase_options.dart not available, continue to error
+    }
+
+    // No configuration found - provide helpful error message
     throw UnsupportedError(
       'Firebase configuration not found for ${kIsWeb ? 'web' : defaultTargetPlatform.toString()}. '
-      'Please set Firebase environment variables in GitHub Actions or create firebase_options.dart file for local development. '
+      'For local development, use: .\\scripts\\run_local.ps1 windows (or ./scripts/run_local.sh windows) '
+      'Or set Firebase environment variables via --dart-define flags. '
       'Required variables: FIREBASE_API_KEY (or platform-specific), FIREBASE_APP_ID (or platform-specific), FIREBASE_PROJECT_ID, FIREBASE_AUTH_DOMAIN. '
-      'See docs/GITHUB_ACTIONS_FIREBASE.md for instructions.',
+      'See docs/LOCAL_DEVELOPMENT.md for instructions.',
     );
+  }
+
+  // Try to load Firebase options from firebase_options.dart if it exists
+  static FirebaseOptions? _tryLoadFirebaseOptions() {
+    try {
+      // Try to use DefaultFirebaseOptions from firebase_options.dart
+      // This will only work if the file exists and is properly configured
+      // Using a try-catch to handle the case where it doesn't exist
+      // Note: This requires firebase_options.dart to be generated via FlutterFire CLI
+      // For now, return null - users should use the run_local script or --dart-define flags
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 }
 

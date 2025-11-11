@@ -146,7 +146,12 @@ class SettingsProvider extends ChangeNotifier {
         updateChannel: _updateChannel,
         selectedAiProfileId: _selectedAiProfileId,
         aiProfiles: _aiProfiles.map((p) => p.toJson()).toList(),
-        customProviders: _customProviders.map((p) => p.toJson()).toList(),
+        // Only sync custom (non-built-in) providers with their API keys
+        // Built-in providers don't need to be synced as they're always available
+        customProviders: _customProviders
+            .where((p) => !p.isBuiltIn) // Only sync non-built-in providers
+            .map((p) => p.toJson()) // Include all fields including apiKey
+            .toList(),
         customModels: _customModels.map((m) => m.toJson()).toList(),
         lastSyncedAt: DateTime.now(),
       );

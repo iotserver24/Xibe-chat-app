@@ -117,15 +117,63 @@ class CloudSyncService {
     }
   }
 
-  // Delete chat from cloud
+  // Delete chat from cloud (including all messages in that chat)
   Future<void> deleteChatFromCloud(String userId, int chatId) async {
     if (!await isOnline) return;
 
     try {
-      final chatRef = _getChatsRef(userId).doc(chatId.toString());
-      await chatRef.delete();
+      final chatIdStr = chatId.toString();
+      
+      // Get all messages in this chat
+      final messagesSnapshot = await _getMessagesRef(userId, chatIdStr).get();
+      
+      // Use batch to delete all messages and the chat
+      final batch = _firestore.batch();
+      
+      // Delete all messages in this chat
+      for (final messageDoc in messagesSnapshot.docs) {
+        batch.delete(messageDoc.reference);
+      }
+      
+      // Delete the chat document
+      final chatRef = _getChatsRef(userId).doc(chatIdStr);
+      batch.delete(chatRef);
+      
+      // Commit all deletions
+      await batch.commit();
     } catch (e) {
       print('Error deleting chat from cloud: $e');
+    }
+  }
+
+  // Delete all chats and their messages from cloud
+  Future<void> deleteAllChatsFromCloud(String userId) async {
+    if (!await isOnline) return;
+
+    try {
+      // Get all chats first
+      final chatsSnapshot = await _getChatsRef(userId).get();
+      
+      // Use batch to delete all chats and their messages
+      final batch = _firestore.batch();
+      
+      for (final chatDoc in chatsSnapshot.docs) {
+        final chatId = chatDoc.id;
+        
+        // Delete all messages in this chat
+        final messagesSnapshot = await _getMessagesRef(userId, chatId).get();
+        for (final messageDoc in messagesSnapshot.docs) {
+          batch.delete(messageDoc.reference);
+        }
+        
+        // Delete the chat document
+        batch.delete(chatDoc.reference);
+      }
+      
+      // Commit all deletions
+      await batch.commit();
+    } catch (e) {
+      print('Error deleting all chats from cloud: $e');
     }
   }
 

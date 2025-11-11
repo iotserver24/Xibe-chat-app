@@ -150,12 +150,22 @@ class DatabaseService {
     _currentUserId = userId;
   }
 
-  Future<int> createChat(Chat chat) async {
+  Future<int> createChat(Chat chat, {bool skipCloudSync = false}) async {
     final db = await database;
-    final id = await db.insert('chats', chat.toMap());
     
-    // Sync to cloud if user is logged in
-    if (_currentUserId != null) {
+    // If chat has an ID, use INSERT OR REPLACE to handle duplicates
+    int id;
+    if (chat.id != null) {
+      // Use INSERT OR REPLACE to handle existing chats (e.g., from cloud sync)
+      await db.insert('chats', chat.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      id = chat.id!;
+    } else {
+      // Auto-generate ID for new chats
+      id = await db.insert('chats', chat.toMap());
+    }
+    
+    // Sync to cloud if user is logged in (unless explicitly skipped)
+    if (!skipCloudSync && _currentUserId != null) {
       final chatWithId = Chat(
         id: id,
         title: chat.title,
@@ -209,12 +219,22 @@ class DatabaseService {
     }
   }
 
-  Future<int> insertMessage(Message message) async {
+  Future<int> insertMessage(Message message, {bool skipCloudSync = false}) async {
     final db = await database;
-    final id = await db.insert('messages', message.toMap());
     
-    // Sync to cloud if user is logged in
-    if (_currentUserId != null) {
+    // If message has an ID, use INSERT OR REPLACE to handle duplicates
+    int id;
+    if (message.id != null) {
+      // Use INSERT OR REPLACE to handle existing messages (e.g., from cloud sync)
+      await db.insert('messages', message.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      id = message.id!;
+    } else {
+      // Auto-generate ID for new messages
+      id = await db.insert('messages', message.toMap());
+    }
+    
+    // Sync to cloud if user is logged in (unless explicitly skipped)
+    if (!skipCloudSync && _currentUserId != null) {
       final messageWithId = Message(
         id: id,
         role: message.role,
@@ -256,17 +276,34 @@ class DatabaseService {
 
   Future<void> deleteAllChats() async {
     final db = await database;
+    
+    // Delete from local database
     await db.delete('messages');
     await db.delete('chats');
+    
+    // Delete all chats and their messages from cloud if user is logged in
+    if (_currentUserId != null) {
+      await _cloudSyncService.deleteAllChatsFromCloud(_currentUserId!);
+    }
   }
 
   // Memory operations
-  Future<int> insertMemory(Memory memory) async {
+  Future<int> insertMemory(Memory memory, {bool skipCloudSync = false}) async {
     final db = await database;
-    final id = await db.insert('memories', memory.toMap());
     
-    // Sync to cloud if user is logged in
-    if (_currentUserId != null) {
+    // If memory has an ID, use INSERT OR REPLACE to handle duplicates
+    int id;
+    if (memory.id != null) {
+      // Use INSERT OR REPLACE to handle existing memories (e.g., from cloud sync)
+      await db.insert('memories', memory.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      id = memory.id!;
+    } else {
+      // Auto-generate ID for new memories
+      id = await db.insert('memories', memory.toMap());
+    }
+    
+    // Sync to cloud if user is logged in (unless explicitly skipped)
+    if (!skipCloudSync && _currentUserId != null) {
       final memoryWithId = Memory(
         id: id,
         content: memory.content,
@@ -405,12 +442,14 @@ class DatabaseService {
       final localChatIds = localChats.map((c) => c.id).toSet();
       
       for (final cloudChat in cloudChats) {
-        if (cloudChat.id != null && !localChatIds.contains(cloudChat.id)) {
-          // Chat exists in cloud but not locally - add it
-          await createChat(cloudChat);
-        } else if (cloudChat.id != null && localChatIds.contains(cloudChat.id)) {
-          // Chat exists in both - update local with cloud version
-          await updateChat(cloudChat);
+        if (cloudChat.id != null) {
+          if (!localChatIds.contains(cloudChat.id)) {
+            // Chat exists in cloud but not locally - add it (skip cloud sync since it's from cloud)
+            await createChat(cloudChat, skipCloudSync: true);
+          } else {
+            // Chat exists in both - update local with cloud version (skip cloud sync)
+            await createChat(cloudChat, skipCloudSync: true);
+          }
         }
       }
       
@@ -427,9 +466,14 @@ class DatabaseService {
           final localMessageIds = localMessages.map((m) => m.id).toSet();
           
           for (final cloudMessage in cloudMessages) {
-            if (cloudMessage.id != null && !localMessageIds.contains(cloudMessage.id)) {
-              // Message exists in cloud but not locally - add it
-              await insertMessage(cloudMessage);
+            if (cloudMessage.id != null) {
+              if (!localMessageIds.contains(cloudMessage.id)) {
+                // Message exists in cloud but not locally - add it (skip cloud sync since it's from cloud)
+                await insertMessage(cloudMessage, skipCloudSync: true);
+              } else {
+                // Message exists in both - update local with cloud version (skip cloud sync)
+                await insertMessage(cloudMessage, skipCloudSync: true);
+              }
             }
           }
         }
@@ -442,9 +486,14 @@ class DatabaseService {
       final localMemoryIds = localMemories.map((m) => m.id).toSet();
       
       for (final cloudMemory in cloudMemories) {
-        if (cloudMemory.id != null && !localMemoryIds.contains(cloudMemory.id)) {
-          // Memory exists in cloud but not locally - add it
-          await insertMemory(cloudMemory);
+        if (cloudMemory.id != null) {
+          if (!localMemoryIds.contains(cloudMemory.id)) {
+            // Memory exists in cloud but not locally - add it (skip cloud sync since it's from cloud)
+            await insertMemory(cloudMemory, skipCloudSync: true);
+          } else {
+            // Memory exists in both - update local with cloud version (skip cloud sync)
+            await insertMemory(cloudMemory, skipCloudSync: true);
+          }
         }
       }
     } catch (e) {

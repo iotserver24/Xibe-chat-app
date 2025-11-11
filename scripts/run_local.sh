@@ -22,33 +22,92 @@ export $(grep -v '^#' .env | xargs)
 DART_DEFINES=()
 DART_DEFINES+=("--dart-define=E2B_BACKEND_URL=${E2B_BACKEND_URL}")
 
-# Add platform-specific Firebase config
+# Add shared Firebase variables first (project-level, not API keys)
+DART_DEFINES+=("--dart-define=FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}")
+DART_DEFINES+=("--dart-define=FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN}")
+DART_DEFINES+=("--dart-define=FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}")
+DART_DEFINES+=("--dart-define=FIREBASE_MESSAGING_SENDER_ID=${FIREBASE_MESSAGING_SENDER_ID}")
+
+# Add platform-specific Firebase config (API keys and App IDs)
+# These come AFTER shared vars so they override if needed
 case "$PLATFORM" in
     android)
-        DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_ANDROID_API_KEY}")
-        DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_ANDROID_APP_ID}")
+        if [ -n "$FIREBASE_ANDROID_API_KEY" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_ANDROID_API_KEY}")
+        else
+            DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_API_KEY}")
+        fi
+        if [ -n "$FIREBASE_ANDROID_APP_ID" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_ANDROID_APP_ID}")
+        else
+            DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_APP_ID}")
+        fi
         ;;
     ios)
-        DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_IOS_API_KEY}")
-        DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_IOS_APP_ID}")
-        DART_DEFINES+=("--dart-define=FIREBASE_IOS_BUNDLE_ID=${FIREBASE_IOS_BUNDLE_ID}")
+        if [ -n "$FIREBASE_IOS_API_KEY" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_IOS_API_KEY}")
+        else
+            DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_API_KEY}")
+        fi
+        if [ -n "$FIREBASE_IOS_APP_ID" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_IOS_APP_ID}")
+        else
+            DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_APP_ID}")
+        fi
+        if [ -n "$FIREBASE_IOS_BUNDLE_ID" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_IOS_BUNDLE_ID=${FIREBASE_IOS_BUNDLE_ID}")
+        fi
         ;;
     windows)
-        DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_WINDOWS_API_KEY}")
-        DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_WINDOWS_APP_ID}")
+        if [ -n "$FIREBASE_WINDOWS_API_KEY" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_WINDOWS_API_KEY}")
+        else
+            DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_API_KEY}")
+        fi
+        if [ -n "$FIREBASE_WINDOWS_APP_ID" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_WINDOWS_APP_ID}")
+        else
+            DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_APP_ID}")
+        fi
         ;;
     macos)
-        DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_MACOS_API_KEY}")
-        DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_MACOS_APP_ID}")
-        DART_DEFINES+=("--dart-define=FIREBASE_MACOS_BUNDLE_ID=${FIREBASE_MACOS_BUNDLE_ID}")
+        if [ -n "$FIREBASE_MACOS_API_KEY" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_MACOS_API_KEY}")
+        else
+            DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_API_KEY}")
+        fi
+        if [ -n "$FIREBASE_MACOS_APP_ID" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_MACOS_APP_ID}")
+        else
+            DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_APP_ID}")
+        fi
+        if [ -n "$FIREBASE_MACOS_BUNDLE_ID" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_MACOS_BUNDLE_ID=${FIREBASE_MACOS_BUNDLE_ID}")
+        fi
         ;;
     linux)
-        DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_LINUX_API_KEY}")
-        DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_LINUX_APP_ID}")
+        if [ -n "$FIREBASE_LINUX_API_KEY" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_LINUX_API_KEY}")
+        else
+            DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_API_KEY}")
+        fi
+        if [ -n "$FIREBASE_LINUX_APP_ID" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_LINUX_APP_ID}")
+        else
+            DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_APP_ID}")
+        fi
         ;;
     web)
-        DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_WEB_API_KEY}")
-        DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_WEB_APP_ID}")
+        if [ -n "$FIREBASE_WEB_API_KEY" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_WEB_API_KEY}")
+        else
+            DART_DEFINES+=("--dart-define=FIREBASE_API_KEY=${FIREBASE_API_KEY}")
+        fi
+        if [ -n "$FIREBASE_WEB_APP_ID" ]; then
+            DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_WEB_APP_ID}")
+        else
+            DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_APP_ID}")
+        fi
         ;;
     *)
         # Use web config as default
@@ -56,12 +115,6 @@ case "$PLATFORM" in
         DART_DEFINES+=("--dart-define=FIREBASE_APP_ID=${FIREBASE_APP_ID}")
         ;;
 esac
-
-# Add shared Firebase variables
-DART_DEFINES+=("--dart-define=FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}")
-DART_DEFINES+=("--dart-define=FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN}")
-DART_DEFINES+=("--dart-define=FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}")
-DART_DEFINES+=("--dart-define=FIREBASE_MESSAGING_SENDER_ID=${FIREBASE_MESSAGING_SENDER_ID}")
 
 # Build Flutter command
 if [ -n "$DEVICE" ]; then

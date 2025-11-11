@@ -31,10 +31,12 @@ void main() async {
     await Firebase.initializeApp(
       options: FirebaseConfig.currentPlatform,
     );
+    print('✅ Firebase initialized successfully');
   } catch (e) {
     // Firebase initialization failed - app can still work offline
-    print('Firebase initialization failed: $e');
-    print('App will continue without cloud sync features.');
+    print('⚠️  Firebase initialization failed: $e');
+    print('📱 App will continue without cloud sync features.');
+    print('💡 Tip: Use .\\scripts\\run_local.ps1 windows to run with Firebase config');
   }
 
   // Initialize MCP configuration with defaults
