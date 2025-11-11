@@ -5,7 +5,9 @@ import '../models/memory.dart';
 import '../models/ai_profile.dart';
 import '../models/custom_provider.dart';
 import '../models/custom_model.dart';
+import '../models/user_settings.dart';
 import '../services/database_service.dart';
+import '../services/cloud_sync_service.dart';
 
 class SettingsProvider extends ChangeNotifier {
   // Memory limits
@@ -31,6 +33,8 @@ class SettingsProvider extends ChangeNotifier {
   String? _selectedAiProfileId;
   List<CustomProvider> _customProviders = [];
   List<CustomModel> _customModels = [];
+  final CloudSyncService _cloudSyncService = CloudSyncService();
+  String? _currentUserId;
 
   String? get apiKey => _apiKey;
   String? get systemPrompt => _systemPrompt;
@@ -51,12 +55,105 @@ class SettingsProvider extends ChangeNotifier {
   List<CustomProvider> get customProviders => _customProviders;
   List<CustomModel> get customModels => _customModels;
 
+  // Set current user ID for cloud sync
+  void setUserId(String? userId) {
+    _currentUserId = userId;
+    if (userId != null) {
+      _loadSettingsFromCloud(userId);
+    }
+  }
+
   SettingsProvider() {
     _loadSettings();
     _loadMemories();
     _loadAiProfiles();
     _loadCustomProviders();
     _loadCustomModels();
+  }
+
+  // Load settings from cloud
+  Future<void> _loadSettingsFromCloud(String userId) async {
+    try {
+      final cloudSettings = await _cloudSyncService.fetchUserSettings(userId);
+      if (cloudSettings != null) {
+        // Merge cloud settings with local (cloud takes precedence)
+        if (cloudSettings.apiKey != null) {
+          _apiKey = cloudSettings.apiKey;
+          await _prefs?.setString('xibe_api_key', _apiKey!);
+        }
+        if (cloudSettings.systemPrompt != null) {
+          _systemPrompt = cloudSettings.systemPrompt;
+          await _prefs?.setString('system_prompt', _systemPrompt!);
+        }
+        if (cloudSettings.defaultModel != null) {
+          _defaultModel = cloudSettings.defaultModel;
+          await _prefs?.setString('default_model', _defaultModel!);
+        }
+        if (cloudSettings.imageGenerationModel != null) {
+          _imageGenerationModel = cloudSettings.imageGenerationModel;
+          await _prefs?.setString('image_generation_model', _imageGenerationModel!);
+        }
+        _temperature = cloudSettings.temperature;
+        _maxTokens = cloudSettings.maxTokens;
+        _topP = cloudSettings.topP;
+        _frequencyPenalty = cloudSettings.frequencyPenalty;
+        _presencePenalty = cloudSettings.presencePenalty;
+        _updateChannel = cloudSettings.updateChannel;
+        _selectedAiProfileId = cloudSettings.selectedAiProfileId;
+        
+        // Load AI profiles, custom providers, and models from cloud
+        if (cloudSettings.aiProfiles.isNotEmpty) {
+          _aiProfiles = cloudSettings.aiProfiles
+              .map((json) => AiProfile.fromJson(json))
+              .toList();
+          await _saveAiProfiles();
+        }
+        if (cloudSettings.customProviders.isNotEmpty) {
+          _customProviders = cloudSettings.customProviders
+              .map((json) => CustomProvider.fromJson(json))
+              .toList();
+          await _saveCustomProviders();
+        }
+        if (cloudSettings.customModels.isNotEmpty) {
+          _customModels = cloudSettings.customModels
+              .map((json) => CustomModel.fromJson(json))
+              .toList();
+          await _saveCustomModels();
+        }
+        
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error loading settings from cloud: $e');
+    }
+  }
+
+  // Sync all settings to cloud (public method)
+  Future<void> syncSettingsToCloud() async {
+    if (_currentUserId == null) return;
+
+    try {
+      final settings = UserSettings(
+        apiKey: _apiKey,
+        systemPrompt: _systemPrompt,
+        defaultModel: _defaultModel,
+        imageGenerationModel: _imageGenerationModel,
+        temperature: _temperature,
+        maxTokens: _maxTokens,
+        topP: _topP,
+        frequencyPenalty: _frequencyPenalty,
+        presencePenalty: _presencePenalty,
+        updateChannel: _updateChannel,
+        selectedAiProfileId: _selectedAiProfileId,
+        aiProfiles: _aiProfiles.map((p) => p.toJson()).toList(),
+        customProviders: _customProviders.map((p) => p.toJson()).toList(),
+        customModels: _customModels.map((m) => m.toJson()).toList(),
+        lastSyncedAt: DateTime.now(),
+      );
+      await _cloudSyncService.saveUserSettings(_currentUserId!, settings);
+    } catch (e) {
+      print('Error syncing settings to cloud: $e');
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -83,6 +180,7 @@ class SettingsProvider extends ChangeNotifier {
     } else {
       await _prefs?.remove('xibe_api_key');
     }
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
@@ -93,6 +191,7 @@ class SettingsProvider extends ChangeNotifier {
     } else {
       await _prefs?.remove('system_prompt');
     }
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
@@ -103,12 +202,14 @@ class SettingsProvider extends ChangeNotifier {
     } else {
       await _prefs?.remove('default_model');
     }
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
   Future<void> setImageGenerationModel(String model) async {
     _imageGenerationModel = model;
     await _prefs?.setString('image_generation_model', model);
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
@@ -135,30 +236,35 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> setTemperature(double value) async {
     _temperature = value;
     await _prefs?.setDouble('temperature', value);
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
   Future<void> setMaxTokens(int value) async {
     _maxTokens = value;
     await _prefs?.setInt('max_tokens', value);
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
   Future<void> setTopP(double value) async {
     _topP = value;
     await _prefs?.setDouble('top_p', value);
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
   Future<void> setFrequencyPenalty(double value) async {
     _frequencyPenalty = value;
     await _prefs?.setDouble('frequency_penalty', value);
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
   Future<void> setPresencePenalty(double value) async {
     _presencePenalty = value;
     await _prefs?.setDouble('presence_penalty', value);
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
@@ -166,6 +272,7 @@ class SettingsProvider extends ChangeNotifier {
     if (channel == 'stable' || channel == 'beta') {
       _updateChannel = channel;
       await _prefs?.setString('update_channel', channel);
+      await syncSettingsToCloud();
       notifyListeners();
     }
   }
@@ -263,6 +370,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> addAiProfile(AiProfile profile) async {
     _aiProfiles.add(profile);
     await _saveAiProfiles();
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
@@ -275,12 +383,14 @@ class SettingsProvider extends ChangeNotifier {
           'selected_ai_profile_id', _selectedAiProfileId ?? '');
     }
     await _saveAiProfiles();
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
   Future<void> setSelectedAiProfileId(String? profileId) async {
     _selectedAiProfileId = profileId;
     await _prefs?.setString('selected_ai_profile_id', profileId ?? '');
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
@@ -340,6 +450,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> addCustomProvider(CustomProvider provider) async {
     _customProviders.add(provider);
     await _saveCustomProviders();
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
@@ -348,6 +459,7 @@ class SettingsProvider extends ChangeNotifier {
     if (index != -1) {
       _customProviders[index] = provider;
       await _saveCustomProviders();
+      await syncSettingsToCloud();
       notifyListeners();
     }
   }
@@ -357,6 +469,7 @@ class SettingsProvider extends ChangeNotifier {
     _customModels.removeWhere((m) => m.providerId == providerId);
     await _saveCustomProviders();
     await _saveCustomModels();
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
@@ -397,6 +510,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> addCustomModel(CustomModel model) async {
     _customModels.add(model);
     await _saveCustomModels();
+    await syncSettingsToCloud();
     notifyListeners();
   }
 
@@ -405,6 +519,7 @@ class SettingsProvider extends ChangeNotifier {
     if (index != -1) {
       _customModels[index] = model;
       await _saveCustomModels();
+      await syncSettingsToCloud();
       notifyListeners();
     }
   }
@@ -412,6 +527,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> deleteCustomModel(String modelId) async {
     _customModels.removeWhere((m) => m.id == modelId);
     await _saveCustomModels();
+    await syncSettingsToCloud();
     notifyListeners();
   }
 

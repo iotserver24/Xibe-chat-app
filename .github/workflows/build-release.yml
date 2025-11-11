@@ -28,6 +28,32 @@ env:
   # E2B Backend URL - can be set in GitHub repository variables (Settings > Secrets and variables > Actions > Variables)
   # If not set, defaults to: https://e2b.n92dev.us.kg
   E2B_BACKEND_URL: ${{ vars.E2B_BACKEND_URL || 'https://e2b.n92dev.us.kg' }}
+  # Firebase Configuration - set in GitHub repository variables (Settings > Secrets and variables > Actions > Variables)
+  # Shared/common values (used as fallback if platform-specific not set)
+  FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+  FIREBASE_AUTH_DOMAIN: ${{ vars.FIREBASE_AUTH_DOMAIN }}
+  FIREBASE_STORAGE_BUCKET: ${{ vars.FIREBASE_STORAGE_BUCKET }}
+  FIREBASE_MESSAGING_SENDER_ID: ${{ vars.FIREBASE_MESSAGING_SENDER_ID }}
+  # Web config (used for Windows, macOS, Linux, and Web platforms)
+  FIREBASE_API_KEY: ${{ vars.FIREBASE_API_KEY }}
+  FIREBASE_APP_ID: ${{ vars.FIREBASE_APP_ID }}
+  # Platform-specific overrides
+  # Android and iOS need separate Firebase apps (register with package names: com.xibechat.app)
+  FIREBASE_ANDROID_API_KEY: ${{ vars.FIREBASE_ANDROID_API_KEY || vars.FIREBASE_API_KEY }}
+  FIREBASE_ANDROID_APP_ID: ${{ vars.FIREBASE_ANDROID_APP_ID || vars.FIREBASE_APP_ID }}
+  FIREBASE_IOS_API_KEY: ${{ vars.FIREBASE_IOS_API_KEY || vars.FIREBASE_API_KEY }}
+  FIREBASE_IOS_APP_ID: ${{ vars.FIREBASE_IOS_APP_ID || vars.FIREBASE_APP_ID }}
+  FIREBASE_IOS_BUNDLE_ID: ${{ vars.FIREBASE_IOS_BUNDLE_ID || 'com.xibechat.app' }}
+  # Desktop platforms (Windows, macOS, Linux) and Web use web config
+  FIREBASE_WEB_API_KEY: ${{ vars.FIREBASE_WEB_API_KEY || vars.FIREBASE_API_KEY }}
+  FIREBASE_WEB_APP_ID: ${{ vars.FIREBASE_WEB_APP_ID || vars.FIREBASE_APP_ID }}
+  FIREBASE_WINDOWS_API_KEY: ${{ vars.FIREBASE_WINDOWS_API_KEY || vars.FIREBASE_API_KEY }}
+  FIREBASE_WINDOWS_APP_ID: ${{ vars.FIREBASE_WINDOWS_APP_ID || vars.FIREBASE_APP_ID }}
+  FIREBASE_MACOS_API_KEY: ${{ vars.FIREBASE_MACOS_API_KEY || vars.FIREBASE_API_KEY }}
+  FIREBASE_MACOS_APP_ID: ${{ vars.FIREBASE_MACOS_APP_ID || vars.FIREBASE_APP_ID }}
+  FIREBASE_MACOS_BUNDLE_ID: ${{ vars.FIREBASE_MACOS_BUNDLE_ID || 'com.xibechat.app' }}
+  FIREBASE_LINUX_API_KEY: ${{ vars.FIREBASE_LINUX_API_KEY || vars.FIREBASE_API_KEY }}
+  FIREBASE_LINUX_APP_ID: ${{ vars.FIREBASE_LINUX_APP_ID || vars.FIREBASE_APP_ID }}
 
 jobs:
   # Android builds - APK and AAB
@@ -108,10 +134,10 @@ jobs:
           fi
 
       - name: Build Universal APK
-        run: flutter build apk --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
+        run: flutter build apk --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }} --dart-define=FIREBASE_API_KEY=${{ env.FIREBASE_ANDROID_API_KEY }} --dart-define=FIREBASE_APP_ID=${{ env.FIREBASE_ANDROID_APP_ID }} --dart-define=FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }} --dart-define=FIREBASE_AUTH_DOMAIN=${{ env.FIREBASE_AUTH_DOMAIN }} --dart-define=FIREBASE_STORAGE_BUCKET=${{ env.FIREBASE_STORAGE_BUCKET }} --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ env.FIREBASE_MESSAGING_SENDER_ID }}
 
       - name: Build App Bundle (AAB)
-        run: flutter build appbundle --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
+        run: flutter build appbundle --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }} --dart-define=FIREBASE_API_KEY=${{ env.FIREBASE_ANDROID_API_KEY }} --dart-define=FIREBASE_APP_ID=${{ env.FIREBASE_ANDROID_APP_ID }} --dart-define=FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }} --dart-define=FIREBASE_AUTH_DOMAIN=${{ env.FIREBASE_AUTH_DOMAIN }} --dart-define=FIREBASE_STORAGE_BUCKET=${{ env.FIREBASE_STORAGE_BUCKET }} --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ env.FIREBASE_MESSAGING_SENDER_ID }}
 
       - name: Rename artifacts
         run: |
@@ -176,12 +202,10 @@ jobs:
         shell: powershell
 
       - name: Build Windows Release (${{ matrix.arch }})
-        env:
-          E2B_BACKEND_URL: ${{ env.E2B_BACKEND_URL }}
         run: |
           # Note: ARM64 support is experimental. On x64 runners, Flutter builds x64 by default.
           # For ARM64, Flutter may still output to x64 folder but the binary targets ARM64.
-          flutter build windows --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
+          flutter build windows --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }} --dart-define=FIREBASE_API_KEY=${{ env.FIREBASE_WINDOWS_API_KEY }} --dart-define=FIREBASE_APP_ID=${{ env.FIREBASE_WINDOWS_APP_ID }} --dart-define=FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }} --dart-define=FIREBASE_AUTH_DOMAIN=${{ env.FIREBASE_AUTH_DOMAIN }} --dart-define=FIREBASE_STORAGE_BUCKET=${{ env.FIREBASE_STORAGE_BUCKET }} --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ env.FIREBASE_MESSAGING_SENDER_ID }}
         shell: powershell
 
       - name: Build Universal MSIX for Microsoft Store (x64 only, once)
@@ -577,7 +601,7 @@ jobs:
         run: |
           # Flutter builds universal binaries by default for macOS (both Intel and Apple Silicon)
           # The --target-platform flag is not supported for macOS builds
-          flutter build macos --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
+          flutter build macos --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }} --dart-define=FIREBASE_API_KEY=${{ env.FIREBASE_MACOS_API_KEY }} --dart-define=FIREBASE_APP_ID=${{ env.FIREBASE_MACOS_APP_ID }} --dart-define=FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }} --dart-define=FIREBASE_AUTH_DOMAIN=${{ env.FIREBASE_AUTH_DOMAIN }} --dart-define=FIREBASE_STORAGE_BUCKET=${{ env.FIREBASE_STORAGE_BUCKET }} --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ env.FIREBASE_MESSAGING_SENDER_ID }} --dart-define=FIREBASE_MACOS_BUNDLE_ID=${{ env.FIREBASE_MACOS_BUNDLE_ID }}
 
       - name: Install create-dmg
         run: brew install create-dmg
@@ -696,13 +720,13 @@ jobs:
           # For ARM builds, we build on x64 and package the binaries
           # In production, these should ideally be built on native ARM runners
           if [ "${{ matrix.arch }}" = "x64" ]; then
-            flutter build linux --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
+            flutter build linux --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }} --dart-define=FIREBASE_API_KEY=${{ env.FIREBASE_LINUX_API_KEY }} --dart-define=FIREBASE_APP_ID=${{ env.FIREBASE_LINUX_APP_ID }} --dart-define=FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }} --dart-define=FIREBASE_AUTH_DOMAIN=${{ env.FIREBASE_AUTH_DOMAIN }} --dart-define=FIREBASE_STORAGE_BUCKET=${{ env.FIREBASE_STORAGE_BUCKET }} --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ env.FIREBASE_MESSAGING_SENDER_ID }}
           else
             # For ARM architectures, build x64 first (users will need native ARM builds for actual use)
             # This is a limitation of GitHub Actions - ideally use native ARM runners
             echo "⚠️  Building x64 binary (ARM cross-compilation not fully supported by Flutter on GitHub Actions)"
             echo "⚠️  For production ARM builds, use native ARM hardware"
-            flutter build linux --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
+            flutter build linux --release --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }} --dart-define=FIREBASE_API_KEY=${{ env.FIREBASE_LINUX_API_KEY }} --dart-define=FIREBASE_APP_ID=${{ env.FIREBASE_LINUX_APP_ID }} --dart-define=FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }} --dart-define=FIREBASE_AUTH_DOMAIN=${{ env.FIREBASE_AUTH_DOMAIN }} --dart-define=FIREBASE_STORAGE_BUCKET=${{ env.FIREBASE_STORAGE_BUCKET }} --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ env.FIREBASE_MESSAGING_SENDER_ID }}
           fi
 
       - name: Install AppImage, DEB, and RPM creation tools
@@ -1022,7 +1046,7 @@ jobs:
 
       - name: Build iOS (unsigned)
         run: |
-          flutter build ios --release --no-codesign --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }}
+          flutter build ios --release --no-codesign --dart-define=E2B_BACKEND_URL=${{ env.E2B_BACKEND_URL }} --dart-define=FIREBASE_API_KEY=${{ env.FIREBASE_IOS_API_KEY }} --dart-define=FIREBASE_APP_ID=${{ env.FIREBASE_IOS_APP_ID }} --dart-define=FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }} --dart-define=FIREBASE_AUTH_DOMAIN=${{ env.FIREBASE_AUTH_DOMAIN }} --dart-define=FIREBASE_STORAGE_BUCKET=${{ env.FIREBASE_STORAGE_BUCKET }} --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ env.FIREBASE_MESSAGING_SENDER_ID }} --dart-define=FIREBASE_IOS_BUNDLE_ID=${{ env.FIREBASE_IOS_BUNDLE_ID }}
 
       - name: Create unsigned IPA
         run: |

@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/theme_provider.dart' show ThemeProvider, AppTheme;
 import '../providers/chat_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/auth_provider.dart';
 import '../services/update_service.dart';
 import '../services/image_generation_service.dart';
 import '../widgets/update_dialog.dart';
@@ -82,6 +83,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: ListView(
             children: [
               const SizedBox(height: 16),
+              // Account Section
+              Consumer<AuthProvider>(
+                builder: (context, authProvider, child) {
+                  if (!authProvider.isAuthenticated) {
+                    return const SizedBox.shrink();
+                  }
+                  return _buildSection(
+                    context,
+                    'Account',
+                    [
+                      ListTile(
+                        title: Text(authProvider.user?.email ?? 'User'),
+                        subtitle: Text(
+                          authProvider.user?.displayName ?? 'Signed in',
+                        ),
+                        leading: CircleAvatar(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          child: Text(
+                            (authProvider.user?.email?.substring(0, 1).toUpperCase() ?? 'U'),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                      ListTile(
+                        title: const Text('Sign Out'),
+                        subtitle: const Text('Sign out of your account'),
+                        leading: const Icon(Icons.logout, color: Colors.red),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Sign Out'),
+                              content: const Text(
+                                'Are you sure you want to sign out? Your data will remain synced in the cloud.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
+                                  child: const Text('Sign Out'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true && context.mounted) {
+                            await authProvider.signOut();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Signed out successfully'),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ),
+              const Divider(),
               _buildSection(
                 context,
                 'API Configuration',

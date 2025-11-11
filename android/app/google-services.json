@@ -1,0 +1,83 @@
+{
+  "project_info": {
+    "project_number": "488265380434",
+    "firebase_url": "https://share-x-56754-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "share-x-56754",
+    "storage_bucket": "share-x-56754.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:488265380434:android:c5f91156083390ec10e58b",
+        "android_client_info": {
+          "package_name": "com.example.notes_ai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "488265380434-711mqm68k6no5jq85aqb7gou9ih8ped0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeYumB4mv99o6yYS0Q1D8XCsooB0P8Afw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "488265380434-711mqm68k6no5jq85aqb7gou9ih8ped0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "488265380434-b6sv1h31iun8ko4m2eqrro1mbonrl2d2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.xibechat.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:488265380434:android:55d3a0fba109b6d410e58b",
+        "android_client_info": {
+          "package_name": "com.xibechat.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "488265380434-711mqm68k6no5jq85aqb7gou9ih8ped0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeYumB4mv99o6yYS0Q1D8XCsooB0P8Afw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "488265380434-711mqm68k6no5jq85aqb7gou9ih8ped0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "488265380434-b6sv1h31iun8ko4m2eqrro1mbonrl2d2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.xibechat.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

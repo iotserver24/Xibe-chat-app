@@ -5,11 +5,14 @@ import 'package:path_provider/path_provider.dart';
 import '../models/chat.dart';
 import '../models/message.dart';
 import '../models/memory.dart';
+import 'cloud_sync_service.dart';
 
 class DatabaseService {
   static const int _databaseVersion = 7;
   static Database? _database;
   static bool _initialized = false;
+  final CloudSyncService _cloudSyncService = CloudSyncService();
+  String? _currentUserId;
 
   static void _initializeDatabaseFactory() {
     if (_initialized) return;
@@ -142,9 +145,27 @@ class DatabaseService {
     );
   }
 
+  // Set current user ID for cloud sync
+  void setUserId(String? userId) {
+    _currentUserId = userId;
+  }
+
   Future<int> createChat(Chat chat) async {
     final db = await database;
-    return await db.insert('chats', chat.toMap());
+    final id = await db.insert('chats', chat.toMap());
+    
+    // Sync to cloud if user is logged in
+    if (_currentUserId != null) {
+      final chatWithId = Chat(
+        id: id,
+        title: chat.title,
+        createdAt: chat.createdAt,
+        updatedAt: chat.updatedAt,
+      );
+      _cloudSyncService.syncChatToCloud(_currentUserId!, chatWithId);
+    }
+    
+    return id;
   }
 
   Future<List<Chat>> getAllChats() async {
@@ -164,6 +185,11 @@ class DatabaseService {
       where: 'id = ?',
       whereArgs: [chat.id],
     );
+    
+    // Sync to cloud if user is logged in
+    if (_currentUserId != null) {
+      _cloudSyncService.syncChatToCloud(_currentUserId!, chat);
+    }
   }
 
   Future<void> deleteChat(int chatId) async {
@@ -173,6 +199,11 @@ class DatabaseService {
         await txn.delete('messages', where: 'chatId = ?', whereArgs: [chatId]);
         await txn.delete('chats', where: 'id = ?', whereArgs: [chatId]);
       });
+      
+      // Delete from cloud if user is logged in
+      if (_currentUserId != null) {
+        _cloudSyncService.deleteChatFromCloud(_currentUserId!, chatId);
+      }
     } catch (e) {
       throw Exception('Failed to delete chat: $e');
     }
@@ -180,7 +211,36 @@ class DatabaseService {
 
   Future<int> insertMessage(Message message) async {
     final db = await database;
-    return await db.insert('messages', message.toMap());
+    final id = await db.insert('messages', message.toMap());
+    
+    // Sync to cloud if user is logged in
+    if (_currentUserId != null) {
+      final messageWithId = Message(
+        id: id,
+        role: message.role,
+        content: message.content,
+        timestamp: message.timestamp,
+        webSearchUsed: message.webSearchUsed,
+        chatId: message.chatId,
+        imageBase64: message.imageBase64,
+        imagePath: message.imagePath,
+        thinkingContent: message.thinkingContent,
+        isThinking: message.isThinking,
+        responseTimeMs: message.responseTimeMs,
+        reaction: message.reaction,
+        generatedImageBase64: message.generatedImageBase64,
+        generatedImagePrompt: message.generatedImagePrompt,
+        generatedImageModel: message.generatedImageModel,
+        isGeneratingImage: message.isGeneratingImage,
+      );
+      _cloudSyncService.syncMessageToCloud(
+        _currentUserId!,
+        message.chatId.toString(),
+        messageWithId,
+      );
+    }
+    
+    return id;
   }
 
   Future<List<Message>> getMessagesForChat(int chatId) async {
@@ -203,7 +263,20 @@ class DatabaseService {
   // Memory operations
   Future<int> insertMemory(Memory memory) async {
     final db = await database;
-    return await db.insert('memories', memory.toMap());
+    final id = await db.insert('memories', memory.toMap());
+    
+    // Sync to cloud if user is logged in
+    if (_currentUserId != null) {
+      final memoryWithId = Memory(
+        id: id,
+        content: memory.content,
+        createdAt: memory.createdAt,
+        updatedAt: memory.updatedAt,
+      );
+      _cloudSyncService.syncMemoryToCloud(_currentUserId!, memoryWithId);
+    }
+    
+    return id;
   }
 
   Future<List<Memory>> getAllMemories() async {
@@ -223,11 +296,21 @@ class DatabaseService {
       where: 'id = ?',
       whereArgs: [memory.id],
     );
+    
+    // Sync to cloud if user is logged in
+    if (_currentUserId != null) {
+      _cloudSyncService.syncMemoryToCloud(_currentUserId!, memory);
+    }
   }
 
   Future<void> deleteMemory(int memoryId) async {
     final db = await database;
     await db.delete('memories', where: 'id = ?', whereArgs: [memoryId]);
+    
+    // Delete from cloud if user is logged in
+    if (_currentUserId != null) {
+      _cloudSyncService.deleteMemoryFromCloud(_currentUserId!, memoryId);
+    }
   }
 
   Future<void> deleteAllMemories() async {
@@ -244,5 +327,128 @@ class DatabaseService {
       where: 'id = ?',
       whereArgs: [messageId],
     );
+    
+    // Sync to cloud if user is logged in
+    if (_currentUserId != null) {
+      // Get the message to sync
+      final messages = await db.query(
+        'messages',
+        where: 'id = ?',
+        whereArgs: [messageId],
+        limit: 1,
+      );
+      if (messages.isNotEmpty) {
+        final message = Message.fromMap(messages.first);
+        final updatedMessage = Message(
+          id: message.id,
+          role: message.role,
+          content: message.content,
+          timestamp: message.timestamp,
+          webSearchUsed: message.webSearchUsed,
+          chatId: message.chatId,
+          imageBase64: message.imageBase64,
+          imagePath: message.imagePath,
+          thinkingContent: message.thinkingContent,
+          isThinking: message.isThinking,
+          responseTimeMs: message.responseTimeMs,
+          reaction: reaction,
+          generatedImageBase64: message.generatedImageBase64,
+          generatedImagePrompt: message.generatedImagePrompt,
+          generatedImageModel: message.generatedImageModel,
+          isGeneratingImage: message.isGeneratingImage,
+        );
+        _cloudSyncService.syncMessageToCloud(
+          _currentUserId!,
+          message.chatId.toString(),
+          updatedMessage,
+        );
+      }
+    }
+  }
+
+  // Sync all local data to cloud
+  Future<void> syncAllToCloud() async {
+    if (_currentUserId == null) return;
+    
+    try {
+      final chats = await getAllChats();
+      final messagesByChat = <int, List<Message>>{};
+      
+      for (final chat in chats) {
+        if (chat.id != null) {
+          messagesByChat[chat.id!] = await getMessagesForChat(chat.id!);
+        }
+      }
+      
+      final memories = await getAllMemories();
+      
+      await _cloudSyncService.syncAllToCloud(
+        userId: _currentUserId!,
+        chats: chats,
+        messagesByChat: messagesByChat,
+        memories: memories,
+      );
+    } catch (e) {
+      print('Error syncing all data to cloud: $e');
+    }
+  }
+
+  // Load data from cloud and merge with local
+  Future<void> loadFromCloud() async {
+    if (_currentUserId == null) return;
+    
+    try {
+      final cloudChats = await _cloudSyncService.fetchChatsFromCloud(_currentUserId!);
+      final localChats = await getAllChats();
+      
+      // Merge cloud chats with local (cloud takes precedence for conflicts)
+      final localChatIds = localChats.map((c) => c.id).toSet();
+      
+      for (final cloudChat in cloudChats) {
+        if (cloudChat.id != null && !localChatIds.contains(cloudChat.id)) {
+          // Chat exists in cloud but not locally - add it
+          await createChat(cloudChat);
+        } else if (cloudChat.id != null && localChatIds.contains(cloudChat.id)) {
+          // Chat exists in both - update local with cloud version
+          await updateChat(cloudChat);
+        }
+      }
+      
+      // Load messages for each chat
+      for (final chat in cloudChats) {
+        if (chat.id != null) {
+          final cloudMessages = await _cloudSyncService.fetchMessagesFromCloud(
+            _currentUserId!,
+            chat.id.toString(),
+          );
+          final localMessages = await getMessagesForChat(chat.id!);
+          
+          // Merge messages (cloud takes precedence)
+          final localMessageIds = localMessages.map((m) => m.id).toSet();
+          
+          for (final cloudMessage in cloudMessages) {
+            if (cloudMessage.id != null && !localMessageIds.contains(cloudMessage.id)) {
+              // Message exists in cloud but not locally - add it
+              await insertMessage(cloudMessage);
+            }
+          }
+        }
+      }
+      
+      // Load memories
+      final cloudMemories = await _cloudSyncService.fetchMemoriesFromCloud(_currentUserId!);
+      final localMemories = await getAllMemories();
+      
+      final localMemoryIds = localMemories.map((m) => m.id).toSet();
+      
+      for (final cloudMemory in cloudMemories) {
+        if (cloudMemory.id != null && !localMemoryIds.contains(cloudMemory.id)) {
+          // Memory exists in cloud but not locally - add it
+          await insertMemory(cloudMemory);
+        }
+      }
+    } catch (e) {
+      print('Error loading data from cloud: $e');
+    }
   }
 }

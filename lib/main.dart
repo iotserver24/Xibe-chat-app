@@ -2,9 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'config/firebase_config.dart';
 import 'providers/chat_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/settings_provider.dart';
+import 'providers/auth_provider.dart';
 import 'screens/chat_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/mcp_servers_screen.dart';
@@ -12,13 +15,27 @@ import 'screens/memory_screen.dart';
 import 'screens/ai_profiles_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/custom_providers_screen.dart';
+import 'screens/auth_screen.dart';
 import 'services/mcp_config_service.dart';
 import 'services/update_service.dart';
 import 'services/deep_link_service.dart';
+import 'services/database_service.dart';
+import 'services/cloud_sync_service.dart';
 import 'widgets/update_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  try {
+    await Firebase.initializeApp(
+      options: FirebaseConfig.currentPlatform,
+    );
+  } catch (e) {
+    // Firebase initialization failed - app can still work offline
+    print('Firebase initialization failed: $e');
+    print('App will continue without cloud sync features.');
+  }
 
   // Initialize MCP configuration with defaults
   final mcpConfigService = McpConfigService();
@@ -54,11 +71,40 @@ class XibeChatApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProxyProvider<SettingsProvider, ChatProvider>(
+        ChangeNotifierProxyProvider2<AuthProvider, SettingsProvider,
+            ChatProvider>(
           create: (_) => ChatProvider(apiKey: null, systemPrompt: null),
-          update: (_, settings, previous) {
+          update: (_, auth, settings, previous) {
+            // Update database service with user ID
+            final databaseService = DatabaseService();
+            databaseService.setUserId(auth.user?.uid);
+            
+            // Update settings provider with user ID for cloud sync
+            settings.setUserId(auth.user?.uid);
+            
+            // Save user profile to cloud when authenticated
+            if (auth.isAuthenticated && auth.user != null) {
+              final cloudSyncService = CloudSyncService();
+              final appUser = auth.user!;
+              // User profile is already in app_user.User format from AuthProvider
+              cloudSyncService.saveUserProfile(appUser.uid, appUser);
+            }
+            
+            // Sync data when user logs in
+            if (auth.isAuthenticated && auth.user != null && previous != null) {
+              // Load from cloud and sync local to cloud
+              databaseService.loadFromCloud().then((_) {
+                databaseService.syncAllToCloud();
+                // Sync settings to cloud
+                settings.syncSettingsToCloud();
+              }).catchError((e) {
+                print('Error syncing data: $e');
+              });
+            }
+            
             if (previous != null) {
               previous.updateApiKey(settings.apiKey);
               previous.updateSystemPrompt(settings.getCombinedSystemPrompt());
@@ -73,8 +119,8 @@ class XibeChatApp extends StatelessWidget {
           },
         ),
       ],
-      child: Consumer2<ThemeProvider, SettingsProvider>(
-        builder: (context, themeProvider, settingsProvider, child) {
+      child: Consumer3<ThemeProvider, SettingsProvider, AuthProvider>(
+        builder: (context, themeProvider, settingsProvider, authProvider, child) {
           // Connect memory context getter and memory extraction callback to chat provider
           final chatProvider =
               Provider.of<ChatProvider>(context, listen: false);
@@ -89,12 +135,18 @@ class XibeChatApp extends StatelessWidget {
             }
           });
 
+          // Show auth screen if not authenticated
+          Widget home = const SplashWrapper();
+          if (!authProvider.isAuthenticated) {
+            home = const AuthScreen();
+          }
+
           return MaterialApp(
             key: const ValueKey('xibe_chat_app'),
             title: 'Xibe Chat',
             debugShowCheckedModeBanner: false,
             theme: themeProvider.themeData,
-            home: const SplashWrapper(),
+            home: home,
             routes: {
               '/settings': (context) => const SettingsScreen(),
               '/mcp-servers': (context) => const McpServersScreen(),
