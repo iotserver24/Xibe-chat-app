@@ -71,6 +71,7 @@ class DeepLinkService {
     final message = messageParam ?? textParam ?? promptParam;
     
     // xibechat://mes/{prompt} - Open with message (path-based)
+    // Note: Query parameters are ignored for mes/ paths to maintain path-based behavior
     if (path.startsWith('mes/')) {
       final prompt = Uri.decodeComponent(path.substring(4));
       return DeepLinkData(
@@ -80,6 +81,7 @@ class DeepLinkService {
     }
     
     // xibechat://new?message=text - Create new chat with pre-filled message (query-based)
+    // This only applies to 'new' or empty paths, not to mes/ paths
     if ((path == 'new' || path.isEmpty) && message != null && message.isNotEmpty) {
       return DeepLinkData(
         type: DeepLinkType.message,
