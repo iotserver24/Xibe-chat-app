@@ -430,7 +430,6 @@ class ChatProvider extends ChangeNotifier {
       }
 
       // Base system prompt - always included to inform AI about the app context
-      final imageModel = imageGenerationModel ?? 'flux';
       String baseSystemPrompt =
           '''You are running in Xibe Chat, a modern AI chat application created by the user.
 
@@ -445,16 +444,24 @@ APP CONTEXT & CAPABILITIES:
 - Code previews appear in a side panel with live rendering
 
 IMAGE GENERATION:
-- You can generate images! When the user requests image generation, respond with: <img-gen>{enhanced_prompt}</img-gen>
-- CRITICAL: You MUST use the exact tag format: <img-gen>your prompt here</img-gen>
-- DO NOT use <enhanced_prompt> or any other tag format - ONLY use <img-gen>
-- The {enhanced_prompt} should be a detailed, descriptive prompt that you create
-- Refine and enhance the user's request to be specific about style, colors, composition, mood, and important details
-- The default model is $imageModel (flux: high quality, kontext, turbo: fast, gptimage)
-- Example: User asks "make me a cat" → You respond: "Here's a beautiful cat image for you: <img-gen>A majestic fluffy orange tabby cat with bright green eyes, sitting elegantly on a velvet cushion, studio lighting, photorealistic, high detail</img-gen>"
-- The image will be automatically generated and displayed to the user
-- You can add context before and after the <img-gen> tag to enhance the response
-- Use this whenever users ask you to create, draw, generate, make, or visualize images
+- You have access to a powerful image generation tool called "generate_image" that you can call directly
+- PREFERRED METHOD: Use the generate_image tool/function call (available in your tools list) for best results
+- The tool allows you to control: prompt, width, height, model, negative_prompt, guidance_scale, steps, seed, and enhance
+- INTELLIGENT DIMENSIONS: Determine width/height based on user requests:
+  * "banner", "wide", "landscape" → 1920x1080 or 2048x1024
+  * "square" → 1024x1024 or 2048x2048
+  * "portrait", "vertical" → 1080x1920 or 1024x2048
+  * "wallpaper", "desktop" → 1920x1080 or 2560x1440
+  * "mobile", "phone" → 1080x1920
+  * Default: 1024x1024
+- NEGATIVE PROMPT: Use negative_prompt to exclude unwanted elements (e.g., "blurry, low quality, distorted, watermark")
+- GUIDANCE_SCALE: Use 7-15 for balanced results (higher = more prompt adherence, lower = more creativity)
+- STEPS: Use 30-40 for good quality/speed balance (20-30 = faster, 40-50 = higher quality)
+- MODEL SELECTION: flux (default, high quality), turbo (faster), kontext, gptimage
+- LEGACY METHOD: If tools are not available, you can use: <img-gen>{enhanced_prompt}</img-gen>
+- Always enhance and refine the user's prompt with specific details about style, colors, composition, mood, lighting, and important visual elements
+- Example tool call: generate_image with prompt="A majestic fluffy orange tabby cat with bright green eyes, sitting elegantly on a velvet cushion, studio lighting, photorealistic, high detail", width=1024, height=1024, model="flux", negative_prompt="blurry, low quality"
+- Use image generation whenever users ask you to create, draw, generate, make, or visualize images
 
 IMPORTANT: Always be aware that you're helping users within this specialized application environment. When providing code examples, leverage the app's built-in execution and preview features to give users the best experience.''';
 
@@ -671,8 +678,11 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         ),
       );
 
-      // Get available tools (no longer need to add image generation tool since we use <img-gen> tags)
+      // Get available tools from MCP servers
       List<McpTool> availableTools = _mcpClientService.getAllTools();
+      
+      // Add built-in image generation tool
+      availableTools.add(ApiService.getImageGenerationTool());
 
       // Stream the response
       String fullResponseContent = '';
@@ -720,11 +730,63 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         );
       }
 
+      // Track tool calls during streaming
+      List<Map<String, dynamic>> accumulatedToolCalls = [];
+      Map<String, String> toolCallBuffers = {}; // id -> accumulated function arguments
+
       await for (final chunk in responseStream) {
         // On first chunk, switch from loading to streaming
         if (firstChunk) {
           _isStreaming = true;
           firstChunk = false;
+        }
+
+        // Check if this is a tool call chunk
+        if (chunk.startsWith('TOOL_CALLS:')) {
+          try {
+            final toolCallsJson = chunk.substring('TOOL_CALLS:'.length);
+            final toolCalls = jsonDecode(toolCallsJson) as List;
+            
+            for (var toolCall in toolCalls) {
+              final toolCallMap = toolCall as Map<String, dynamic>;
+              final index = toolCallMap['index'] as int?;
+              final id = toolCallMap['id'] as String?;
+              final function = toolCallMap['function'] as Map<String, dynamic>?;
+              
+              if (id != null && function != null) {
+                final functionName = function['name'] as String?;
+                final functionArgs = function['arguments'] as String?;
+                
+                if (functionName != null) {
+                  // Initialize buffer if needed
+                  if (!toolCallBuffers.containsKey(id)) {
+                    toolCallBuffers[id] = '';
+                    accumulatedToolCalls.add({
+                      'id': id,
+                      'index': index ?? 0,
+                      'function': {
+                        'name': functionName,
+                        'arguments': '',
+                      },
+                    });
+                  }
+                  
+                  // Accumulate function arguments (they come in chunks)
+                  if (functionArgs != null) {
+                    toolCallBuffers[id] = (toolCallBuffers[id] ?? '') + functionArgs;
+                    // Update the accumulated tool call
+                    final toolCallIndex = accumulatedToolCalls.indexWhere((tc) => tc['id'] == id);
+                    if (toolCallIndex >= 0) {
+                      accumulatedToolCalls[toolCallIndex]['function']['arguments'] = toolCallBuffers[id];
+                    }
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            print('Error parsing tool calls: $e');
+          }
+          continue; // Skip adding tool call chunks to content
         }
 
         fullResponseContent += chunk;
@@ -791,98 +853,174 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         notifyListeners();
       }
 
-      // Extract image generation request if present using XML-style tags
+      // Execute tool calls if any were made
       String? generatedImageBase64;
       String? generatedImagePrompt;
       String? generatedImageModel;
       bool isGeneratingImage = false;
 
-      // Try <img-gen> tag first (preferred format)
-      final imgGenPattern = RegExp(r'<img-gen>(.*?)</img-gen>',
-          caseSensitive: false, dotAll: true);
-      Match? imgGenMatch = imgGenPattern.firstMatch(fullResponseContent);
+      if (accumulatedToolCalls.isNotEmpty) {
+        for (var toolCall in accumulatedToolCalls) {
+          final functionName = toolCall['function']?['name'] as String?;
+          final functionArgsStr = toolCall['function']?['arguments'] as String?;
 
-      // Fallback to <enhanced_prompt> if AI uses that format
-      if (imgGenMatch == null) {
-        final enhancedPromptPattern = RegExp(
-            r'<enhanced_prompt>(.*?)</enhanced_prompt>',
-            caseSensitive: false,
-            dotAll: true);
-        imgGenMatch = enhancedPromptPattern.firstMatch(fullResponseContent);
-        // If we found enhanced_prompt, also update the pattern for replacement
-        if (imgGenMatch != null) {
-          // Use enhanced_prompt pattern for replacement
-          final enhancedPattern = RegExp(
-              r'<enhanced_prompt>.*?</enhanced_prompt>',
-              caseSensitive: false,
-              dotAll: true);
-          fullResponseContent = fullResponseContent
-              .replaceFirst(
-                enhancedPattern,
-                '\n\n*[Generated Image]*\n',
-              )
-              .trim();
+          if (functionName == 'generate_image' && functionArgsStr != null) {
+            try {
+              final functionArgs = jsonDecode(functionArgsStr) as Map<String, dynamic>;
+              final prompt = functionArgs['prompt'] as String?;
+              
+              if (prompt != null && prompt.isNotEmpty) {
+                isGeneratingImage = true;
+                generatedImagePrompt = prompt;
+                generatedImageModel = functionArgs['model'] as String? ?? imageGenerationModel ?? 'flux';
+                
+                // Extract parameters with defaults
+                final width = functionArgs['width'] as int? ?? 1024;
+                final height = functionArgs['height'] as int? ?? 1024;
+                final seed = functionArgs['seed'] as int?;
+                final negativePrompt = functionArgs['negative_prompt'] as String?;
+                final guidanceScale = functionArgs['guidance_scale'] != null 
+                    ? (functionArgs['guidance_scale'] as num).toDouble() 
+                    : null;
+                final steps = functionArgs['steps'] as int?;
+                final enhance = functionArgs['enhance'] as bool? ?? true;
+
+                // Generate the image with all parameters
+                // generatedImageModel is guaranteed to be non-null due to assignment above
+                final result = await _imageGenerationService.generateImage(
+                  prompt: prompt,
+                  model: generatedImageModel,
+                  width: width,
+                  height: height,
+                  seed: seed,
+                  enhance: enhance,
+                  negativePrompt: negativePrompt,
+                  guidanceScale: guidanceScale,
+                  steps: steps,
+                );
+
+                if (result['success'] == true && result['imageBytes'] != null) {
+                  generatedImageBase64 = base64Encode(result['imageBytes'] as List<int>);
+                  isGeneratingImage = false;
+                  
+                  // Add a note about the generated image to the response
+                  fullResponseContent += '\n\n*[Generated Image: ${width}x${height}]*\n';
+                } else {
+                  isGeneratingImage = false;
+                  fullResponseContent += '\n\n*[Image generation failed: ${result['error'] ?? 'Unknown error'}]*\n';
+                }
+              }
+            } catch (e) {
+              print('Error executing image generation tool: $e');
+              isGeneratingImage = false;
+              fullResponseContent += '\n\n*[Image generation error: $e]*\n';
+            }
+          } else if (functionName != null && functionName != 'generate_image') {
+            // Handle other MCP tools
+            try {
+              final functionArgs = functionArgsStr != null 
+                  ? jsonDecode(functionArgsStr) as Map<String, dynamic>?
+                  : <String, dynamic>{};
+              await _mcpClientService.callTool(functionName, functionArgs);
+              // Tool results are typically handled by the MCP server itself
+              // You can add result handling here if needed
+            } catch (e) {
+              print('Error executing tool $functionName: $e');
+            }
+          }
         }
       }
 
-      if (imgGenMatch != null) {
-        generatedImagePrompt = imgGenMatch.group(1)?.trim();
-        if (generatedImagePrompt != null && generatedImagePrompt.isNotEmpty) {
-          // Mark that we're generating an image
-          isGeneratingImage = true;
+      // Extract image generation request if present using XML-style tags (legacy support)
+      // Only process legacy tags if no tool calls were made (tool calls already handled above)
+      if (accumulatedToolCalls.isEmpty) {
+        // Try <img-gen> tag first (preferred format)
+        final imgGenPattern = RegExp(r'<img-gen>(.*?)</img-gen>',
+            caseSensitive: false, dotAll: true);
+        Match? imgGenMatch = imgGenPattern.firstMatch(fullResponseContent);
 
-          // Update the message in the list to show loading state
-          // Note: We'll update it again after processing is complete
-          // For now, just mark that we're generating
+        // Fallback to <enhanced_prompt> if AI uses that format
+        if (imgGenMatch == null) {
+          final enhancedPromptPattern = RegExp(
+              r'<enhanced_prompt>(.*?)</enhanced_prompt>',
+              caseSensitive: false,
+              dotAll: true);
+          imgGenMatch = enhancedPromptPattern.firstMatch(fullResponseContent);
+          // If we found enhanced_prompt, also update the pattern for replacement
+          if (imgGenMatch != null) {
+            // Use enhanced_prompt pattern for replacement
+            final enhancedPattern = RegExp(
+                r'<enhanced_prompt>.*?</enhanced_prompt>',
+                caseSensitive: false,
+                dotAll: true);
+            fullResponseContent = fullResponseContent
+                .replaceFirst(
+                  enhancedPattern,
+                  '\n\n*[Generated Image]*\n',
+                )
+                .trim();
+          }
+        }
 
-          try {
-            // Get the image generation model from settings
-            generatedImageModel = imageGenerationModel ?? 'flux';
+        if (imgGenMatch != null) {
+          generatedImagePrompt = imgGenMatch.group(1)?.trim();
+          if (generatedImagePrompt != null && generatedImagePrompt.isNotEmpty) {
+            // Mark that we're generating an image
+            isGeneratingImage = true;
 
-            // Generate the image
-            final result = await _imageGenerationService.generateImage(
-              prompt: generatedImagePrompt,
-              model: generatedImageModel,
-              width: 1024,
-              height: 1024,
-            );
+            // Update the message in the list to show loading state
+            // Note: We'll update it again after processing is complete
+            // For now, just mark that we're generating
 
-            if (result['success'] == true && result['imageBytes'] != null) {
-              // Convert image bytes to base64
-              generatedImageBase64 = base64Encode(result['imageBytes']);
-              isGeneratingImage = false;
+            try {
+              // Get the image generation model from settings
+              generatedImageModel = imageGenerationModel ?? 'flux';
 
-              // Remove the img-gen tag from the response and replace with a placeholder
-              // Check if we already replaced it (for enhanced_prompt case)
-              if (fullResponseContent.contains('<img-gen>') ||
-                  fullResponseContent.contains('</img-gen>')) {
+              // Generate the image
+              final result = await _imageGenerationService.generateImage(
+                prompt: generatedImagePrompt,
+                model: generatedImageModel,
+                width: 1024,
+                height: 1024,
+              );
+
+              if (result['success'] == true && result['imageBytes'] != null) {
+                // Convert image bytes to base64
+                generatedImageBase64 = base64Encode(result['imageBytes']);
+                isGeneratingImage = false;
+
+                // Remove the img-gen tag from the response and replace with a placeholder
+                // Check if we already replaced it (for enhanced_prompt case)
+                if (fullResponseContent.contains('<img-gen>') ||
+                    fullResponseContent.contains('</img-gen>')) {
+                  fullResponseContent = fullResponseContent
+                      .replaceFirst(
+                        imgGenPattern,
+                        '\n\n*[Generated Image]*\n',
+                      )
+                      .trim();
+                }
+              } else {
+                // Image generation failed, show error message
+                isGeneratingImage = false;
                 fullResponseContent = fullResponseContent
                     .replaceFirst(
                       imgGenPattern,
-                      '\n\n*[Generated Image]*\n',
+                      '\n\n*[Image generation failed: ${result['error'] ?? 'Unknown error'}]*\n',
                     )
                     .trim();
               }
-            } else {
-              // Image generation failed, show error message
+            } catch (e) {
+              print('Error generating image: $e');
               isGeneratingImage = false;
+              // Replace with error message
               fullResponseContent = fullResponseContent
                   .replaceFirst(
                     imgGenPattern,
-                    '\n\n*[Image generation failed: ${result['error'] ?? 'Unknown error'}]*\n',
+                    '\n\n*[Image generation error: $e]*\n',
                   )
                   .trim();
             }
-          } catch (e) {
-            print('Error generating image: $e');
-            isGeneratingImage = false;
-            // Replace with error message
-            fullResponseContent = fullResponseContent
-                .replaceFirst(
-                  imgGenPattern,
-                  '\n\n*[Image generation error: $e]*\n',
-                )
-                .trim();
           }
         }
       }

@@ -252,11 +252,12 @@ class _MessageBubbleState extends State<MessageBubble>
               if (widget.message.isGeneratingImage ||
                   (widget.message.generatedImageBase64 != null &&
                       widget.message.generatedImageBase64!.isNotEmpty)) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
                 if (widget.message.isGeneratingImage)
                   _buildImageLoadingAnimation(context)
                 else
                   _buildGeneratedImage(context),
+                const SizedBox(height: 16),
               ],
               if (widget.isStreaming)
                 Padding(
@@ -522,11 +523,12 @@ class _MessageBubbleState extends State<MessageBubble>
     final imageBytes = base64Decode(widget.message.generatedImageBase64!);
 
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: const Color(0xFFEC4899).withOpacity(0.3),
-          width: 2,
+          color: const Color(0xFFEC4899).withOpacity(0.6),
+          width: 2.5,
         ),
       ),
       child: Column(
@@ -537,8 +539,8 @@ class _MessageBubbleState extends State<MessageBubble>
             onTap: () => _showFullscreenImage(context, imageBytes),
             child: ClipRRect(
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(10),
-                topRight: Radius.circular(10),
+                topLeft: Radius.circular(4),
+                topRight: Radius.circular(4),
               ),
               child: Stack(
                 children: [
@@ -586,12 +588,12 @@ class _MessageBubbleState extends State<MessageBubble>
           ),
           // Image metadata and actions
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: const Color(0xFFEC4899).withOpacity(0.1),
               borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(10),
-                bottomRight: Radius.circular(10),
+                bottomLeft: Radius.circular(4),
+                bottomRight: Radius.circular(4),
               ),
             ),
             child: Column(

@@ -135,8 +135,17 @@ class CustomProviderService {
               }
             } else {
               final delta = json['choices']?[0]?['delta'];
-              if (delta != null && delta['content'] != null) {
-                yield delta['content'] as String;
+              if (delta != null) {
+                // Check for tool calls first
+                if (delta['tool_calls'] != null) {
+                  final toolCalls = delta['tool_calls'] as List;
+                  // Yield tool calls as special JSON string that can be parsed later
+                  yield 'TOOL_CALLS:${jsonEncode(toolCalls)}';
+                }
+                // Check for content
+                if (delta['content'] != null) {
+                  yield delta['content'] as String;
+                }
               }
             }
           } catch (e) {

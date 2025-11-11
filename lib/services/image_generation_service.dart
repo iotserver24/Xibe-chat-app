@@ -39,23 +39,33 @@ class ImageGenerationService {
     int? seed,
     bool enhance = true,
     bool nologo = true,
+    String? negativePrompt,
+    double? guidanceScale,
+    int? steps,
+    bool? private,
   }) async {
     try {
       // Encode prompt for URL
       final encodedPrompt = Uri.encodeComponent(prompt);
 
       // Build URL with parameters
-      final url = Uri.parse('$_baseUrl/prompt/$encodedPrompt').replace(
-        queryParameters: {
-          'model': model,
-          'width': width.toString(),
-          'height': height.toString(),
-          'token': _token,
-          if (seed != null) 'seed': seed.toString(),
-          'enhance': enhance.toString(),
-          'nologo': nologo.toString(),
-        },
-      );
+      final queryParams = <String, String>{
+        'model': model,
+        'width': width.toString(),
+        'height': height.toString(),
+        'token': _token,
+        if (seed != null) 'seed': seed.toString(),
+        'enhance': enhance.toString(),
+        'nologo': nologo.toString(),
+        if (negativePrompt != null && negativePrompt.isNotEmpty)
+          'negative_prompt': negativePrompt,
+        if (guidanceScale != null) 'guidance_scale': guidanceScale.toString(),
+        if (steps != null) 'steps': steps.toString(),
+        if (private != null) 'private': private.toString(),
+      };
+
+      final url = Uri.parse('$_baseUrl/prompt/$encodedPrompt')
+          .replace(queryParameters: queryParams);
 
       // Make request
       final response = await http.get(
@@ -74,6 +84,9 @@ class ImageGenerationService {
           'width': width,
           'height': height,
           'seed': seed,
+          'negativePrompt': negativePrompt,
+          'guidanceScale': guidanceScale,
+          'steps': steps,
         };
       } else {
         throw Exception(

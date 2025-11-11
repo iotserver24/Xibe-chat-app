@@ -5,6 +5,17 @@ import '../models/message.dart';
 import '../models/ai_model.dart';
 import '../services/mcp_client_service.dart';
 
+/// Represents a streaming response chunk that can be either content or tool calls
+class StreamChunk {
+  final String? content;
+  final List<Map<String, dynamic>>? toolCalls;
+
+  StreamChunk({this.content, this.toolCalls});
+
+  bool get isContent => content != null;
+  bool get isToolCalls => toolCalls != null && toolCalls!.isNotEmpty;
+}
+
 class ApiService {
   static const String baseUrl = 'https://api.xibe.app';
   static const String chatEndpoint = '/openai/v1/chat/completions';
@@ -13,6 +24,75 @@ class ApiService {
   final String? apiKey;
 
   ApiService({this.apiKey});
+
+  /// Get the built-in image generation tool
+  static McpTool getImageGenerationTool() {
+    return McpTool(
+      name: 'generate_image',
+      description:
+          'Generate an image using AI based on a text prompt. The AI can intelligently determine the best dimensions (width/height) based on the user\'s request (e.g., "banner", "square", "portrait", "landscape", "wallpaper", etc.). The AI can also set other parameters like negative_prompt, guidance_scale, steps, model, and seed for optimal results.',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'prompt': {
+            'type': 'string',
+            'description':
+                'The text description of the image to generate. Be descriptive and include details about style, composition, colors, mood, etc.',
+          },
+          'width': {
+            'type': 'integer',
+            'description':
+                'Image width in pixels. Choose based on user request: 1024 for square, 1920 for landscape/banner, 1080 for portrait, 2048 for high-res, etc. Default: 1024',
+            'default': 1024,
+          },
+          'height': {
+            'type': 'integer',
+            'description':
+                'Image height in pixels. Choose based on user request: 1024 for square, 1080 for landscape, 1920 for portrait/banner, 2048 for high-res, etc. Default: 1024',
+            'default': 1024,
+          },
+          'model': {
+            'type': 'string',
+            'description':
+                'The AI model to use for image generation. Options: flux (default, high quality), turbo (faster), kontext, gptimage. Default: flux',
+            'enum': ['flux', 'turbo', 'kontext', 'gptimage'],
+            'default': 'flux',
+          },
+          'negative_prompt': {
+            'type': 'string',
+            'description':
+                'What to avoid in the image (e.g., "blurry, low quality, distorted"). Use this to improve image quality by excluding unwanted elements.',
+          },
+          'guidance_scale': {
+            'type': 'number',
+            'description':
+                'How closely to follow the prompt. Higher values (7-20) follow prompt more strictly, lower values (1-7) allow more creativity. Typical range: 7-15. Default: 7.5',
+            'minimum': 1,
+            'maximum': 20,
+          },
+          'steps': {
+            'type': 'integer',
+            'description':
+                'Number of diffusion steps. More steps = higher quality but slower. Range: 20-50. Default: 30',
+            'minimum': 20,
+            'maximum': 50,
+          },
+          'seed': {
+            'type': 'integer',
+            'description':
+                'Random seed for reproducibility. If user wants the same image again, use the same seed. Leave null for random generation.',
+          },
+          'enhance': {
+            'type': 'boolean',
+            'description':
+                'Let AI improve/enhance the prompt for better results. Default: true',
+            'default': true,
+          },
+        },
+        'required': ['prompt'],
+      },
+    );
+  }
 
   // Fetch available models from Xibe API
   Future<List<AiModel>> fetchModels() async {
@@ -119,8 +199,17 @@ class ApiService {
           try {
             final json = jsonDecode(data);
             final delta = json['choices']?[0]?['delta'];
-            if (delta != null && delta['content'] != null) {
-              yield delta['content'] as String;
+            if (delta != null) {
+              // Check for tool calls first
+              if (delta['tool_calls'] != null) {
+                final toolCalls = delta['tool_calls'] as List;
+                // Yield tool calls as special JSON string that can be parsed later
+                yield 'TOOL_CALLS:${jsonEncode(toolCalls)}';
+              }
+              // Check for content
+              if (delta['content'] != null) {
+                yield delta['content'] as String;
+              }
             }
           } catch (e) {
             // Skip invalid JSON chunks
