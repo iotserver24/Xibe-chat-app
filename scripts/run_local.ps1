@@ -8,6 +8,18 @@ param(
     [string]$device = ""
 )
 
+# Kill any running xibe_chat processes to prevent file locking
+Write-Host "Checking for running app instances..." -ForegroundColor Cyan
+$processes = Get-Process -Name "xibe_chat" -ErrorAction SilentlyContinue
+if ($processes) {
+    Write-Host "Found $($processes.Count) running instance(s), killing..." -ForegroundColor Yellow
+    $processes | ForEach-Object {
+        Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+    }
+    Start-Sleep -Seconds 1
+    Write-Host "✅ Processes killed" -ForegroundColor Green
+}
+
 # Check if .env file exists
 if (-not (Test-Path ".env")) {
     Write-Host "Error: .env file not found!" -ForegroundColor Red
@@ -29,6 +41,11 @@ Get-Content ".env" | ForEach-Object {
 # Build dart-define flags
 $dartDefines = @()
 $dartDefines += "--dart-define=E2B_BACKEND_URL=$($envVars['E2B_BACKEND_URL'])"
+
+# Add MongoDB API URL if present in .env
+if ($envVars.ContainsKey('MONGODB_API_URL')) {
+    $dartDefines += "--dart-define=MONGODB_API_URL=$($envVars['MONGODB_API_URL'])"
+}
 
 # Add shared Firebase variables first (project-level, not API keys)
 $sharedFirebaseVars = @(

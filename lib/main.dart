@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -19,7 +20,6 @@ import 'screens/auth_screen.dart';
 import 'services/mcp_config_service.dart';
 import 'services/update_service.dart';
 import 'services/deep_link_service.dart';
-import 'services/database_service.dart';
 import 'services/cloud_sync_service.dart';
 import 'widgets/update_dialog.dart';
 
@@ -66,8 +66,15 @@ void main() async {
   runApp(const XibeChatApp());
 }
 
-class XibeChatApp extends StatelessWidget {
+class XibeChatApp extends StatefulWidget {
   const XibeChatApp({super.key});
+
+  @override
+  State<XibeChatApp> createState() => _XibeChatAppState();
+}
+
+class _XibeChatAppState extends State<XibeChatApp> {
+  String? _previousUserId;
 
   @override
   Widget build(BuildContext context) {
@@ -80,44 +87,53 @@ class XibeChatApp extends StatelessWidget {
             ChatProvider>(
           create: (_) => ChatProvider(apiKey: null, systemPrompt: null),
           update: (_, auth, settings, previous) {
-            // Update database service with user ID
-            final databaseService = DatabaseService();
-            databaseService.setUserId(auth.user?.uid);
+            // CLOUD-ONLY: No database service, direct API calls
+            final previousUserId = _previousUserId;
+            final currentUserId = auth.user?.uid;
             
             // Update settings provider with user ID for cloud sync
-            settings.setUserId(auth.user?.uid);
+            settings.setUserId(currentUserId);
             
             // Save user profile to cloud when authenticated
             if (auth.isAuthenticated && auth.user != null) {
               final cloudSyncService = CloudSyncService();
               final appUser = auth.user!;
-              // User profile is already in app_user.User format from AuthProvider
               cloudSyncService.saveUserProfile(appUser.uid, appUser);
             }
             
-            // Sync data when user logs in
-            if (auth.isAuthenticated && auth.user != null && previous != null) {
-              // Load from cloud and sync local to cloud
-              databaseService.loadFromCloud().then((_) {
-                databaseService.syncAllToCloud();
-                // Sync settings to cloud
-                settings.syncSettingsToCloud();
-              }).catchError((e) {
-                print('Error syncing data: $e');
-              });
-            }
-            
             if (previous != null) {
+              // Set user ID in ChatProvider (triggers chat list load)
+              previous.setUserId(currentUserId);
+              
+              // Update API key and system prompt
               previous.updateApiKey(settings.apiKey);
               previous.updateSystemPrompt(settings.getCombinedSystemPrompt());
-              previous.updateCustomProviders(
-                  settings.customProviders, settings.customModels);
+              
+              // Check if user changed
+              if (previousUserId != currentUserId) {
+                _previousUserId = currentUserId;
+                if (currentUserId != null) {
+                  print('🔄 User logged in: $currentUserId - Loading chats...');
+                  // Chats will load automatically via setUserId
+                } else {
+                  print('👋 User logged out');
+                }
+              }
+              
               return previous;
             }
-            return ChatProvider(
+            
+            // Create new ChatProvider
+            final newProvider = ChatProvider(
               apiKey: settings.apiKey,
               systemPrompt: settings.getCombinedSystemPrompt(),
             );
+            
+            // Set user ID (triggers chat list load if authenticated)
+            newProvider.setUserId(currentUserId);
+            
+            _previousUserId = currentUserId;
+            return newProvider;
           },
         ),
       ],
@@ -244,21 +260,16 @@ class _SplashWrapperState extends State<SplashWrapper> {
 
   void _navigateToNewChat() {
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    final settingsProvider =
-        Provider.of<SettingsProvider>(context, listen: false);
-    chatProvider.createNewChat(defaultModel: settingsProvider.defaultModel);
+    chatProvider.createChat('New Chat');
   }
 
   void _navigateToNewChatWithPrompt(String prompt) {
-    // Create a new chat and set the prompt
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    final settingsProvider =
-        Provider.of<SettingsProvider>(context, listen: false);
-    chatProvider
-        .createNewChat(defaultModel: settingsProvider.defaultModel)
-        .then((_) {
-      // The prompt will be set in ChatScreen via the provider
-      chatProvider.setPendingPrompt(prompt);
+    chatProvider.createChat('New Chat').then((_) {
+      // Send the prompt directly as first message
+      if (chatProvider.currentChat != null) {
+        chatProvider.sendMessage(prompt);
+      }
     });
   }
 

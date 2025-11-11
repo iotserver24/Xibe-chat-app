@@ -48,7 +48,10 @@ class CloudSyncService {
 
   // Sync chat to cloud
   Future<void> syncChatToCloud(String userId, Chat chat) async {
-    if (!await isOnline) return;
+    if (!await isOnline) {
+      print('⚠️  Chat sync skipped: Device is offline');
+      return;
+    }
 
     try {
       final chatRef = _getChatsRef(userId).doc(chat.id.toString());
@@ -59,8 +62,28 @@ class CloudSyncService {
         'updatedAt': chat.updatedAt.toIso8601String(),
         'syncedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+      print('✅ Chat synced to Firestore: ${chat.id} - "${chat.title}" at users/$userId/chats/${chat.id}');
     } catch (e) {
-      print('Error syncing chat to cloud: $e');
+      // Handle RESOURCE_EXHAUSTED by retrying with delay
+      if (e.toString().contains('RESOURCE_EXHAUSTED') || 
+          e.toString().contains('resource-exhausted')) {
+        print('Firestore resource exhausted, retrying after delay: $e');
+        await Future.delayed(const Duration(seconds: 2));
+        try {
+          final chatRef = _getChatsRef(userId).doc(chat.id.toString());
+          await chatRef.set({
+            'id': chat.id,
+            'title': chat.title,
+            'createdAt': chat.createdAt.toIso8601String(),
+            'updatedAt': chat.updatedAt.toIso8601String(),
+            'syncedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } catch (retryError) {
+          print('Error retrying chat sync to cloud: $retryError');
+        }
+      } else {
+        print('Error syncing chat to cloud: $e');
+      }
       // Don't throw - allow app to continue working offline
     }
   }
@@ -93,7 +116,39 @@ class CloudSyncService {
         'syncedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
-      print('Error syncing message to cloud: $e');
+      // Handle RESOURCE_EXHAUSTED by retrying with delay
+      if (e.toString().contains('RESOURCE_EXHAUSTED') || 
+          e.toString().contains('resource-exhausted')) {
+        print('Firestore resource exhausted, retrying after delay: $e');
+        await Future.delayed(const Duration(seconds: 2));
+        try {
+          final messageRef =
+              _getMessagesRef(userId, chatId).doc(message.id.toString());
+          await messageRef.set({
+            'id': message.id,
+            'role': message.role,
+            'content': message.content,
+            'timestamp': message.timestamp.toIso8601String(),
+            'webSearchUsed': message.webSearchUsed,
+            'chatId': message.chatId,
+            'imageBase64': message.imageBase64,
+            'imagePath': message.imagePath,
+            'thinkingContent': message.thinkingContent,
+            'isThinking': message.isThinking,
+            'responseTimeMs': message.responseTimeMs,
+            'reaction': message.reaction,
+            'generatedImageBase64': message.generatedImageBase64,
+            'generatedImagePrompt': message.generatedImagePrompt,
+            'generatedImageModel': message.generatedImageModel,
+            'isGeneratingImage': message.isGeneratingImage,
+            'syncedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } catch (retryError) {
+          print('Error retrying message sync to cloud: $retryError');
+        }
+      } else {
+        print('Error syncing message to cloud: $e');
+      }
       // Don't throw - allow app to continue working offline
     }
   }
@@ -231,14 +286,16 @@ class CloudSyncService {
     }
   }
 
-  // Fetch messages for a chat from cloud
+  // Fetch messages for a chat from cloud (with limit to prevent memory issues)
   Future<List<Message>> fetchMessagesFromCloud(
-      String userId, String chatId) async {
+      String userId, String chatId, {int limit = 200}) async {
     if (!await isOnline) return [];
 
     try {
+      // Limit to 200 most recent messages to prevent memory exhaustion
       final snapshot = await _getMessagesRef(userId, chatId)
           .orderBy('timestamp', descending: false)
+          .limit(limit)
           .get();
 
       return snapshot.docs.map((doc) {
@@ -265,7 +322,7 @@ class CloudSyncService {
         );
       }).toList();
     } catch (e) {
-      print('Error fetching messages from cloud: $e');
+      print('❌ Error fetching messages from cloud: $e');
       return [];
     }
   }
@@ -299,6 +356,7 @@ class CloudSyncService {
   }
 
   // Batch sync all local data to cloud (for initial sync or after offline period)
+  // Firestore batches are limited to 500 operations, so we split into multiple batches
   Future<void> syncAllToCloud({
     required String userId,
     required List<Chat> chats,
@@ -308,65 +366,146 @@ class CloudSyncService {
     if (!await isOnline) return;
 
     try {
-      final batch = _firestore.batch();
-
-      // Sync chats
-      for (final chat in chats) {
-        final chatRef = _getChatsRef(userId).doc(chat.id.toString());
-        batch.set(chatRef, {
-          'id': chat.id,
-          'title': chat.title,
-          'createdAt': chat.createdAt.toIso8601String(),
-          'updatedAt': chat.updatedAt.toIso8601String(),
-          'syncedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+      const int maxBatchSize = 500; // Firestore batch limit
+      int totalOperations = chats.length + memories.length;
+      
+      // Count total messages
+      for (final messages in messagesByChat.values) {
+        totalOperations += messages.length;
       }
-
-      // Sync messages
-      for (final entry in messagesByChat.entries) {
-        final chatId = entry.key.toString();
-        for (final message in entry.value) {
-          final messageRef =
-              _getMessagesRef(userId, chatId).doc(message.id.toString());
-          batch.set(messageRef, {
-            'id': message.id,
-            'role': message.role,
-            'content': message.content,
-            'timestamp': message.timestamp.toIso8601String(),
-            'webSearchUsed': message.webSearchUsed,
-            'chatId': message.chatId,
-            'imageBase64': message.imageBase64,
-            'imagePath': message.imagePath,
-            'thinkingContent': message.thinkingContent,
-            'isThinking': message.isThinking,
-            'responseTimeMs': message.responseTimeMs,
-            'reaction': message.reaction,
-            'generatedImageBase64': message.generatedImageBase64,
-            'generatedImagePrompt': message.generatedImagePrompt,
-            'generatedImageModel': message.generatedImageModel,
-            'isGeneratingImage': message.isGeneratingImage,
-            'syncedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+      
+      // If total operations exceed batch limit, process in chunks
+      if (totalOperations <= maxBatchSize) {
+        // Single batch is sufficient
+        await _syncBatchToCloud(
+          userId: userId,
+          chats: chats,
+          messagesByChat: messagesByChat,
+          memories: memories,
+        );
+      } else {
+        // Process in multiple batches
+        print('Large sync detected ($totalOperations operations), processing in batches...');
+        
+        // Sync chats first
+        for (int i = 0; i < chats.length; i += maxBatchSize) {
+          final chatBatch = chats.sublist(
+            i,
+            i + maxBatchSize > chats.length ? chats.length : i + maxBatchSize,
+          );
+          await _syncBatchToCloud(
+            userId: userId,
+            chats: chatBatch,
+            messagesByChat: {},
+            memories: [],
+          );
+          // Small delay to prevent overwhelming Firestore
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+        
+        // Sync messages in batches
+        for (final entry in messagesByChat.entries) {
+          final messages = entry.value;
+          for (int i = 0; i < messages.length; i += maxBatchSize) {
+            final messageBatch = messages.sublist(
+              i,
+              i + maxBatchSize > messages.length ? messages.length : i + maxBatchSize,
+            );
+            await _syncBatchToCloud(
+              userId: userId,
+              chats: [],
+              messagesByChat: {entry.key: messageBatch},
+              memories: [],
+            );
+            // Small delay to prevent overwhelming Firestore
+            await Future.delayed(const Duration(milliseconds: 100));
+          }
+        }
+        
+        // Sync memories in batches
+        for (int i = 0; i < memories.length; i += maxBatchSize) {
+          final memoryBatch = memories.sublist(
+            i,
+            i + maxBatchSize > memories.length ? memories.length : i + maxBatchSize,
+          );
+          await _syncBatchToCloud(
+            userId: userId,
+            chats: [],
+            messagesByChat: {},
+            memories: memoryBatch,
+          );
+          // Small delay to prevent overwhelming Firestore
+          await Future.delayed(const Duration(milliseconds: 100));
         }
       }
-
-      // Sync memories
-      for (final memory in memories) {
-        final memoryRef = _getMemoriesRef(userId).doc(memory.id.toString());
-        batch.set(memoryRef, {
-          'id': memory.id,
-          'content': memory.content,
-          'createdAt': memory.createdAt.toIso8601String(),
-          'updatedAt': memory.updatedAt.toIso8601String(),
-          'syncedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-      }
-
-      await batch.commit();
     } catch (e) {
       print('Error batch syncing to cloud: $e');
       // Don't throw - allow app to continue working
     }
+  }
+  
+  // Internal method to sync a single batch (max 500 operations)
+  Future<void> _syncBatchToCloud({
+    required String userId,
+    required List<Chat> chats,
+    required Map<int, List<Message>> messagesByChat,
+    required List<Memory> memories,
+  }) async {
+    final batch = _firestore.batch();
+
+    // Sync chats
+    for (final chat in chats) {
+      final chatRef = _getChatsRef(userId).doc(chat.id.toString());
+      batch.set(chatRef, {
+        'id': chat.id,
+        'title': chat.title,
+        'createdAt': chat.createdAt.toIso8601String(),
+        'updatedAt': chat.updatedAt.toIso8601String(),
+        'syncedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    }
+
+    // Sync messages
+    for (final entry in messagesByChat.entries) {
+      final chatId = entry.key.toString();
+      for (final message in entry.value) {
+        final messageRef =
+            _getMessagesRef(userId, chatId).doc(message.id.toString());
+        batch.set(messageRef, {
+          'id': message.id,
+          'role': message.role,
+          'content': message.content,
+          'timestamp': message.timestamp.toIso8601String(),
+          'webSearchUsed': message.webSearchUsed,
+          'chatId': message.chatId,
+          'imageBase64': message.imageBase64,
+          'imagePath': message.imagePath,
+          'thinkingContent': message.thinkingContent,
+          'isThinking': message.isThinking,
+          'responseTimeMs': message.responseTimeMs,
+          'reaction': message.reaction,
+          'generatedImageBase64': message.generatedImageBase64,
+          'generatedImagePrompt': message.generatedImagePrompt,
+          'generatedImageModel': message.generatedImageModel,
+          'isGeneratingImage': message.isGeneratingImage,
+          'syncedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+    }
+
+    // Sync memories
+    for (final memory in memories) {
+      final memoryRef = _getMemoriesRef(userId).doc(memory.id.toString());
+      batch.set(memoryRef, {
+        'id': memory.id,
+        'content': memory.content,
+        'createdAt': memory.createdAt.toIso8601String(),
+        'updatedAt': memory.updatedAt.toIso8601String(),
+        'syncedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    }
+
+    await batch.commit();
   }
 
   // Save/Update user profile in cloud

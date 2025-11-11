@@ -22,6 +22,11 @@ export $(grep -v '^#' .env | xargs)
 DART_DEFINES=()
 DART_DEFINES+=("--dart-define=E2B_BACKEND_URL=${E2B_BACKEND_URL}")
 
+# Add MongoDB API URL if present in .env
+if [ -n "${MONGODB_API_URL:-}" ]; then
+    DART_DEFINES+=("--dart-define=MONGODB_API_URL=${MONGODB_API_URL}")
+fi
+
 # Add shared Firebase variables first (project-level, not API keys)
 DART_DEFINES+=("--dart-define=FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}")
 DART_DEFINES+=("--dart-define=FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN}")

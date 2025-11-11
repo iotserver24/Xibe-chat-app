@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/message.dart';
 import '../models/ai_model.dart';
 import '../services/mcp_client_service.dart';
+import '../config/sync_config.dart';
 
 /// Represents a streaming response chunk that can be either content or tool calls
 class StreamChunk {
@@ -17,13 +18,19 @@ class StreamChunk {
 }
 
 class ApiService {
-  static const String baseUrl = 'https://api.xibe.app';
-  static const String chatEndpoint = '/openai/v1/chat/completions';
-  static const String modelsEndpoint = '/api/xibe/models';
+  // Use local chat-server for AI requests
+  String get baseUrl => MONGODB_API_URL.replaceAll('/api', ''); // Remove /api suffix
+  static const String chatEndpoint = '/api/ai/chat/completions';
+  static const String modelsEndpoint = '/api/ai/models';
 
   final String? apiKey;
+  String? _userId;
 
   ApiService({this.apiKey});
+
+  void setUserId(String? userId) {
+    _userId = userId;
+  }
 
   /// Get the built-in image generation tool
   static McpTool getImageGenerationTool() {
@@ -94,14 +101,26 @@ class ApiService {
     );
   }
 
-  // Fetch available models from Xibe API
+  Map<String, String> _getHeaders() {
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+    };
+    
+    // Add authentication headers for chat-server
+    if (_userId != null) {
+      headers['Authorization'] = 'Bearer token'; // Chat-server expects this
+      headers['X-User-Id'] = _userId!;
+    }
+    
+    return headers;
+  }
+
+  // Fetch available models from chat-server
   Future<List<AiModel>> fetchModels() async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl$modelsEndpoint'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: _getHeaders(),
       ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
@@ -130,16 +149,11 @@ class ApiService {
         Uri.parse('$baseUrl$chatEndpoint'),
       );
 
-      request.headers.addAll({
-        'Content-Type': 'application/json',
-        if (apiKey != null && apiKey!.isNotEmpty)
-          'Authorization': 'Bearer $apiKey',
-      });
+      // Use chat-server authentication headers
+      request.headers.addAll(_getHeaders());
 
-      // Build messages array in OpenAI format
+      // Build messages array (without system prompt - sent separately)
       final messages = [
-        if (systemPrompt != null && systemPrompt.isNotEmpty)
-          {'role': 'system', 'content': systemPrompt},
         ...history.map((m) => m.toApiFormat()),
         {'role': 'user', 'content': message},
       ];
@@ -148,6 +162,8 @@ class ApiService {
         'model': model,
         'messages': messages,
         'stream': true,
+        if (systemPrompt != null && systemPrompt.isNotEmpty)
+          'systemPrompt': systemPrompt,
         if (reasoning)
           'reasoning': {
             'enabled': true,
@@ -168,15 +184,30 @@ class ApiService {
       };
 
       request.body = jsonEncode(requestBody);
+      
+      print('📤 Sending AI request to: $baseUrl$chatEndpoint');
+      print('   Model: $model, Stream: true, Messages: ${messages.length}');
 
       final streamedResponse = await request.send();
 
+      print('📥 Response status: ${streamedResponse.statusCode}');
+      
       if (streamedResponse.statusCode != 200) {
+        // Try to read error body
+        String errorBody = '';
+        try {
+          errorBody = await streamedResponse.stream.transform(utf8.decoder).join();
+        } catch (_) {}
+        
+        print('❌ Server error: ${streamedResponse.statusCode}');
+        print('   Error body: $errorBody');
+        
         throw Exception(
-            'Server returned status code: ${streamedResponse.statusCode}');
+            'Server returned status code: ${streamedResponse.statusCode}. $errorBody');
       }
 
       String buffer = '';
+      int lineCount = 0;
       await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
         buffer += chunk;
 
@@ -208,16 +239,40 @@ class ApiService {
               }
               // Check for content
               if (delta['content'] != null) {
-                yield delta['content'] as String;
+                final content = delta['content'] as String;
+                lineCount++;
+                if (lineCount <= 3) {
+                  print('   Line $lineCount: content length=${content.length}');
+                }
+                yield content;
               }
             }
+            
+            // Check for errors in response
+            if (json['error'] != null) {
+              print('❌ API error in stream: ${json['error']}');
+              throw Exception('API error: ${json['error']}');
+            }
           } catch (e) {
-            // Skip invalid JSON chunks
+            // Log JSON decode errors but continue
+            if (lineCount < 5) {
+              print('⚠️  JSON decode error (line $lineCount): $e');
+              print('   Data: ${data.substring(0, data.length > 100 ? 100 : data.length)}');
+            }
             continue;
           }
         }
       }
-    } catch (e) {
+      
+      print('✅ Stream processing complete. Total lines processed: $lineCount');
+      
+      if (lineCount == 0) {
+        print('⚠️  Warning: No content lines received from stream!');
+        throw Exception('No content received from AI stream');
+      }
+    } catch (e, stackTrace) {
+      print('❌ Error in sendMessageStream: $e');
+      print('Stack trace: $stackTrace');
       throw Exception('Failed to send message: $e');
     }
   }
@@ -231,8 +286,6 @@ class ApiService {
   }) async {
     try {
       final messages = [
-        if (systemPrompt != null && systemPrompt.isNotEmpty)
-          {'role': 'system', 'content': systemPrompt},
         ...history.map((m) => m.toApiFormat()),
         {'role': 'user', 'content': message},
       ];
@@ -240,15 +293,13 @@ class ApiService {
       final response = await http
           .post(
             Uri.parse('$baseUrl$chatEndpoint'),
-            headers: {
-              'Content-Type': 'application/json',
-              if (apiKey != null && apiKey!.isNotEmpty)
-                'Authorization': 'Bearer $apiKey',
-            },
+            headers: _getHeaders(),
             body: jsonEncode({
               'model': model,
               'messages': messages,
               'stream': false,
+              if (systemPrompt != null && systemPrompt.isNotEmpty)
+                'systemPrompt': systemPrompt,
             }),
           )
           .timeout(const Duration(seconds: 60));

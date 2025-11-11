@@ -1,0 +1,19 @@
+# Copy this to .env file in chat-server directory
+
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# MongoDB Configuration
+MONGODB_URI=mongodb://root:18751Anish@193.24.208.154:4532/?directConnection=true
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# AI API Configuration
+# API key for external AI service (Xibe API)
+XIBE_API_KEY=your_api_key_here
+# Optional: Custom API URL (defaults to https://api.xibe.app)
+XIBE_API_URL=https://api.xibe.app
+

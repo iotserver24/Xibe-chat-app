@@ -1,3 +1,10 @@
 {
-    "cmake.sourceDirectory": "C:/Users/Asus/codes-rep/Xibe-chat-app/windows"
+    "cmake.sourceDirectory": "C:/Users/Asus/codes-rep/Xibe-chat-app/windows",
+    "terminal.integrated.env.linux": {
+
+    },
+    "terminal.integrated.env.windows": {
+
+    },
+    "cursor.general.globalCursorIgnoreList": []
 }

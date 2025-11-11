@@ -98,7 +98,22 @@ class _ChatScreenState extends State<ChatScreen> {
           const ModelSelector(),
           Consumer<ChatProvider>(
             builder: (context, chatProvider, child) {
-              if (chatProvider.currentChat == null) {
+              if (chatProvider.currentChat != null) {
+                return IconButton(
+                  icon: const Icon(Icons.refresh_rounded,
+                      color: Color(0xFF9AA0A6), size: 22),
+                  tooltip: 'Reload chat',
+                  onPressed: () async {
+                    await chatProvider.reloadCurrentChat();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Chat reloaded'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                );
+              } else {
                 return IconButton(
                   icon: const Icon(Icons.add_rounded,
                       color: Color(0xFF9AA0A6), size: 22),
@@ -110,7 +125,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   },
                 );
               }
-              return const SizedBox.shrink();
             },
           ),
         ],
@@ -388,6 +402,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     children: [
                       ListView.builder(
                         controller: _scrollController,
+                        reverse: false,  // Allow scrolling up
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         itemCount: finalItemCount,
                         itemBuilder: (context, index) {
@@ -715,7 +730,43 @@ class _ChatScreenState extends State<ChatScreen> {
                       // Model selection
                       const ModelSelector(),
                       const SizedBox(width: 8),
-                      // New chat button
+                      // Reload chat button (when chat is selected)
+                      Consumer<ChatProvider>(
+                        builder: (context, chatProvider, child) {
+                          if (chatProvider.currentChat != null) {
+                            return Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () async {
+                                  await chatProvider.reloadCurrentChat();
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text('Chat reloaded'),
+                                        duration: const Duration(seconds: 2),
+                                        backgroundColor: Theme.of(context).colorScheme.primary,
+                                      ),
+                                    );
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.refresh_rounded,
+                                      color: Colors.white70, size: 20),
+                                ),
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      // New chat button (when no chat is selected)
                       Consumer<ChatProvider>(
                         builder: (context, chatProvider, child) {
                           if (chatProvider.currentChat == null) {
@@ -1179,6 +1230,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           key: ValueKey(
                               'chat_${chatProvider.currentChat?.id ?? 'none'}_${chatProvider.messages.length}'),
                           controller: _scrollController,
+                          reverse: false,  // Allow scrolling up
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 8),
                           itemCount: finalItemCount,

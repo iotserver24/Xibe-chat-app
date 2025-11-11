@@ -6,15 +6,15 @@ import '../models/ai_profile.dart';
 import '../models/custom_provider.dart';
 import '../models/custom_model.dart';
 import '../models/user_settings.dart';
-import '../services/database_service.dart';
 import '../services/cloud_sync_service.dart';
+import '../services/chat_api_service.dart';
 
 class SettingsProvider extends ChangeNotifier {
   // Memory limits
   static const int maxTotalMemoryCharacters = 1000;
   static const int maxSingleMemoryCharacters = 200;
   SharedPreferences? _prefs;
-  final DatabaseService _databaseService = DatabaseService();
+  final ChatApiService _chatApiService = ChatApiService();
   String? _apiKey;
   String? _systemPrompt;
   String? _defaultModel; // Default model for new chats
@@ -35,6 +35,7 @@ class SettingsProvider extends ChangeNotifier {
   List<CustomModel> _customModels = [];
   final CloudSyncService _cloudSyncService = CloudSyncService();
   String? _currentUserId;
+  bool _isLoadingMemories = false; // Prevent concurrent memory loads
 
   String? get apiKey => _apiKey;
   String? get systemPrompt => _systemPrompt;
@@ -57,15 +58,27 @@ class SettingsProvider extends ChangeNotifier {
 
   // Set current user ID for cloud sync
   void setUserId(String? userId) {
+    // Only reload if userId actually changed
+    if (_currentUserId == userId) {
+      return; // No change, skip
+    }
+    
     _currentUserId = userId;
+    _chatApiService.setUserId(userId);
     if (userId != null) {
       _loadSettingsFromCloud(userId);
+      _loadMemories(); // Reload memories from Firebase
+    } else {
+      // User logged out - clear memories
+      _memories = [];
+      _updateCachedTotalCharacters();
+      notifyListeners();
     }
   }
 
   SettingsProvider() {
     _loadSettings();
-    _loadMemories();
+    // Don't load memories here - wait for userId to be set via setUserId()
     _loadAiProfiles();
     _loadCustomProviders();
     _loadCustomModels();
@@ -284,9 +297,27 @@ class SettingsProvider extends ChangeNotifier {
 
   // Memory management
   Future<void> _loadMemories() async {
-    _memories = await _databaseService.getAllMemories();
-    _updateCachedTotalCharacters();
-    notifyListeners();
+    // Prevent concurrent loads
+    if (_isLoadingMemories) {
+      return;
+    }
+    
+    if (_currentUserId == null) {
+      return;
+    }
+    
+    try {
+      _isLoadingMemories = true;
+      // Fetch memories from Firebase, not API
+      _memories = await _cloudSyncService.fetchMemoriesFromCloud(_currentUserId!);
+      _updateCachedTotalCharacters();
+      notifyListeners();
+    } catch (e) {
+      print('Error loading memories: $e');
+      _memories = [];
+    } finally {
+      _isLoadingMemories = false;
+    }
   }
 
   void _updateCachedTotalCharacters() {
@@ -295,29 +326,56 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> addMemory(String content) async {
-    final now = DateTime.now();
-    final memory = Memory(
+    if (_currentUserId == null) return;
+    
+    // Generate ID based on timestamp (milliseconds since epoch)
+    final memoryId = DateTime.now().millisecondsSinceEpoch;
+    final newMemory = Memory(
+      id: memoryId,
       content: content,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
     );
-    await _databaseService.insertMemory(memory);
-    await _loadMemories();
+    
+    // Save to Firebase
+    await _cloudSyncService.syncMemoryToCloud(_currentUserId!, newMemory);
+    
+    // Update local state
+    _memories.add(newMemory);
+    _updateCachedTotalCharacters();
+    notifyListeners();
   }
 
   Future<void> updateMemoryContent(int memoryId, String content) async {
-    final memory = _memories.firstWhere((m) => m.id == memoryId);
-    final updatedMemory = memory.copyWith(
+    if (_currentUserId == null) return;
+    
+    final memoryIndex = _memories.indexWhere((m) => m.id == memoryId);
+    if (memoryIndex == -1) return;
+    
+    final updatedMemory = _memories[memoryIndex].copyWith(
       content: content,
       updatedAt: DateTime.now(),
     );
-    await _databaseService.updateMemory(updatedMemory);
-    await _loadMemories();
+    
+    // Update in Firebase
+    await _cloudSyncService.syncMemoryToCloud(_currentUserId!, updatedMemory);
+    
+    // Update local state
+    _memories[memoryIndex] = updatedMemory;
+    _updateCachedTotalCharacters();
+    notifyListeners();
   }
 
   Future<void> deleteMemory(int memoryId) async {
-    await _databaseService.deleteMemory(memoryId);
-    await _loadMemories();
+    if (_currentUserId == null) return;
+    
+    // Delete from Firebase
+    await _cloudSyncService.deleteMemoryFromCloud(_currentUserId!, memoryId);
+    
+    // Update local state
+    _memories.removeWhere((m) => m.id == memoryId);
+    _updateCachedTotalCharacters();
+    notifyListeners();
   }
 
   int getTotalMemoryCharacters() {

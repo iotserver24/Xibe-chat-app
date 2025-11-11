@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: xibe-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: xibe-chat
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - xibe-network
+
+  server:
+    build: .
+    container_name: xibe-chat-server
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongodb:27017/xibe-chat
+    depends_on:
+      - mongodb
+    networks:
+      - xibe-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  xibe-network:
+    driver: bridge
+

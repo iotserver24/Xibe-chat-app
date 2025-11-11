@@ -22,28 +22,30 @@ class AuthProvider extends ChangeNotifier {
     // This helps prevent the Firebase Auth plugin threading warning
     _authService.authStateChanges.listen(
       (firebaseUser) {
-        // Handle auth state changes synchronously on the main thread
-        if (firebaseUser != null) {
-          _user = app_user.User(
-            uid: firebaseUser.uid,
-            email: firebaseUser.email ?? '',
-            displayName: firebaseUser.displayName,
-            photoUrl: firebaseUser.photoURL,
-            createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
-            lastLoginAt: DateTime.now(),
-          );
-        } else {
-          _user = null;
-        }
-        // Notify listeners on the main thread
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Schedule all handling on the main isolate to prevent threading issues
+        Future.microtask(() {
+          // Handle auth state changes on the main thread
+          if (firebaseUser != null) {
+            _user = app_user.User(
+              uid: firebaseUser.uid,
+              email: firebaseUser.email ?? '',
+              displayName: firebaseUser.displayName,
+              photoUrl: firebaseUser.photoURL,
+              createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
+              lastLoginAt: DateTime.now(),
+            );
+          } else {
+            _user = null;
+          }
+          // Notify listeners on the main thread
           notifyListeners();
         });
       },
       onError: (error) {
-        // Handle errors gracefully
-        print('Auth state change error: $error');
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Schedule error handling on the main isolate
+        Future.microtask(() {
+          // Handle errors gracefully
+          print('Auth state change error: $error');
           notifyListeners();
         });
       },
