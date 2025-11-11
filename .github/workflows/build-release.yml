@@ -290,6 +290,13 @@ jobs:
 
       - name: Create NSIS installer script
         run: |
+          # Determine the actual build path (Flutter may output ARM64 builds to x64 folder when cross-compiling)
+          $buildPath = "build\windows\x64\runner\Release"
+          if (Test-Path "build\windows\${{ matrix.arch }}\runner\Release") {
+            $buildPath = "build\windows\${{ matrix.arch }}\runner\Release"
+          }
+          Write-Host "Using build path for NSIS: $buildPath"
+          
           $nsisScript = @"
           !include "MUI2.nsh"
           !include "x64.nsh"
@@ -330,7 +337,7 @@ jobs:
           
           Section "Install"
             SetOutPath "`$INSTDIR"
-            File /r "build\windows\x64\runner\Release\*.*"
+            File /r "$buildPath\*.*"
             CreateDirectory "`$SMPROGRAMS\XibeChat"
             CreateShortcut "`$SMPROGRAMS\XibeChat\Xibe Chat.lnk" "`$INSTDIR\xibe_chat.exe"
             CreateShortcut "`$DESKTOP\Xibe Chat.lnk" "`$INSTDIR\xibe_chat.exe"
