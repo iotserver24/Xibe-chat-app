@@ -8,7 +8,7 @@ import '../models/memory.dart';
 import 'cloud_sync_service.dart';
 
 class DatabaseService {
-  static const int _databaseVersion = 7;
+  static const int _databaseVersion = 8;
   static Database? _database;
   static bool _initialized = false;
   final CloudSyncService _cloudSyncService = CloudSyncService();
@@ -81,6 +81,7 @@ class DatabaseService {
             generatedImagePrompt TEXT,
             generatedImageModel TEXT,
             isGeneratingImage INTEGER NOT NULL DEFAULT 0,
+            showDonationPrompt INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (chatId) REFERENCES chats (id) ON DELETE CASCADE
           )
         ''');
@@ -140,6 +141,11 @@ class DatabaseService {
           // Add isGeneratingImage field for version 7
           await db.execute(
               'ALTER TABLE messages ADD COLUMN isGeneratingImage INTEGER DEFAULT 0');
+        }
+        if (oldVersion < 8) {
+          // Add showDonationPrompt field for version 8
+          await db.execute(
+              'ALTER TABLE messages ADD COLUMN showDonationPrompt INTEGER DEFAULT 0');
         }
       },
     );
@@ -252,6 +258,7 @@ class DatabaseService {
         generatedImagePrompt: message.generatedImagePrompt,
         generatedImageModel: message.generatedImageModel,
         isGeneratingImage: message.isGeneratingImage,
+        showDonationPrompt: message.showDonationPrompt,
       );
       _cloudSyncService.syncMessageToCloud(
         _currentUserId!,

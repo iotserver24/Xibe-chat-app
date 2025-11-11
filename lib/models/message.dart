@@ -15,6 +15,7 @@ class Message {
   final String? generatedImagePrompt; // Prompt used to generate the image
   final String? generatedImageModel; // Model used for image generation
   final bool isGeneratingImage; // Whether image is currently being generated
+  final bool showDonationPrompt; // Whether to show donation prompt after this message
 
   Message({
     this.id,
@@ -33,6 +34,7 @@ class Message {
     this.generatedImagePrompt,
     this.generatedImageModel,
     this.isGeneratingImage = false,
+    this.showDonationPrompt = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -53,6 +55,7 @@ class Message {
       'generatedImagePrompt': generatedImagePrompt,
       'generatedImageModel': generatedImageModel,
       'isGeneratingImage': isGeneratingImage ? 1 : 0,
+      'showDonationPrompt': showDonationPrompt ? 1 : 0,
     };
   }
 
@@ -75,6 +78,8 @@ class Message {
       generatedImageModel: map['generatedImageModel'] as String?,
       isGeneratingImage:
           map['isGeneratingImage'] != null && map['isGeneratingImage'] == 1,
+      showDonationPrompt:
+          map['showDonationPrompt'] != null && map['showDonationPrompt'] == 1,
     );
   }
 

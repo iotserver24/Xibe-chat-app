@@ -356,7 +356,7 @@ class _DonateScreenState extends State<DonateScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Your donation helps us maintain servers, pay for API costs, and continue developing new features.',
+                  'Created by R3AP3Reditz (Anish Kumar)\n\nYour donation helps maintain servers, pay for API costs, and continue developing new features.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,

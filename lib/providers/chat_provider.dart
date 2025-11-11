@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/chat.dart';
 import '../models/message.dart';
@@ -431,7 +432,15 @@ class ChatProvider extends ChangeNotifier {
 
       // Base system prompt - always included to inform AI about the app context
       String baseSystemPrompt =
-          '''You are running in Xibe Chat, a modern AI chat application created by the user.
+          '''You are running in Xibe Chat, a modern AI chat application created by R3AP3Reditz (Anish Kumar).
+
+CREATOR INFORMATION:
+- Xibe Chat was created and developed by R3AP3Reditz (Anish Kumar)
+- The app is powered by xibe.app for AI
+- Portfolio: anishkumar.tech
+- GitHub: github.com/iotserver24
+- When users ask about the creator, developer, or who made this app, mention R3AP3Reditz (Anish Kumar)
+- You can occasionally mention that users can support the creator through donations if they find the app helpful
 
 APP CONTEXT & CAPABILITIES:
 - You are operating within the Xibe Chat desktop/mobile application
@@ -886,11 +895,23 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
               if (prompt != null && prompt.isNotEmpty) {
                 isGeneratingImage = true;
                 generatedImagePrompt = prompt;
-                // Use model from tool call if specified, otherwise use settings model, fallback to 'flux'
-                final toolModel = functionArgs['model'] as String?;
-                generatedImageModel = (toolModel != null && toolModel.isNotEmpty) 
-                    ? toolModel 
-                    : (imageGenerationModel ?? 'flux');
+                
+                // Check if user explicitly requested a specific model in their message
+                final userMessage = content.toLowerCase();
+                final availableModels = ['flux', 'kontext', 'turbo', 'gptimage'];
+                String? userRequestedModel;
+                for (final model in availableModels) {
+                  if (userMessage.contains('$model model') || 
+                      userMessage.contains('use $model') ||
+                      userMessage.contains('with $model')) {
+                    userRequestedModel = model;
+                    break;
+                  }
+                }
+                
+                // Always prioritize user's settings model, unless they explicitly requested a different one
+                // Ignore the AI's tool call model parameter - use settings instead
+                generatedImageModel = userRequestedModel ?? (imageGenerationModel ?? 'flux');
                 
                 // Extract parameters with defaults
                 final width = functionArgs['width'] as int? ?? 1024;
@@ -1244,6 +1265,20 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
       final responseTimeMs =
           responseEndTime.difference(responseStartTime).inMilliseconds;
 
+      // Determine if we should show donation prompt
+      // Show donation prompt occasionally (about 25% chance, but not on first message)
+      // Also show it every 3rd assistant message to ensure it appears regularly
+      // Count includes the message we're about to add, so we add 1
+      final assistantMessageCount = _messages.where((m) => m.role == 'assistant').length + 1;
+      final random = Random();
+      final randomChance = random.nextDouble();
+      final shouldShowDonation = !isFirstMessage && 
+          (assistantMessageCount % 3 == 0 || 
+           (assistantMessageCount >= 2 && randomChance < 0.25));
+      
+      // Debug logging
+      print('Donation prompt check: assistantCount=$assistantMessageCount, isFirst=$isFirstMessage, shouldShow=$shouldShowDonation, random=$randomChance');
+
       // Save the response with cleaned content (without chat name JSON)
       final assistantMessage = Message(
         role: 'assistant',
@@ -1256,6 +1291,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         generatedImagePrompt: generatedImagePrompt,
         generatedImageModel: generatedImageModel,
         isGeneratingImage: isGeneratingImage,
+        showDonationPrompt: shouldShowDonation,
       );
 
       final assistantInsertedId =
@@ -1272,6 +1308,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
         generatedImagePrompt: assistantMessage.generatedImagePrompt,
         generatedImageModel: assistantMessage.generatedImageModel,
         isGeneratingImage: assistantMessage.isGeneratingImage,
+        showDonationPrompt: assistantMessage.showDonationPrompt,
       );
       _messages.add(assistantMessageWithId);
 

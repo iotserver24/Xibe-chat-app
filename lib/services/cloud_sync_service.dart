@@ -90,6 +90,7 @@ class CloudSyncService {
         'generatedImagePrompt': message.generatedImagePrompt,
         'generatedImageModel': message.generatedImageModel,
         'isGeneratingImage': message.isGeneratingImage,
+        'showDonationPrompt': message.showDonationPrompt,
         'syncedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
@@ -262,6 +263,7 @@ class CloudSyncService {
           generatedImagePrompt: data['generatedImagePrompt'] as String?,
           generatedImageModel: data['generatedImageModel'] as String?,
           isGeneratingImage: data['isGeneratingImage'] == true,
+          showDonationPrompt: data['showDonationPrompt'] == true,
         );
       }).toList();
     } catch (e) {

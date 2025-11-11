@@ -439,13 +439,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             return FutureBuilder<List<String>>(
                               future: _getImageModels(),
                               builder: (context, snapshot) {
-                                final models = snapshot.data ??
+                                final rawModels = snapshot.data ??
                                     ['flux', 'kontext', 'turbo', 'gptimage'];
+                                // Remove duplicates by converting to Set and back to List
+                                final models = rawModels.toSet().toList()..sort();
                                 final currentModel =
                                     settingsProvider.imageGenerationModel;
+                                // Ensure currentModel exists in the list, otherwise use first model or null
+                                final validModel = models.contains(currentModel)
+                                    ? currentModel
+                                    : (models.isNotEmpty ? models.first : null);
 
                                 return DropdownButtonFormField<String>(
-                                  value: currentModel,
+                                  value: validModel,
                                   decoration: const InputDecoration(
                                     labelText: 'Default Image Model',
                                     hintText: 'Select default image model',

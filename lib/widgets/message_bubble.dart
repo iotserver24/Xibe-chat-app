@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import '../models/message.dart';
 import '../providers/chat_provider.dart';
 import 'code_block.dart';
+import 'donate_button.dart';
 
 class MessageBubble extends StatefulWidget {
   final Message message;
@@ -302,6 +303,9 @@ class _MessageBubbleState extends State<MessageBubble>
                     },
                   ),
                 ),
+              // Donation prompt button
+              if (widget.message.showDonationPrompt && !widget.isStreaming)
+                const DonateButton(),
             ],
             // Footer with time, response time, reactions, and copy
             const SizedBox(height: 12),
