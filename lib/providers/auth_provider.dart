@@ -98,17 +98,53 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> signInWithGoogle() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _user = await _authService.signInWithGoogle();
+      _error = null;
+    } catch (e) {
+      _error = e.toString();
+      _user = null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> openGoogleOAuthInBrowser() async {
+    try {
+      await _authService.openGoogleOAuthInBrowser();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
+  }
+
   Future<void> signOut() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
+      // Sign out from Firebase and Google
       await _authService.signOut();
+      
+      // Clear user state immediately
       _user = null;
       _error = null;
+      
+      // The auth state listener will also update _user to null,
+      // but we set it here immediately for responsiveness
     } catch (e) {
       _error = e.toString();
+      print('Sign out error: $e');
+      // Even if there's an error, clear the user state
+      // The auth state listener will handle the actual auth state
+      _user = null;
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -688,6 +688,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
       String fullResponseContent = '';
       String streamingDisplayContent = '';
       bool firstChunk = true;
+      DateTime? _lastNotifyTime; // Throttle notifyListeners during streaming
 
       Stream<String> responseStream;
 
@@ -850,6 +851,19 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
 
         // Update streaming content for display (without chat name JSON and img-gen tags)
         _streamingContent = streamingDisplayContent;
+        
+        // Throttle notifyListeners to reduce rebuilds and memory pressure
+        // Only notify every 50ms during streaming instead of on every chunk
+        final now = DateTime.now();
+        final lastNotify = _lastNotifyTime;
+        if (lastNotify == null || now.difference(lastNotify).inMilliseconds >= 50) {
+          _lastNotifyTime = now;
+          notifyListeners();
+        }
+      }
+      
+      // Ensure final update after streaming completes
+      if (_lastNotifyTime != null) {
         notifyListeners();
       }
 
@@ -872,7 +886,11 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
               if (prompt != null && prompt.isNotEmpty) {
                 isGeneratingImage = true;
                 generatedImagePrompt = prompt;
-                generatedImageModel = functionArgs['model'] as String? ?? imageGenerationModel ?? 'flux';
+                // Use model from tool call if specified, otherwise use settings model, fallback to 'flux'
+                final toolModel = functionArgs['model'] as String?;
+                generatedImageModel = (toolModel != null && toolModel.isNotEmpty) 
+                    ? toolModel 
+                    : (imageGenerationModel ?? 'flux');
                 
                 // Extract parameters with defaults
                 final width = functionArgs['width'] as int? ?? 1024;
@@ -973,7 +991,7 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
             // For now, just mark that we're generating
 
             try {
-              // Get the image generation model from settings
+              // Get the image generation model from settings (already passed as parameter)
               generatedImageModel = imageGenerationModel ?? 'flux';
 
               // Generate the image
@@ -1023,6 +1041,142 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
             }
           }
         }
+      }
+
+      // Extract chat name FIRST if it's the first message (before other processing)
+      String displayContent = fullResponseContent;
+      String? extractedChatName;
+
+      if (isFirstMessage) {
+        // Save original response for chat name extraction (before modifications)
+        final originalResponse = fullResponseContent;
+        
+        // Try multiple patterns to extract chat name from JSON
+        // Look for JSON at the end of the response (most common location)
+        // Pattern 1: Standard JSON format {"chat_name": "name"} at the end
+        RegExp jsonPattern1 =
+            RegExp(r'\{"chat_name"\s*:\s*"([^"]+)"\s*\}\s*$', caseSensitive: false, multiLine: true);
+        Match? match = jsonPattern1.firstMatch(originalResponse);
+
+        if (match == null) {
+          // Pattern 2: JSON with potential whitespace variations
+          RegExp jsonPattern2 = RegExp(r'\{\s*"chat_name"\s*:\s*"([^"]+)"\s*\}\s*$',
+              caseSensitive: false, multiLine: true);
+          match = jsonPattern2.firstMatch(originalResponse);
+        }
+
+        if (match == null) {
+          // Pattern 3: Look for chat_name anywhere in the response (not just at end)
+          RegExp jsonPattern3 =
+              RegExp(r'\{"chat_name"\s*:\s*"([^"]+)"\}', caseSensitive: false);
+          match = jsonPattern3.firstMatch(originalResponse);
+        }
+
+        if (match == null) {
+          // Pattern 4: JSON with whitespace variations anywhere
+          RegExp jsonPattern4 = RegExp(r'\{\s*"chat_name"\s*:\s*"([^"]+)"\s*\}',
+              caseSensitive: false);
+          match = jsonPattern4.firstMatch(originalResponse);
+        }
+
+        if (match == null) {
+          // Pattern 5: Look for chat_name key-value pair (more flexible)
+          RegExp jsonPattern5 =
+              RegExp(r'"chat_name"\s*:\s*"([^"]+)"', caseSensitive: false);
+          match = jsonPattern5.firstMatch(originalResponse);
+        }
+
+        if (match == null) {
+          // Pattern 6: Single quotes
+          RegExp jsonPattern6 =
+              RegExp(r"'chat_name'\s*:\s*'([^']+)'", caseSensitive: false);
+          match = jsonPattern6.firstMatch(originalResponse);
+        }
+
+        if (match != null) {
+          extractedChatName = match.group(1)?.trim();
+          // Remove the JSON part from display content
+          displayContent = originalResponse.substring(0, match.start).trim();
+        }
+
+        // Clean up display content - remove any remaining JSON artifacts
+        displayContent = displayContent
+            .replaceAll(
+                RegExp(r'\{"chat_name"[^\}]*\}', caseSensitive: false), '')
+            .replaceAll(
+                RegExp(r'\{[^}]*"chat_name"[^}]*\}', caseSensitive: false), '')
+            .replaceAll(
+                RegExp(r'\{[^}]*chat_name[^}]*\}', caseSensitive: false), '')
+            .trim();
+
+        // If no chat name was extracted, generate one based on the response content
+        // This ensures we always have a meaningful name, not the user's input
+        if (extractedChatName == null || extractedChatName.isEmpty) {
+          // Try to generate a name from the first meaningful sentence
+          final sentences = displayContent.split(RegExp(r'[.!?]\s+'));
+          if (sentences.isNotEmpty) {
+            final firstSentence = sentences.first.trim();
+            // Extract key words (4-6 words, excluding common words)
+            final commonWords = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they'};
+            final words = firstSentence
+                .split(RegExp(r'\s+'))
+                .where((w) {
+                  final cleaned = w.toLowerCase().replaceAll(RegExp(r'[^\w]'), '');
+                  return cleaned.length > 3 && !commonWords.contains(cleaned);
+                })
+                .take(5)
+                .toList();
+            
+            if (words.isNotEmpty) {
+              extractedChatName = words.join(' ');
+              // Limit length
+              if (extractedChatName.length > 50) {
+                extractedChatName = '${extractedChatName.substring(0, 47)}...';
+              }
+            } else {
+              // Fallback: use first 4 words regardless
+              final allWords = firstSentence.split(RegExp(r'\s+')).take(4).toList();
+              if (allWords.isNotEmpty) {
+                extractedChatName = allWords.join(' ');
+                if (extractedChatName.length > 50) {
+                  extractedChatName = '${extractedChatName.substring(0, 47)}...';
+                }
+              }
+            }
+          }
+          
+          // Ultimate fallback - use first few words from user's message
+          if (extractedChatName == null || extractedChatName.isEmpty) {
+            final userMessage = _messages.isNotEmpty ? _messages.first.content : '';
+            if (userMessage.isNotEmpty) {
+              final userWords = userMessage.split(RegExp(r'\s+')).take(4).toList();
+              if (userWords.isNotEmpty) {
+                extractedChatName = userWords.join(' ');
+                if (extractedChatName.length > 50) {
+                  extractedChatName = '${extractedChatName.substring(0, 47)}...';
+                }
+              }
+            }
+          }
+          
+          // Final fallback - generic descriptive name
+          if (extractedChatName == null || extractedChatName.isEmpty) {
+            extractedChatName = 'New Conversation';
+          }
+        }
+
+        // Always update chat title (even if extraction failed, we have a fallback)
+        _currentChat = Chat(
+          id: _currentChat!.id,
+          title: extractedChatName,
+          createdAt: _currentChat!.createdAt,
+          updatedAt: DateTime.now(),
+        );
+        await _databaseService.updateChat(_currentChat!);
+        await _loadChats();
+        
+        // Update fullResponseContent to use cleaned displayContent for further processing
+        fullResponseContent = displayContent;
       }
 
       // Extract sources from web search if present using XML-style tags
@@ -1083,98 +1237,6 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
             print('Error saving memory: $e');
           }
         }
-      }
-
-      // Extract chat name from full response if it's the first message
-      String displayContent = fullResponseContent;
-      String? extractedChatName;
-
-      if (isFirstMessage) {
-        // Try multiple patterns to extract chat name from JSON
-        // Pattern 1: Standard JSON format {"chat_name": "name"}
-        RegExp jsonPattern1 =
-            RegExp(r'\{"chat_name"\s*:\s*"([^"]+)"\}', caseSensitive: false);
-        Match? match = jsonPattern1.firstMatch(fullResponseContent);
-
-        if (match != null) {
-          extractedChatName = match.group(1);
-          // Remove the JSON part from display content
-          displayContent = fullResponseContent.substring(0, match.start).trim();
-        } else {
-          // Pattern 2: JSON with potential whitespace variations
-          RegExp jsonPattern2 = RegExp(r'\{\s*"chat_name"\s*:\s*"([^"]+)"\s*\}',
-              caseSensitive: false);
-          match = jsonPattern2.firstMatch(fullResponseContent);
-
-          if (match != null) {
-            extractedChatName = match.group(1);
-            displayContent =
-                fullResponseContent.substring(0, match.start).trim();
-          } else {
-            // Pattern 3: Look for chat_name with any quotes
-            RegExp jsonPattern3 =
-                RegExp(r'"chat_name"\s*:\s*"([^"]+)"', caseSensitive: false);
-            match = jsonPattern3.firstMatch(fullResponseContent);
-
-            if (match != null) {
-              extractedChatName = match.group(1);
-              displayContent =
-                  fullResponseContent.substring(0, match.start).trim();
-            } else {
-              // Pattern 4: Single quotes
-              RegExp jsonPattern4 =
-                  RegExp(r"'chat_name'\s*:\s*'([^']+)'", caseSensitive: false);
-              match = jsonPattern4.firstMatch(fullResponseContent);
-
-              if (match != null) {
-                extractedChatName = match.group(1);
-                displayContent =
-                    fullResponseContent.substring(0, match.start).trim();
-              }
-            }
-          }
-        }
-
-        // Clean up display content - remove any remaining JSON artifacts
-        displayContent = displayContent
-            .replaceAll(
-                RegExp(r'\{"chat_name"[^\}]*\}', caseSensitive: false), '')
-            .replaceAll(
-                RegExp(r'\{[^}]*"chat_name"[^}]*\}', caseSensitive: false), '')
-            .replaceAll(
-                RegExp(r'\{[^}]*chat_name[^}]*\}', caseSensitive: false), '')
-            .trim();
-
-        // If no chat name was extracted, generate one based on the response content
-        // This ensures we always have a meaningful name, not the user's input
-        if (extractedChatName == null || extractedChatName.isEmpty) {
-          // Generate a name from the first sentence or key words in the response
-          final words = displayContent
-              .split(RegExp(r'\s+'))
-              .where((w) => w.length > 3)
-              .take(4)
-              .toList();
-          if (words.isNotEmpty) {
-            extractedChatName = words.join(' ');
-            // Limit length
-            if (extractedChatName.length > 50) {
-              extractedChatName = '${extractedChatName.substring(0, 47)}...';
-            }
-          } else {
-            // Ultimate fallback - generic descriptive name
-            extractedChatName = 'New Conversation';
-          }
-        }
-
-        // Update chat title with extracted/generated name (never show user's input as title)
-        _currentChat = Chat(
-          id: _currentChat!.id,
-          title: extractedChatName,
-          createdAt: _currentChat!.createdAt,
-          updatedAt: DateTime.now(),
-        );
-        await _databaseService.updateChat(_currentChat!);
-        await _loadChats();
       }
 
       // Calculate response time

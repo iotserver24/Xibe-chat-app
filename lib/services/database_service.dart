@@ -435,67 +435,58 @@ class DatabaseService {
     if (_currentUserId == null) return;
     
     try {
+      // Fetch all cloud data first (before starting transaction)
       final cloudChats = await _cloudSyncService.fetchChatsFromCloud(_currentUserId!);
-      final localChats = await getAllChats();
       
-      // Merge cloud chats with local (cloud takes precedence for conflicts)
-      final localChatIds = localChats.map((c) => c.id).toSet();
-      
-      for (final cloudChat in cloudChats) {
-        if (cloudChat.id != null) {
-          if (!localChatIds.contains(cloudChat.id)) {
-            // Chat exists in cloud but not locally - add it (skip cloud sync since it's from cloud)
-            await createChat(cloudChat, skipCloudSync: true);
-          } else {
-            // Chat exists in both - update local with cloud version (skip cloud sync)
-            await createChat(cloudChat, skipCloudSync: true);
-          }
-        }
-      }
-      
-      // Load messages for each chat
+      // Fetch messages for all chats
+      final Map<int, List<Message>> cloudMessagesByChat = {};
       for (final chat in cloudChats) {
         if (chat.id != null) {
-          final cloudMessages = await _cloudSyncService.fetchMessagesFromCloud(
+          cloudMessagesByChat[chat.id!] = await _cloudSyncService.fetchMessagesFromCloud(
             _currentUserId!,
             chat.id.toString(),
           );
-          final localMessages = await getMessagesForChat(chat.id!);
+        }
+      }
+      
+      // Fetch memories
+      final cloudMemories = await _cloudSyncService.fetchMemoriesFromCloud(_currentUserId!);
+      
+      final db = await database;
+      
+      // Use a transaction to prevent database locks - all DB operations use the transaction object
+      await db.transaction((txn) async {
+        // Merge cloud chats with local (cloud takes precedence for conflicts)
+        // Using INSERT OR REPLACE handles both new and existing chats automatically
+        for (final cloudChat in cloudChats) {
+          if (cloudChat.id != null) {
+            await txn.insert('chats', cloudChat.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+          }
+        }
+        
+        // Load messages for each chat using transaction
+        for (final chat in cloudChats) {
+          if (chat.id != null) {
+            final cloudMessages = cloudMessagesByChat[chat.id!] ?? [];
           
           // Merge messages (cloud takes precedence)
-          final localMessageIds = localMessages.map((m) => m.id).toSet();
-          
+            // Using INSERT OR REPLACE handles both new and existing messages automatically
           for (final cloudMessage in cloudMessages) {
             if (cloudMessage.id != null) {
-              if (!localMessageIds.contains(cloudMessage.id)) {
-                // Message exists in cloud but not locally - add it (skip cloud sync since it's from cloud)
-                await insertMessage(cloudMessage, skipCloudSync: true);
-              } else {
-                // Message exists in both - update local with cloud version (skip cloud sync)
-                await insertMessage(cloudMessage, skipCloudSync: true);
-              }
+                await txn.insert('messages', cloudMessage.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
             }
           }
         }
       }
       
-      // Load memories
-      final cloudMemories = await _cloudSyncService.fetchMemoriesFromCloud(_currentUserId!);
-      final localMemories = await getAllMemories();
-      
-      final localMemoryIds = localMemories.map((m) => m.id).toSet();
-      
+        // Merge memories (cloud takes precedence)
+        // Using INSERT OR REPLACE handles both new and existing memories automatically
       for (final cloudMemory in cloudMemories) {
         if (cloudMemory.id != null) {
-          if (!localMemoryIds.contains(cloudMemory.id)) {
-            // Memory exists in cloud but not locally - add it (skip cloud sync since it's from cloud)
-            await insertMemory(cloudMemory, skipCloudSync: true);
-          } else {
-            // Memory exists in both - update local with cloud version (skip cloud sync)
-            await insertMemory(cloudMemory, skipCloudSync: true);
+            await txn.insert('memories', cloudMemory.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
           }
         }
-      }
+      });
     } catch (e) {
       print('Error loading data from cloud: $e');
     }

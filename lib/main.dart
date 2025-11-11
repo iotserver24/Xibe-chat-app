@@ -16,6 +16,7 @@ import 'screens/ai_profiles_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/custom_providers_screen.dart';
 import 'screens/auth_screen.dart';
+import 'screens/donate_screen.dart';
 import 'services/mcp_config_service.dart';
 import 'services/update_service.dart';
 import 'services/deep_link_service.dart';
@@ -105,6 +106,12 @@ class XibeChatApp extends StatelessWidget {
               }).catchError((e) {
                 print('Error syncing data: $e');
               });
+            }
+            
+            // Clear chat state when user signs out
+            if (!auth.isAuthenticated && previous != null) {
+              // Reset chat provider state when user signs out
+              previous.createNewChat();
             }
             
             if (previous != null) {
@@ -235,10 +242,35 @@ class _SplashWrapperState extends State<SplashWrapper> {
       case DeepLinkType.settings:
         Navigator.of(context).pushNamed('/settings');
         break;
+      case DeepLinkType.donate:
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const DonateScreen(),
+          ),
+        );
+        break;
       case DeepLinkType.chat:
         // TODO: Implement chat navigation by ID
         _navigateToNewChat();
         break;
+      case DeepLinkType.googleOAuthCallback:
+        // Handle Google OAuth callback from browser (desktop platforms)
+        _handleGoogleOAuthCallback(deepLinkData.oauthParams);
+        break;
+    }
+  }
+
+  Future<void> _handleGoogleOAuthCallback(Map<String, String>? params) async {
+    debugPrint('Handling Google OAuth callback: $params');
+    // The auth state listener in AuthProvider will handle the sign-in automatically
+    // We just need to show a success message
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sign-in completed!'),
+          backgroundColor: Colors.green,
+        ),
+      );
     }
   }
 

@@ -19,6 +19,9 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
+  int _lastMessageCount = 0;
+  bool _isStreaming = false;
+  int? _lastChatId;
 
   @override
   void dispose() {
@@ -263,9 +266,31 @@ class _ChatScreenState extends State<ChatScreen> {
                     );
                   }
 
+                  // Reset tracking if chat changed
+                  final currentChatId = chatProvider.currentChat?.id;
+                  if (currentChatId != _lastChatId) {
+                    _lastChatId = currentChatId;
+                    _lastMessageCount = chatProvider.messages.length;
+                    _isStreaming = chatProvider.isStreaming;
+                  }
+                  
+                  // Only scroll to bottom when:
+                  // 1. New message is added (message count increased)
+                  // 2. Streaming is active (user is typing)
+                  // 3. Loading state changes (typing indicator appears)
+                  final currentMessageCount = chatProvider.messages.length;
+                  final currentlyStreaming = chatProvider.isStreaming;
+                  final shouldScroll = currentMessageCount > _lastMessageCount ||
+                      currentlyStreaming != _isStreaming ||
+                      (chatProvider.isLoading && !currentlyStreaming);
+                  
+                  if (shouldScroll) {
+                    _lastMessageCount = currentMessageCount;
+                    _isStreaming = currentlyStreaming;
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _scrollToBottom();
                   });
+                  }
 
                   // Show greeting for new chats (no messages yet)
                   // Always show greeting when we have a chat but no messages
@@ -389,6 +414,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.symmetric(vertical: 8),
+                        cacheExtent: 500, // Cache 500 pixels worth of items for better performance
                         itemCount: finalItemCount,
                         itemBuilder: (context, index) {
 
@@ -424,9 +450,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
                           // Show normal message
                           final message = chatProvider.messages[messageIndex];
+                          final messageWidget = MessageBubble(
+                            key: ValueKey('message_${message.id}'),
+                            message: message,
+                          );
+                          
+                          // Only animate messages that are newly added (last 2 messages)
+                          // This prevents animation restart when existing messages are updated (e.g., image generation completes)
+                          final shouldAnimate = messageIndex >= chatProvider.messages.length - 2;
+                          
+                          if (shouldAnimate) {
                           return TweenAnimationBuilder(
-                            key: ValueKey(
-                                '${message.id}_${message.timestamp.millisecondsSinceEpoch}'),
+                              key: ValueKey('anim_${message.id}'),
                             duration: const Duration(milliseconds: 400),
                             tween: Tween<double>(begin: 0.0, end: 1.0),
                             curve: Curves.easeOutCubic,
@@ -439,10 +474,12 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ),
                               );
                             },
-                            child: MessageBubble(
-                              message: message,
-                            ),
+                              child: messageWidget,
                           );
+                          } else {
+                            // For existing messages, just show without animation to prevent jumping
+                            return messageWidget;
+                          }
                         },
                       ),
                       if (chatProvider.error != null)
@@ -959,9 +996,31 @@ class _ChatScreenState extends State<ChatScreen> {
                           );
                         }
 
+                        // Reset tracking if chat changed
+                        final currentChatId = chatProvider.currentChat?.id;
+                        if (currentChatId != _lastChatId) {
+                          _lastChatId = currentChatId;
+                          _lastMessageCount = chatProvider.messages.length;
+                          _isStreaming = chatProvider.isStreaming;
+                        }
+                        
+                        // Only scroll to bottom when:
+                        // 1. New message is added (message count increased)
+                        // 2. Streaming is active (user is typing)
+                        // 3. Loading state changes (typing indicator appears)
+                        final currentMessageCount = chatProvider.messages.length;
+                        final currentlyStreaming = chatProvider.isStreaming;
+                        final shouldScroll = currentMessageCount > _lastMessageCount ||
+                            currentlyStreaming != _isStreaming ||
+                            (chatProvider.isLoading && !currentlyStreaming);
+                        
+                        if (shouldScroll) {
+                          _lastMessageCount = currentMessageCount;
+                          _isStreaming = currentlyStreaming;
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           _scrollToBottom();
                         });
+                        }
 
                         // Show greeting for new chats (no messages yet)
                         // Always show greeting when we have a chat but no messages
@@ -1181,6 +1240,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           controller: _scrollController,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 8),
+                          cacheExtent: 500, // Cache 500 pixels worth of items for better performance
                           itemCount: finalItemCount,
                           itemBuilder: (context, index) {
 

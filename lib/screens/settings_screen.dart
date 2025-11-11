@@ -101,7 +101,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         leading: CircleAvatar(
                           backgroundColor: Theme.of(context).colorScheme.primary,
                           child: Text(
-                            (authProvider.user?.email?.substring(0, 1).toUpperCase() ?? 'U'),
+                            (authProvider.user?.email != null 
+                                ? authProvider.user!.email.substring(0, 1).toUpperCase()
+                                : 'U'),
                             style: const TextStyle(color: Colors.white),
                           ),
                         ),
@@ -135,13 +137,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           );
                           if (confirm == true && context.mounted) {
+                            try {
                             await authProvider.signOut();
                             if (context.mounted) {
+                                if (authProvider.error != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Sign out error: ${authProvider.error}'),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Signed out successfully'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  // Navigate back or close settings
+                                  if (Navigator.canPop(context)) {
+                                    Navigator.pop(context);
+                                  }
+                                }
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Sign out failed: $e'),
+                                    backgroundColor: Colors.red,
                                 ),
                               );
+                              }
                             }
                           }
                         },

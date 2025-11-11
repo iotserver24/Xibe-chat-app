@@ -29,6 +29,7 @@ class MessageBubble extends StatefulWidget {
 class _MessageBubbleState extends State<MessageBubble>
     with SingleTickerProviderStateMixin {
   late AnimationController _cursorController;
+  Uint8List? _cachedImageBytes; // Cache decoded image bytes to avoid re-decoding
 
   @override
   void initState() {
@@ -37,11 +38,32 @@ class _MessageBubbleState extends State<MessageBubble>
       vsync: this,
       duration: const Duration(milliseconds: 530),
     )..repeat(reverse: true);
+    
+    // Pre-decode image if present to cache it
+    if (widget.message.generatedImageBase64 != null &&
+        widget.message.generatedImageBase64!.isNotEmpty) {
+      _cachedImageBytes = base64Decode(widget.message.generatedImageBase64!);
+    }
+  }
+
+  @override
+  void didUpdateWidget(MessageBubble oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only re-decode if the image actually changed
+    if (widget.message.generatedImageBase64 != oldWidget.message.generatedImageBase64) {
+      if (widget.message.generatedImageBase64 != null &&
+          widget.message.generatedImageBase64!.isNotEmpty) {
+        _cachedImageBytes = base64Decode(widget.message.generatedImageBase64!);
+      } else {
+        _cachedImageBytes = null;
+      }
+    }
   }
 
   @override
   void dispose() {
     _cursorController.dispose();
+    _cachedImageBytes = null; // Clear cache on dispose
     super.dispose();
   }
 
@@ -249,14 +271,18 @@ class _MessageBubbleState extends State<MessageBubble>
                 extensionSet: md.ExtensionSet.gitHubFlavored,
               ),
               // Generated image display or loading animation
+              // Show image if we have base64 data, or if we're generating
               if (widget.message.isGeneratingImage ||
                   (widget.message.generatedImageBase64 != null &&
                       widget.message.generatedImageBase64!.isNotEmpty)) ...[
                 const SizedBox(height: 20),
-                if (widget.message.isGeneratingImage)
-                  _buildImageLoadingAnimation(context)
-                else
-                  _buildGeneratedImage(context),
+                // Use stable condition to prevent flickering when state changes
+                widget.message.isGeneratingImage
+                    ? _buildImageLoadingAnimation(context)
+                    : (widget.message.generatedImageBase64 != null &&
+                            widget.message.generatedImageBase64!.isNotEmpty)
+                        ? _buildGeneratedImage(context)
+                        : const SizedBox.shrink(),
                 const SizedBox(height: 16),
               ],
               if (widget.isStreaming)
@@ -520,9 +546,18 @@ class _MessageBubbleState extends State<MessageBubble>
   }
 
   Widget _buildGeneratedImage(BuildContext context) {
-    final imageBytes = base64Decode(widget.message.generatedImageBase64!);
+    // Use cached image bytes if available, otherwise decode (shouldn't happen)
+    final imageBytes = _cachedImageBytes ?? 
+        (widget.message.generatedImageBase64 != null 
+            ? base64Decode(widget.message.generatedImageBase64!) 
+            : Uint8List(0));
+
+    if (imageBytes.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
+      key: ValueKey('generated_image_${widget.message.id}'),
       margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(6),
@@ -534,8 +569,9 @@ class _MessageBubbleState extends State<MessageBubble>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image preview
-          GestureDetector(
+          // Image preview - use RepaintBoundary to prevent unnecessary repaints
+          RepaintBoundary(
+            child: GestureDetector(
             onTap: () => _showFullscreenImage(context, imageBytes),
             child: ClipRRect(
               borderRadius: const BorderRadius.only(
@@ -545,9 +581,11 @@ class _MessageBubbleState extends State<MessageBubble>
               child: Stack(
                 children: [
                   Image.memory(
+                      key: ValueKey('image_memory_${widget.message.id}'),
                     imageBytes,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                      gaplessPlayback: true, // Prevent flicker when image updates
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         padding: const EdgeInsets.all(12),
@@ -583,6 +621,7 @@ class _MessageBubbleState extends State<MessageBubble>
                     ),
                   ),
                 ],
+                ),
               ),
             ),
           ),

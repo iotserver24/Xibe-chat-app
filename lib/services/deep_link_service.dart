@@ -64,6 +64,14 @@ class DeepLinkService {
   DeepLinkData? _parseCustomScheme(Uri uri) {
     final path = uri.host + uri.path;
     
+    // Handle Google OAuth callback: xibechat://auth/google?token=...
+    if (path.startsWith('auth/google')) {
+      return DeepLinkData(
+        type: DeepLinkType.googleOAuthCallback,
+        oauthParams: uri.queryParameters,
+      );
+    }
+    
     // Check for query parameters first (more user-friendly for website buttons)
     final messageParam = uri.queryParameters['message'];
     final textParam = uri.queryParameters['text'];
@@ -101,6 +109,11 @@ class DeepLinkService {
     // xibechat://settings - Open settings
     if (path == 'settings') {
       return DeepLinkData(type: DeepLinkType.settings);
+    }
+    
+    // xibechat://donate - Open donate screen
+    if (path == 'donate') {
+      return DeepLinkData(type: DeepLinkType.donate);
     }
     
     // xibechat://new - Create new chat
@@ -159,6 +172,13 @@ class DeepLinkService {
       return DeepLinkData(type: DeepLinkType.settings);
     }
     
+    // https://chat.xibe.app/app/donate
+    if (uri.pathSegments.length >= 2 && 
+        uri.pathSegments[0] == 'app' && 
+        uri.pathSegments[1] == 'donate') {
+      return DeepLinkData(type: DeepLinkType.donate);
+    }
+    
     // https://chat.xibe.app/app/new or https://chat.xibe.app/app
     if (uri.pathSegments.length >= 1 && uri.pathSegments[0] == 'app') {
       if (uri.pathSegments.length == 1 || 
@@ -181,21 +201,25 @@ enum DeepLinkType {
   chat,
   message,
   settings,
+  donate,
+  googleOAuthCallback,
 }
 
 class DeepLinkData {
   final DeepLinkType type;
   final String? chatId;
   final String? messagePrompt;
+  final Map<String, String>? oauthParams;
 
   DeepLinkData({
     required this.type,
     this.chatId,
     this.messagePrompt,
+    this.oauthParams,
   });
 
   @override
   String toString() {
-    return 'DeepLinkData(type: $type, chatId: $chatId, messagePrompt: $messagePrompt)';
+    return 'DeepLinkData(type: $type, chatId: $chatId, messagePrompt: $messagePrompt, oauthParams: $oauthParams)';
   }
 }
