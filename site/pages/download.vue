@@ -36,19 +36,19 @@
     </header>
 
     <!-- Main Content -->
-    <main class="relative z-10 container mx-auto px-4 py-20">
+    <main class="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
       <!-- Hero -->
-      <div class="text-center mb-16">
+      <div class="text-center mb-12 sm:mb-16">
         <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 mb-6">
           <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
           <span class="text-sm font-semibold text-green-400">100% Free & Open Source</span>
         </div>
-        <h1 class="text-5xl md:text-6xl font-black mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-black mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent px-4">
           Download Xibe Chat
         </h1>
-        <p class="text-xl text-slate-400 max-w-2xl mx-auto">
+        <p class="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto px-4">
           Choose your platform and release channel. Available for all major operating systems.
         </p>
       </div>
@@ -69,61 +69,61 @@
       </div>
 
       <!-- Release Channels -->
-      <div v-else class="space-y-8">
+      <div v-else class="space-y-6 sm:space-y-8">
         <!-- Stable Release -->
         <div v-if="stableRelease" class="relative p-1 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-500">
-          <div class="rounded-2xl bg-slate-950 p-8">
-            <div class="flex items-center justify-between mb-6">
-              <div>
-                <div class="flex items-center gap-3 mb-2">
-                  <h2 class="text-3xl font-bold text-white">Stable Release</h2>
-                  <span class="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm font-semibold">Recommended</span>
+          <div class="rounded-2xl bg-slate-950 p-4 sm:p-6 lg:p-8">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div class="min-w-0">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                  <h2 class="text-2xl sm:text-3xl font-bold text-white">Stable Release</h2>
+                  <span class="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs sm:text-sm font-semibold w-fit">Recommended</span>
                 </div>
-                <p class="text-slate-400">{{ stableRelease.name || stableRelease.tag_name }}</p>
+                <p class="text-slate-400 text-sm sm:text-base truncate">{{ stableRelease.name || stableRelease.tag_name }}</p>
               </div>
-              <div class="text-right">
-                <div class="text-2xl font-bold text-white">{{ stableRelease.tag_name }}</div>
+              <div class="text-left sm:text-right flex-shrink-0">
+                <div class="text-xl sm:text-2xl font-bold text-white">{{ stableRelease.tag_name }}</div>
                 <div class="text-sm text-slate-500">{{ formatDate(stableRelease.published_at) }}</div>
               </div>
             </div>
 
             <!-- Release Notes -->
-            <div v-if="stableRelease.body" class="mb-6 p-4 rounded-xl bg-slate-900/50 border border-slate-800">
-              <h3 class="text-lg font-semibold text-white mb-2">Release Notes</h3>
-              <div class="text-slate-400 text-sm prose prose-invert max-w-none" v-html="formatMarkdown(stableRelease.body)"></div>
+            <div v-if="stableRelease.body" class="mb-6 p-3 sm:p-4 rounded-xl bg-slate-900/50 border border-slate-800 overflow-hidden">
+              <h3 class="text-base sm:text-lg font-semibold text-white mb-2">Release Notes</h3>
+              <div class="text-slate-400 text-xs sm:text-sm prose prose-invert max-w-none overflow-x-auto" v-html="formatMarkdown(stableRelease.body)"></div>
             </div>
 
             <!-- Download Options -->
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <div v-for="(asset, index) in stableRelease.assets" :key="asset.id" 
                    :class="[
-                     'group relative p-6 rounded-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 backdrop-blur-sm border transition-all duration-300',
+                     'group relative p-4 sm:p-6 rounded-xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 backdrop-blur-sm border transition-all duration-300 overflow-hidden',
                      index === 0 && getPlatformName(asset.name).toLowerCase() === userOS ? 'border-blue-500/70 shadow-lg shadow-blue-500/20' : 'border-slate-700/50 hover:border-green-500/50'
                    ]">
                 <!-- Recommended Badge -->
-                <div v-if="index === 0 && getPlatformName(asset.name).toLowerCase() === userOS" class="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span class="px-3 py-1 rounded-full bg-blue-500 text-white text-xs font-semibold shadow-lg">
+                <div v-if="index === 0 && getPlatformName(asset.name).toLowerCase() === userOS" class="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                  <span class="px-3 py-1 rounded-full bg-blue-500 text-white text-xs font-semibold shadow-lg whitespace-nowrap">
                     Recommended for You
                   </span>
                 </div>
-                <div class="flex items-start justify-between mb-4">
-                  <div class="flex-1">
+                <div class="flex items-start justify-between mb-4 min-w-0">
+                  <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-2">
-                      <component :is="getPlatformIcon(asset.name)" class="w-6 h-6 text-green-400" />
-                      <div>
-                        <h4 class="font-semibold text-white">{{ getPlatformName(asset.name) }}</h4>
+                      <component :is="getPlatformIcon(asset.name)" class="w-5 h-5 sm:w-6 sm:h-6 text-green-400 flex-shrink-0" />
+                      <div class="min-w-0">
+                        <h4 class="font-semibold text-white text-sm sm:text-base truncate">{{ getPlatformName(asset.name) }}</h4>
                         <span v-if="getArchitecture(asset.name)" class="text-xs text-green-400 font-medium">{{ getArchitecture(asset.name) }}</span>
                       </div>
                     </div>
-                    <p class="text-sm text-slate-500 truncate">{{ asset.name }}</p>
+                    <p class="text-xs sm:text-sm text-slate-500 truncate">{{ asset.name }}</p>
                   </div>
                 </div>
-                <div class="flex items-center justify-between text-sm text-slate-400 mb-4">
-                  <span>{{ formatSize(asset.size) }}</span>
-                  <span>{{ asset.download_count }} downloads</span>
+                <div class="flex items-center justify-between text-xs sm:text-sm text-slate-400 mb-4 gap-2">
+                  <span class="truncate">{{ formatSize(asset.size) }}</span>
+                  <span class="truncate flex-shrink-0">{{ asset.download_count }} downloads</span>
                 </div>
                 <a :href="asset.browser_download_url" 
-                   class="block w-full py-2 px-4 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold text-center transition-colors">
+                   class="block w-full py-2 px-4 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold text-center transition-colors text-sm sm:text-base">
                   Download
                 </a>
               </div>
@@ -133,41 +133,41 @@
 
         <!-- Beta/Pre-release -->
         <div v-if="betaReleases.length > 0" class="relative p-1 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500">
-          <div class="rounded-2xl bg-slate-950 p-8">
-            <div class="flex items-center justify-between mb-6">
-              <div>
-                <div class="flex items-center gap-3 mb-2">
-                  <h2 class="text-3xl font-bold text-white">Beta Releases</h2>
-                  <span class="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-sm font-semibold">Experimental</span>
+          <div class="rounded-2xl bg-slate-950 p-4 sm:p-6 lg:p-8">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div class="min-w-0">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                  <h2 class="text-2xl sm:text-3xl font-bold text-white">Beta Releases</h2>
+                  <span class="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs sm:text-sm font-semibold w-fit">Experimental</span>
                 </div>
-                <p class="text-slate-400">Preview upcoming features (may be unstable)</p>
+                <p class="text-slate-400 text-sm sm:text-base">Preview upcoming features (may be unstable)</p>
               </div>
             </div>
 
             <!-- Beta Releases List -->
-            <div class="space-y-6">
+            <div class="space-y-4 sm:space-y-6">
               <div v-for="release in betaReleases.slice(0, 3)" :key="release.id" 
-                   class="p-6 rounded-xl bg-slate-900/50 border border-slate-800">
-                <div class="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 class="text-xl font-bold text-white">{{ release.name || release.tag_name }}</h3>
-                    <p class="text-sm text-slate-500">{{ formatDate(release.published_at) }}</p>
+                   class="p-4 sm:p-6 rounded-xl bg-slate-900/50 border border-slate-800">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                  <div class="min-w-0">
+                    <h3 class="text-lg sm:text-xl font-bold text-white truncate">{{ release.name || release.tag_name }}</h3>
+                    <p class="text-xs sm:text-sm text-slate-500">{{ formatDate(release.published_at) }}</p>
                   </div>
-                  <span class="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-sm font-semibold">{{ release.tag_name }}</span>
+                  <span class="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs sm:text-sm font-semibold w-fit">{{ release.tag_name }}</span>
                 </div>
 
                 <!-- Assets -->
-                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   <a v-for="asset in release.assets" :key="asset.id" 
                      :href="asset.browser_download_url"
-                     class="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-blue-500/50 transition-all">
+                     class="flex items-center gap-2 sm:gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-blue-500/50 transition-all overflow-hidden">
                     <component :is="getPlatformIcon(asset.name)" class="w-5 h-5 text-blue-400 flex-shrink-0" />
                     <div class="flex-1 min-w-0">
-                      <div class="text-sm font-medium text-white truncate">
+                      <div class="text-xs sm:text-sm font-medium text-white truncate">
                         {{ getPlatformName(asset.name) }}
                         <span v-if="getArchitecture(asset.name)" class="text-blue-400 ml-1">({{ getArchitecture(asset.name) }})</span>
                       </div>
-                      <div class="text-xs text-slate-500">{{ formatSize(asset.size) }}</div>
+                      <div class="text-xs text-slate-500 truncate">{{ formatSize(asset.size) }}</div>
                     </div>
                   </a>
                 </div>
@@ -177,7 +177,7 @@
             <!-- View All Beta Releases -->
             <div class="text-center mt-6">
               <a href="https://github.com/iotserver24/Xibe-chat-app/releases" target="_blank"
-                 class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700 text-white font-semibold transition-all">
+                 class="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700 text-white font-semibold transition-all text-sm sm:text-base">
                 View All Releases on GitHub
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -188,15 +188,15 @@
         </div>
 
         <!-- Free & Open Source Notice -->
-        <div class="p-8 rounded-2xl bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-teal-500/10 backdrop-blur-sm border border-green-500/30">
+        <div class="p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-teal-500/10 backdrop-blur-sm border border-green-500/30">
           <div class="text-center">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 mb-4">
-              <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-green-500/20 mb-4">
+              <svg class="w-7 h-7 sm:w-8 sm:h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
               </svg>
             </div>
-            <h2 class="text-3xl font-bold text-white mb-4">100% Free & Open Source</h2>
-            <p class="text-lg text-slate-300 max-w-2xl mx-auto">
+            <h2 class="text-2xl sm:text-3xl font-bold text-white mb-4">100% Free & Open Source</h2>
+            <p class="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto px-4">
               Xibe Chat is completely free to use with no hidden costs, subscriptions, or premium features. 
               Download and enjoy all features without limitations!
             </p>
@@ -204,36 +204,36 @@
         </div>
 
         <!-- Installation Guide -->
-        <div class="p-8 rounded-2xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50">
-          <h2 class="text-2xl font-bold text-white mb-6">Installation Guide</h2>
-          <div class="grid md:grid-cols-2 gap-6">
-            <div>
-              <h3 class="text-lg font-semibold text-blue-400 mb-3">Windows</h3>
-              <ol class="space-y-2 text-slate-400 text-sm">
+        <div class="p-4 sm:p-6 lg:p-8 rounded-2xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50">
+          <h2 class="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Installation Guide</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div class="p-3 sm:p-0">
+              <h3 class="text-base sm:text-lg font-semibold text-blue-400 mb-3">Windows</h3>
+              <ol class="space-y-2 text-slate-400 text-xs sm:text-sm">
                 <li>1. Download the Windows installer (.exe or .zip)</li>
                 <li>2. Run the installer and follow the setup wizard</li>
                 <li>3. Launch Xibe Chat from the Start menu</li>
               </ol>
             </div>
-            <div>
-              <h3 class="text-lg font-semibold text-green-400 mb-3">Android</h3>
-              <ol class="space-y-2 text-slate-400 text-sm">
+            <div class="p-3 sm:p-0">
+              <h3 class="text-base sm:text-lg font-semibold text-green-400 mb-3">Android</h3>
+              <ol class="space-y-2 text-slate-400 text-xs sm:text-sm">
                 <li>1. Download the APK file</li>
                 <li>2. Allow installation from unknown sources</li>
                 <li>3. Install and open the app</li>
               </ol>
             </div>
-            <div>
-              <h3 class="text-lg font-semibold text-purple-400 mb-3">Linux</h3>
-              <ol class="space-y-2 text-slate-400 text-sm">
+            <div class="p-3 sm:p-0">
+              <h3 class="text-base sm:text-lg font-semibold text-purple-400 mb-3">Linux</h3>
+              <ol class="space-y-2 text-slate-400 text-xs sm:text-sm">
                 <li>1. Download the appropriate package (.deb, .rpm, or .AppImage)</li>
                 <li>2. Install using your package manager</li>
                 <li>3. Run from applications menu or terminal</li>
               </ol>
             </div>
-            <div>
-              <h3 class="text-lg font-semibold text-cyan-400 mb-3">macOS</h3>
-              <ol class="space-y-2 text-slate-400 text-sm">
+            <div class="p-3 sm:p-0">
+              <h3 class="text-base sm:text-lg font-semibold text-cyan-400 mb-3">macOS</h3>
+              <ol class="space-y-2 text-slate-400 text-xs sm:text-sm">
                 <li>1. Download the macOS package</li>
                 <li>2. Open and drag to Applications folder</li>
                 <li>3. Launch Xibe Chat from Applications</li>
@@ -243,21 +243,21 @@
         </div>
 
         <!-- Credits -->
-        <div class="p-8 rounded-2xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50">
+        <div class="p-4 sm:p-6 lg:p-8 rounded-2xl bg-gradient-to-b from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50">
           <div class="text-center">
-            <h2 class="text-2xl font-bold text-white mb-4">Created By</h2>
+            <h2 class="text-xl sm:text-2xl font-bold text-white mb-4">Created By</h2>
             <div class="flex items-center justify-center gap-4">
-              <a href="https://github.com/iotserver24" target="_blank" class="group inline-flex items-center gap-3 px-6 py-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700 transition-all">
-                <svg class="w-6 h-6 text-slate-400 group-hover:text-white" fill="currentColor" viewBox="0 0 24 24">
+              <a href="https://github.com/iotserver24" target="_blank" class="group inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700 transition-all">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-slate-400 group-hover:text-white flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                 </svg>
                 <div class="text-left">
-                  <div class="text-sm font-semibold text-white">iotserver24</div>
+                  <div class="text-xs sm:text-sm font-semibold text-white">iotserver24</div>
                   <div class="text-xs text-slate-400">Creator & Maintainer</div>
                 </div>
               </a>
             </div>
-            <p class="text-slate-400 text-sm mt-4">
+            <p class="text-slate-400 text-xs sm:text-sm mt-4 px-4">
               Special thanks to all contributors and the open source community
             </p>
           </div>
