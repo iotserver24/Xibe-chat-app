@@ -87,37 +87,41 @@ class XibeChatApp extends StatelessWidget {
             // Update settings provider with user ID for cloud sync
             settings.setUserId(auth.user?.uid);
             
+            // Determine which chat provider to use
+            final chatProvider = previous ?? ChatProvider(
+              apiKey: settings.apiKey,
+              systemPrompt: settings.getCombinedSystemPrompt(),
+            );
+            
             // Save user profile to cloud when authenticated
             if (auth.isAuthenticated && auth.user != null) {
               final cloudSyncService = CloudSyncService();
               final appUser = auth.user!;
               // User profile is already in app_user.User format from AuthProvider
               cloudSyncService.saveUserProfile(appUser.uid, appUser);
-            }
-            
-            // Sync data when user logs in
-            if (auth.isAuthenticated && auth.user != null && previous != null) {
-              // Load from cloud and sync local to cloud
+              
+              // Sync data from cloud (load cloud data first, then push local data)
               databaseService.loadFromCloud().then((_) {
+                // After loading from cloud, sync any local changes to cloud
                 databaseService.syncAllToCloud();
                 // Sync settings to cloud
                 settings.syncSettingsToCloud();
+                
+                // Reload chats in the chat provider to reflect cloud data
+                chatProvider.reloadChats();
               }).catchError((e) {
                 print('Error syncing data: $e');
               });
             }
             
             if (previous != null) {
-              previous.updateApiKey(settings.apiKey);
-              previous.updateSystemPrompt(settings.getCombinedSystemPrompt());
-              previous.updateCustomProviders(
+              chatProvider.updateApiKey(settings.apiKey);
+              chatProvider.updateSystemPrompt(settings.getCombinedSystemPrompt());
+              chatProvider.updateCustomProviders(
                   settings.customProviders, settings.customModels);
-              return previous;
             }
-            return ChatProvider(
-              apiKey: settings.apiKey,
-              systemPrompt: settings.getCombinedSystemPrompt(),
-            );
+            
+            return chatProvider;
           },
         ),
       ],
