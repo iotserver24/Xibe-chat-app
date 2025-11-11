@@ -1302,4 +1302,9 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
       notifyListeners();
     }
   }
+
+  // Reload chats from database (useful after cloud sync)
+  Future<void> reloadChats() async {
+    await _loadChats();
+  }
 }
