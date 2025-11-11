@@ -8,6 +8,7 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:logo_n_spinner/logo_n_spinner.dart';
 import '../models/message.dart';
 import '../providers/chat_provider.dart';
 import 'code_block.dart';
@@ -28,8 +29,9 @@ class MessageBubble extends StatefulWidget {
 }
 
 class _MessageBubbleState extends State<MessageBubble>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _cursorController;
+  late AnimationController _imageLoadingController;
   Uint8List? _cachedImageBytes; // Cache decoded image bytes to avoid re-decoding
 
   @override
@@ -40,10 +42,21 @@ class _MessageBubbleState extends State<MessageBubble>
       duration: const Duration(milliseconds: 530),
     )..repeat(reverse: true);
     
+    // Image loading animation controller (used for loading dots)
+    _imageLoadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat();
+    
     // Pre-decode image if present to cache it
     if (widget.message.generatedImageBase64 != null &&
         widget.message.generatedImageBase64!.isNotEmpty) {
       _cachedImageBytes = base64Decode(widget.message.generatedImageBase64!);
+    }
+    
+    // Start animation if image is already being generated
+    if (widget.message.isGeneratingImage) {
+      _imageLoadingController.repeat();
     }
   }
 
@@ -59,11 +72,20 @@ class _MessageBubbleState extends State<MessageBubble>
         _cachedImageBytes = null;
       }
     }
+    
+    // Control image loading animation based on state
+    if (widget.message.isGeneratingImage && !_imageLoadingController.isAnimating) {
+      _imageLoadingController.repeat();
+    } else if (!widget.message.isGeneratingImage && _imageLoadingController.isAnimating) {
+      _imageLoadingController.stop();
+      _imageLoadingController.reset();
+    }
   }
 
   @override
   void dispose() {
     _cursorController.dispose();
+    _imageLoadingController.dispose();
     _cachedImageBytes = null; // Clear cache on dispose
     super.dispose();
   }
@@ -457,10 +479,17 @@ class _MessageBubbleState extends State<MessageBubble>
         children: [
           // Loading animation box
           Container(
-            height: 300,
+            height: 400,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: const Color(0xFFEC4899).withOpacity(0.1),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFEC4899).withOpacity(0.15),
+                  const Color(0xFF8B5CF6).withOpacity(0.1),
+                ],
+              ),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(10),
                 topRight: Radius.circular(10),
@@ -470,35 +499,58 @@ class _MessageBubbleState extends State<MessageBubble>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Animated spinner
-                  SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 4,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        const Color(0xFFEC4899),
-                      ),
+                  // Logo with spinner loading animation
+                  Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFEC4899).withOpacity(0.4),
+                          blurRadius: 30,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: LogoandSpinner(
+                      imageAssets: 'logo-nobg.png',
+                      reverse: false,
+                      arcColor: const Color(0xFFEC4899),
+                      spinSpeed: const Duration(milliseconds: 1500),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   Text(
                     'Generating image...',
                     style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.8),
-                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.9),
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
                     ),
                   ),
+                  const SizedBox(height: 8),
                   if (widget.message.generatedImagePrompt != null) ...[
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 32),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                          width: 1,
+                        ),
+                      ),
                       child: Text(
                         widget.message.generatedImagePrompt!,
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withOpacity(0.6),
+                          fontSize: 13,
+                          color: Colors.white.withOpacity(0.7),
                           fontStyle: FontStyle.italic,
                         ),
                         textAlign: TextAlign.center,
@@ -507,6 +559,35 @@ class _MessageBubbleState extends State<MessageBubble>
                       ),
                     ),
                   ],
+                  const SizedBox(height: 16),
+                  // Loading dots animation
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(3, (index) {
+                      return AnimatedBuilder(
+                        animation: _imageLoadingController,
+                        builder: (context, child) {
+                          final delay = index * 0.2;
+                          final animationValue = (_imageLoadingController.value + delay) % 1.0;
+                          return Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color.lerp(
+                                const Color(0xFFEC4899).withOpacity(0.3),
+                                const Color(0xFFEC4899),
+                                (animationValue < 0.5)
+                                    ? animationValue * 2
+                                    : 2 - (animationValue * 2),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }),
+                  ),
                 ],
               ),
             ),

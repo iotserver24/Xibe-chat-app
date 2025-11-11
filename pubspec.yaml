@@ -37,6 +37,7 @@ dependencies:
   cloud_firestore: ^5.4.4
   connectivity_plus: ^6.1.0
   google_sign_in: ^6.2.1
+  logo_n_spinner: ^0.1.8
 
 dev_dependencies:
   flutter_test:

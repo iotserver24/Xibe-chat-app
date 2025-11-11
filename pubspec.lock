@@ -552,6 +552,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
+  logo_n_spinner:
+    dependency: "direct main"
+    description:
+      name: logo_n_spinner
+      sha256: ba90169bd8085d27512c678af50d49faac315e1cb983ed9a1a79e8cd78919f51
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.8"
   markdown:
     dependency: "direct main"
     description:
