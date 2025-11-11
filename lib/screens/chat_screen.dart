@@ -415,6 +415,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         controller: _scrollController,
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         cacheExtent: 500, // Cache 500 pixels worth of items for better performance
+                        addAutomaticKeepAlives: false, // Reduce memory by not keeping all items alive
+                        addRepaintBoundaries: true, // Isolate repaints to individual items
                         itemCount: finalItemCount,
                         itemBuilder: (context, index) {
 
@@ -450,9 +452,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
                           // Show normal message
                           final message = chatProvider.messages[messageIndex];
-                          final messageWidget = MessageBubble(
-                            key: ValueKey('message_${message.id}'),
-                            message: message,
+                          final messageWidget = RepaintBoundary(
+                            child: MessageBubble(
+                              key: ValueKey('message_${message.id}'),
+                              message: message,
+                            ),
                           );
                           
                           // Only animate messages that are newly added (last 2 messages)
@@ -1241,6 +1245,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 8),
                           cacheExtent: 500, // Cache 500 pixels worth of items for better performance
+                          addAutomaticKeepAlives: false, // Reduce memory by not keeping all items alive
+                          addRepaintBoundaries: true, // Isolate repaints to individual items
                           itemCount: finalItemCount,
                           itemBuilder: (context, index) {
 
@@ -1281,7 +1287,12 @@ class _ChatScreenState extends State<ChatScreen> {
                               return Padding(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 8),
-                                child: MessageBubble(message: message),
+                                child: RepaintBoundary(
+                                  child: MessageBubble(
+                                    key: ValueKey('message_${message.id}'),
+                                    message: message,
+                                  ),
+                                ),
                               );
                             }
 

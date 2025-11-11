@@ -801,71 +801,72 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
 
         fullResponseContent += chunk;
 
-        // Filter out img-gen tags immediately during streaming
-        String tempContent = fullResponseContent;
-        final imgGenPatternStream = RegExp(r'<img-gen>.*?</img-gen>',
-            caseSensitive: false, dotAll: true);
-        final enhancedPromptPatternStream = RegExp(
-            r'<enhanced_prompt>.*?</enhanced_prompt>',
-            caseSensitive: false,
-            dotAll: true);
-        if (imgGenPatternStream.hasMatch(tempContent)) {
-          // Replace with loading placeholder
-          tempContent = tempContent.replaceAll(
-            imgGenPatternStream,
-            '\n\n*[Generating image...]*\n',
-          );
-        }
-        // Also handle <enhanced_prompt> as fallback
-        if (enhancedPromptPatternStream.hasMatch(tempContent)) {
-          tempContent = tempContent.replaceAll(
-            enhancedPromptPatternStream,
-            '\n\n*[Generating image...]*\n',
-          );
-        }
-
-        // For first message, filter out chat name JSON from display in real-time
-        if (isFirstMessage) {
-          // Look for JSON pattern that might appear at the end
-          // Try multiple patterns to catch the JSON
-
-          // Pattern 1: Full JSON object with chat_name
-          final jsonPattern1 =
-              RegExp(r'\{"chat_name"\s*:\s*"[^"]*"\}', caseSensitive: false);
-          if (jsonPattern1.hasMatch(tempContent)) {
-            tempContent = tempContent.replaceAll(jsonPattern1, '').trim();
-          }
-
-          // Pattern 2: Look for {"chat_name" at the start of JSON
-          final jsonPattern2 = RegExp(r'\{"chat_name"', caseSensitive: false);
-          if (jsonPattern2.hasMatch(tempContent)) {
-            final match = jsonPattern2.firstMatch(tempContent);
-            if (match != null) {
-              // Remove everything from the start of the JSON
-              tempContent = tempContent.substring(0, match.start).trim();
-            }
-          }
-
-          // Pattern 3: Look for any remaining JSON-like patterns at the end
-          final jsonPattern3 =
-              RegExp(r'\{[^}]*"chat_name"[^}]*\}', caseSensitive: false);
-          if (jsonPattern3.hasMatch(tempContent)) {
-            tempContent = tempContent.replaceAll(jsonPattern3, '').trim();
-          }
-
-          streamingDisplayContent = tempContent;
-        } else {
-          streamingDisplayContent = tempContent;
-        }
-
-        // Update streaming content for display (without chat name JSON and img-gen tags)
-        _streamingContent = streamingDisplayContent;
-        
         // Throttle notifyListeners to reduce rebuilds and memory pressure
-        // Only notify every 50ms during streaming instead of on every chunk
+        // Only notify every 100ms during streaming (increased from 50ms to reduce memory usage)
         final now = DateTime.now();
         final lastNotify = _lastNotifyTime;
-        if (lastNotify == null || now.difference(lastNotify).inMilliseconds >= 50) {
+        final shouldNotify = lastNotify == null || now.difference(lastNotify).inMilliseconds >= 100;
+        
+        if (shouldNotify) {
+          // Filter out img-gen tags immediately during streaming (only when notifying)
+          String tempContent = fullResponseContent;
+          final imgGenPatternStream = RegExp(r'<img-gen>.*?</img-gen>',
+              caseSensitive: false, dotAll: true);
+          final enhancedPromptPatternStream = RegExp(
+              r'<enhanced_prompt>.*?</enhanced_prompt>',
+              caseSensitive: false,
+              dotAll: true);
+          if (imgGenPatternStream.hasMatch(tempContent)) {
+            // Replace with loading placeholder
+            tempContent = tempContent.replaceAll(
+              imgGenPatternStream,
+              '\n\n*[Generating image...]*\n',
+            );
+          }
+          // Also handle <enhanced_prompt> as fallback
+          if (enhancedPromptPatternStream.hasMatch(tempContent)) {
+            tempContent = tempContent.replaceAll(
+              enhancedPromptPatternStream,
+              '\n\n*[Generating image...]*\n',
+            );
+          }
+
+          // For first message, filter out chat name JSON from display in real-time
+          if (isFirstMessage) {
+            // Look for JSON pattern that might appear at the end
+            // Try multiple patterns to catch the JSON
+
+            // Pattern 1: Full JSON object with chat_name
+            final jsonPattern1 =
+                RegExp(r'\{"chat_name"\s*:\s*"[^"]*"\}', caseSensitive: false);
+            if (jsonPattern1.hasMatch(tempContent)) {
+              tempContent = tempContent.replaceAll(jsonPattern1, '').trim();
+            }
+
+            // Pattern 2: Look for {"chat_name" at the start of JSON
+            final jsonPattern2 = RegExp(r'\{"chat_name"', caseSensitive: false);
+            if (jsonPattern2.hasMatch(tempContent)) {
+              final match = jsonPattern2.firstMatch(tempContent);
+              if (match != null) {
+                // Remove everything from the start of the JSON
+                tempContent = tempContent.substring(0, match.start).trim();
+              }
+            }
+
+            // Pattern 3: Look for any remaining JSON-like patterns at the end
+            final jsonPattern3 =
+                RegExp(r'\{[^}]*"chat_name"[^}]*\}', caseSensitive: false);
+            if (jsonPattern3.hasMatch(tempContent)) {
+              tempContent = tempContent.replaceAll(jsonPattern3, '').trim();
+            }
+
+            streamingDisplayContent = tempContent;
+          } else {
+            streamingDisplayContent = tempContent;
+          }
+
+          // Update streaming content for display (without chat name JSON and img-gen tags)
+          _streamingContent = streamingDisplayContent;
           _lastNotifyTime = now;
           notifyListeners();
         }
@@ -1236,7 +1237,8 @@ CRITICAL INSTRUCTIONS FOR THIS RESPONSE:
       // Extract memory from full response if present using XML-style tags
       String? extractedMemory;
       // Try to find memory tag - look for the first occurrence
-      final memoryPattern = RegExp(r'<save\s+memory>(.*?)</save\s+memory>',
+      // Use more flexible pattern to match both "<save memory>" and "<save  memory>" (one or more spaces)
+      final memoryPattern = RegExp(r'<save\s*memory>(.*?)</save\s*memory>',
           caseSensitive: false, dotAll: true);
       final memoryMatch = memoryPattern.firstMatch(fullResponseContent);
 

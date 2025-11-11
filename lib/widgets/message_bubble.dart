@@ -65,11 +65,12 @@ class _MessageBubbleState extends State<MessageBubble>
     super.didUpdateWidget(oldWidget);
     // Only re-decode if the image actually changed
     if (widget.message.generatedImageBase64 != oldWidget.message.generatedImageBase64) {
+      // Clear old cache first to free memory
+      _cachedImageBytes = null;
+      
       if (widget.message.generatedImageBase64 != null &&
           widget.message.generatedImageBase64!.isNotEmpty) {
         _cachedImageBytes = base64Decode(widget.message.generatedImageBase64!);
-      } else {
-        _cachedImageBytes = null;
       }
     }
     
