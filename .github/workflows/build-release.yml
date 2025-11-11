@@ -317,14 +317,14 @@ jobs:
             WriteRegStr HKCR "xibechat" "URL Protocol" ""
             WriteRegStr HKCR "xibechat\shell" "" ""
             WriteRegStr HKCR "xibechat\shell\open" "" ""
-            WriteRegStr HKCR "xibechat\shell\open\command" "" "`"`$INSTDIR\xibe_chat.exe`" `"%1`""
+            WriteRegStr HKCR "xibechat\shell\open\command" "" "`$`\`"`$INSTDIR\xibe_chat.exe`$`\`" `$`\`"%1`$`\`""
             
             # Register HTTPS protocol handler for xibechat.app domain
             WriteRegStr HKCR "xibechat.app" "" "URL:xibechat.app Protocol"
             WriteRegStr HKCR "xibechat.app" "URL Protocol" ""
             WriteRegStr HKCR "xibechat.app\shell" "" ""
             WriteRegStr HKCR "xibechat.app\shell\open" "" ""
-            WriteRegStr HKCR "xibechat.app\shell\open\command" "" "`"`$INSTDIR\xibe_chat.exe`" `"%1`""
+            WriteRegStr HKCR "xibechat.app\shell\open\command" "" "`$`\`"`$INSTDIR\xibe_chat.exe`$`\`" `$`\`"%1`$`\`""
           SectionEnd
           
           Section "Uninstall"
