@@ -55,18 +55,48 @@
 const route = useRoute();
 const promptParam = route.params.prompt;
 
-// Handle array or string prompt
-const promptText = Array.isArray(promptParam) ? promptParam.join('/') : promptParam;
+// Check for query parameters first (preferred method)
+const messageParam = route.query.message || route.query.text || route.query.prompt;
+
+// Handle array or string prompt (path-based fallback)
+const promptText = messageParam || 
+  (Array.isArray(promptParam) ? promptParam.join('/') : promptParam);
 
 // Create deep link URL with encoded prompt
+// Prefer query parameter format for better compatibility
 const deepLinkUrl = computed(() => {
-  return `xibechat://mes/${encodeURIComponent(promptText)}`;
+  const encodedPrompt = encodeURIComponent(promptText);
+  if (messageParam) {
+    // Use query parameter format (preferred)
+    return `xibechat://new?message=${encodedPrompt}`;
+  } else {
+    // Use path-based format (legacy support)
+    return `xibechat://mes/${encodedPrompt}`;
+  }
+});
+
+// Also create HTTPS fallback URL
+const httpsLinkUrl = computed(() => {
+  const encodedPrompt = encodeURIComponent(promptText);
+  if (messageParam) {
+    return `https://chat.xibe.app/app/new?message=${encodedPrompt}`;
+  } else {
+    return `https://chat.xibe.app/app/mes/${encodedPrompt}`;
+  }
 });
 
 // Auto-redirect on mount
 onMounted(() => {
-  // Try to open the deep link
+  // Try to open the custom scheme deep link
   window.location.href = deepLinkUrl.value;
+  
+  // Fallback to HTTPS after a delay if app doesn't open
+  setTimeout(() => {
+    // Only redirect if still on the page (app didn't open)
+    if (document.visibilityState === 'visible') {
+      window.location.href = httpsLinkUrl.value;
+    }
+  }, 1000);
 });
 
 useHead({

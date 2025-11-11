@@ -52,9 +52,9 @@ class DeepLinkService {
       return _parseCustomScheme(uri);
     }
     
-    // Handle HTTP/HTTPS scheme: https://xibechat.app/app/...
+    // Handle HTTP/HTTPS scheme: https://chat.xibe.app/app/...
     if ((uri.scheme == 'http' || uri.scheme == 'https') && 
-        uri.host.contains('xibechat')) {
+        (uri.host.contains('chat.xibe.app') || uri.host.contains('xibechat'))) {
       return _parseHttpScheme(uri);
     }
     
@@ -64,12 +64,26 @@ class DeepLinkService {
   DeepLinkData? _parseCustomScheme(Uri uri) {
     final path = uri.host + uri.path;
     
-    // xibechat://mes/{prompt} - Open with message
+    // Check for query parameters first (more user-friendly for website buttons)
+    final messageParam = uri.queryParameters['message'];
+    final textParam = uri.queryParameters['text'];
+    final promptParam = uri.queryParameters['prompt'];
+    final message = messageParam ?? textParam ?? promptParam;
+    
+    // xibechat://mes/{prompt} - Open with message (path-based)
     if (path.startsWith('mes/')) {
       final prompt = Uri.decodeComponent(path.substring(4));
       return DeepLinkData(
         type: DeepLinkType.message,
         messagePrompt: prompt,
+      );
+    }
+    
+    // xibechat://new?message=text - Create new chat with pre-filled message (query-based)
+    if ((path == 'new' || path.isEmpty) && message != null && message.isNotEmpty) {
+      return DeepLinkData(
+        type: DeepLinkType.message,
+        messagePrompt: Uri.decodeComponent(message),
       );
     }
     
@@ -96,7 +110,13 @@ class DeepLinkService {
   }
 
   DeepLinkData? _parseHttpScheme(Uri uri) {
-    // https://xibechat.app/app/mes/{prompt}
+    // Check for query parameters first (more user-friendly for website buttons)
+    final messageParam = uri.queryParameters['message'];
+    final textParam = uri.queryParameters['text'];
+    final promptParam = uri.queryParameters['prompt'];
+    final message = messageParam ?? textParam ?? promptParam;
+    
+    // https://chat.xibe.app/app/mes/{prompt} - Path-based message
     if (uri.pathSegments.length >= 3 && 
         uri.pathSegments[0] == 'app' && 
         uri.pathSegments[1] == 'mes') {
@@ -107,7 +127,19 @@ class DeepLinkService {
       );
     }
     
-    // https://xibechat.app/app/chat/{chatId}
+    // https://chat.xibe.app/app/new?message=text - Query-based message (preferred for buttons)
+    if (uri.pathSegments.length >= 1 && uri.pathSegments[0] == 'app') {
+      if ((uri.pathSegments.length == 1 || 
+          (uri.pathSegments.length >= 2 && uri.pathSegments[1] == 'new')) &&
+          message != null && message.isNotEmpty) {
+        return DeepLinkData(
+          type: DeepLinkType.message,
+          messagePrompt: Uri.decodeComponent(message),
+        );
+      }
+    }
+    
+    // https://chat.xibe.app/app/chat/{chatId}
     if (uri.pathSegments.length >= 3 && 
         uri.pathSegments[0] == 'app' && 
         uri.pathSegments[1] == 'chat') {
@@ -118,14 +150,14 @@ class DeepLinkService {
       );
     }
     
-    // https://xibechat.app/app/settings
+    // https://chat.xibe.app/app/settings
     if (uri.pathSegments.length >= 2 && 
         uri.pathSegments[0] == 'app' && 
         uri.pathSegments[1] == 'settings') {
       return DeepLinkData(type: DeepLinkType.settings);
     }
     
-    // https://xibechat.app/app/new or https://xibechat.app/app
+    // https://chat.xibe.app/app/new or https://chat.xibe.app/app
     if (uri.pathSegments.length >= 1 && uri.pathSegments[0] == 'app') {
       if (uri.pathSegments.length == 1 || 
           (uri.pathSegments.length >= 2 && uri.pathSegments[1] == 'new')) {

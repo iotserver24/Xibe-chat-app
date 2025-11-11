@@ -55,23 +55,33 @@ class _MessageBubbleState extends State<MessageBubble>
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: screenWidth > 800 ? 48 : 16,
-        vertical: 8,
+        vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: isUser
-            ? const Color(0xFF0A0A0A).withOpacity(0.3)
-            : Colors.transparent,
+        gradient: isUser
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.05),
+                  Colors.white.withOpacity(0.02),
+                ],
+              )
+            : null,
         border: isUser
             ? Border(
-                top:
-                    BorderSide(color: Colors.white.withOpacity(0.05), width: 1),
-                bottom:
-                    BorderSide(color: Colors.white.withOpacity(0.05), width: 1),
+                top: BorderSide(
+                    color: Colors.white.withOpacity(0.06), width: 1),
+                bottom: BorderSide(
+                    color: Colors.white.withOpacity(0.06), width: 1),
               )
             : null,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        padding: EdgeInsets.symmetric(
+          horizontal: screenWidth > 800 ? 24 : 16,
+          vertical: 20,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -183,14 +193,17 @@ class _MessageBubbleState extends State<MessageBubble>
                 ),
                 const SizedBox(height: 12),
               ],
-              Text(
-                widget.message.content,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  height: 1.6,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: 0.1,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  widget.message.content,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.95),
+                    fontSize: 15,
+                    height: 1.6,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 0.1,
+                  ),
                 ),
               ),
             ] else ...[

@@ -230,13 +230,66 @@ class ChatProvider extends ChangeNotifier {
 
   String getGreeting() {
     final hour = DateTime.now().hour;
+    
+    // Get a variety of greetings based on time of day
+    final List<String> morningGreetings = [
+      'Good morning! ☀️',
+      'Ready to start your day? 🌅',
+      'Morning! What can I help you with? ☕',
+      'Good morning! How can I assist you today? 🌞',
+      'Rise and shine! Ready when you are. 🌄',
+    ];
+    
+    final List<String> afternoonGreetings = [
+      'Good afternoon! 🌤️',
+      'Afternoon! How can I help? ☀️',
+      'Ready when you are. 🌥️',
+      'Good afternoon! What would you like to explore? 🌤️',
+      'Afternoon! Let\'s get started. ☀️',
+    ];
+    
+    final List<String> eveningGreetings = [
+      'Good evening! 🌙',
+      'Evening! How can I assist? 🌆',
+      'Ready when you are. 🌃',
+      'Good evening! What can I help you with? 🌙',
+      'Evening! Let\'s dive in. 🌉',
+    ];
+    
+    // Use chat ID to select different greeting (consistent per chat)
+    // If no chat exists yet, use a hash of current time to vary it
+    final chatId = _currentChat?.id ?? DateTime.now().day;
+    final seed = chatId.hashCode.abs();
+    
+    List<String> greetings;
     if (hour < 12) {
-      return 'Good morning! ☀️';
+      greetings = morningGreetings;
     } else if (hour < 17) {
-      return 'Good afternoon! 🌤️';
+      greetings = afternoonGreetings;
     } else {
-      return 'Good evening! 🌙';
+      greetings = eveningGreetings;
     }
+    
+    // Select greeting based on seed to ensure variety
+    return greetings[seed % greetings.length];
+  }
+  
+  String getGreetingSubtitle() {
+    final List<String> subtitles = [
+      'Start a conversation to begin',
+      'What would you like to know?',
+      'How can I help you today?',
+      'Ask me anything!',
+      'Let\'s explore together',
+      'What\'s on your mind?',
+      'I\'m here to help',
+      'Ready to chat?',
+    ];
+    
+    // Use chat ID to select different subtitle (consistent per chat)
+    final chatId = _currentChat?.id ?? DateTime.now().day;
+    final seed = chatId.hashCode.abs();
+    return subtitles[seed % subtitles.length];
   }
 
   Future<void> _loadChats() async {

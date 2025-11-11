@@ -125,40 +125,140 @@ class _ChatScreenState extends State<ChatScreen> {
                 builder: (context, chatProvider, child) {
                   if (chatProvider.currentChat == null) {
                     return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.chat_bubble_outline,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'No chat selected',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey,
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(28),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.12),
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.04),
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(0.2),
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.1),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.chat_bubble_outline,
+                                size: 48,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.8),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: () {
-                              final settingsProvider =
-                                  Provider.of<SettingsProvider>(context,
-                                      listen: false);
-                              chatProvider.createNewChat(
-                                  defaultModel: settingsProvider.defaultModel);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF3B82F6),
+                            const SizedBox(height: 20),
+                            Text(
+                              'No chat selected',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.9),
+                              ),
                             ),
-                            child: const Text(
-                              'Start New Chat',
-                              style: TextStyle(color: Colors.white),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Select a chat or create a new one',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.5),
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 20),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Theme.of(context).colorScheme.primary,
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.8),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    final settingsProvider =
+                                        Provider.of<SettingsProvider>(context,
+                                            listen: false);
+                                    chatProvider.createNewChat(
+                                        defaultModel:
+                                            settingsProvider.defaultModel);
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 12),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.add,
+                                            color: Colors.white, size: 18),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Start New Chat',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }
@@ -184,6 +284,106 @@ class _ChatScreenState extends State<ChatScreen> {
                           ? 1
                           : itemCount;
 
+                  // If only showing greeting, center it vertically
+                  if (chatProvider.currentChat != null &&
+                      chatProvider.messages.isEmpty &&
+                      finalItemCount == 1) {
+                    return Center(
+                      child: TweenAnimationBuilder(
+                        duration: const Duration(milliseconds: 800),
+                        tween: Tween<double>(begin: 0.0, end: 1.0),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, double value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 30 * (1 - value)),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Container(
+                            padding: const EdgeInsets.all(28),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(0.12),
+                                  Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(0.04),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.15),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(0.08),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.auto_awesome,
+                                  size: 40,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(0.8),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  chatProvider.getGreeting(),
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w500,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withOpacity(0.9),
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  chatProvider.getGreetingSubtitle(),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w400,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withOpacity(0.5),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
                   return Stack(
                     children: [
                       ListView.builder(
@@ -191,38 +391,6 @@ class _ChatScreenState extends State<ChatScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         itemCount: finalItemCount,
                         itemBuilder: (context, index) {
-                          // Show greeting at the top for new chats (when no messages and chat exists)
-                          if (chatProvider.currentChat != null &&
-                              chatProvider.messages.isEmpty &&
-                              index == 0) {
-                            return TweenAnimationBuilder(
-                              duration: const Duration(milliseconds: 800),
-                              tween: Tween<double>(begin: 0.0, end: 1.0),
-                              curve: Curves.easeOutCubic,
-                              builder: (context, double value, child) {
-                                return Opacity(
-                                  opacity: value,
-                                  child: Transform.translate(
-                                    offset: Offset(0, 30 * (1 - value)),
-                                    child: child,
-                                  ),
-                                );
-                              },
-                              child: Center(
-                                child: Text(
-                                  'Ready when you are.',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w400,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withOpacity(0.7),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
 
                           final messageIndex =
                               shouldShowGreeting ? index - 1 : index;
@@ -436,21 +604,35 @@ class _ChatScreenState extends State<ChatScreen> {
           Expanded(
             child: Column(
               children: [
-                // Browser-like header
+                // Modern header with gradient
                 Container(
-                  height: 56,
+                  height: 64,
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF0A0A0A),
+                        const Color(0xFF0A0A0A).withOpacity(0.95),
+                      ],
+                    ),
                     border: Border(
                       bottom: BorderSide(
-                        color: const Color(0xFF1A1A1A),
+                        color: Colors.white.withOpacity(0.08),
                         width: 1,
                       ),
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 24),
                       Expanded(
                         child: Consumer<ChatProvider>(
                           builder: (context, chatProvider, child) {
@@ -458,26 +640,73 @@ class _ChatScreenState extends State<ChatScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  chatProvider.currentChat?.title ??
-                                      'Xibe Chat',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFFE8EAED),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                if (chatProvider.selectedModel.isNotEmpty)
-                                  Text(
-                                    chatProvider.selectedModel,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF8A8A8A),
-                                      fontWeight: FontWeight.w400,
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withOpacity(0.2),
+                                            Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withOpacity(0.1),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.3),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        chatProvider.currentChat?.title ??
+                                            'New Chat',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFFE8EAED),
+                                          letterSpacing: 0.2,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
+                                  ],
+                                ),
+                                if (chatProvider.selectedModel.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.auto_awesome,
+                                        size: 14,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.7),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        chatProvider.selectedModel,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: const Color(0xFF8A8A8A),
+                                          fontWeight: FontWeight.w400,
+                                          letterSpacing: 0.1,
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                                ],
                               ],
                             );
                           },
@@ -485,65 +714,38 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       // Model selection
                       const ModelSelector(),
+                      const SizedBox(width: 8),
                       // New chat button
                       Consumer<ChatProvider>(
                         builder: (context, chatProvider, child) {
                           if (chatProvider.currentChat == null) {
-                            return IconButton(
-                              icon: const Icon(Icons.add,
-                                  color: Colors.white, size: 20),
-                              onPressed: () async {
-                                final settingsProvider =
-                                    Provider.of<SettingsProvider>(context,
-                                        listen: false);
-                                await chatProvider.createNewChat(
-                                    defaultModel:
-                                        settingsProvider.defaultModel);
-                              },
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
-                      // Settings
-                      IconButton(
-                        icon: const Icon(Icons.settings_outlined,
-                            color: Colors.white, size: 20),
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/settings');
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                  ),
-                ),
-                // Chat messages
-                Expanded(
-                  child: Container(
-                    color: const Color(0xFF0D1521),
-                    child: Consumer<ChatProvider>(
-                      builder: (context, chatProvider, child) {
-                        if (chatProvider.currentChat == null) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.chat_bubble_outline,
-                                  size: 64,
-                                  color: Colors.grey,
+                            return Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Theme.of(context).colorScheme.primary,
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.8),
+                                  ],
                                 ),
-                                const SizedBox(height: 16),
-                                const Text(
-                                  'No chat selected',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.grey,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                ElevatedButton(
-                                  onPressed: () async {
+                                ],
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () async {
                                     final settingsProvider =
                                         Provider.of<SettingsProvider>(context,
                                             listen: false);
@@ -551,15 +753,208 @@ class _ChatScreenState extends State<ChatScreen> {
                                         defaultModel:
                                             settingsProvider.defaultModel);
                                   },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF3B82F6),
-                                  ),
-                                  child: const Text(
-                                    'Start New Chat',
-                                    style: TextStyle(color: Colors.white),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 10),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.add,
+                                            color: Colors.white, size: 18),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          'New Chat',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ],
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      // Settings
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/settings');
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.settings_outlined,
+                                color: Colors.white70, size: 20),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                    ],
+                  ),
+                ),
+                // Chat messages with gradient background
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          const Color(0xFF0A0A0A),
+                          const Color(0xFF0D0D0D),
+                          const Color(0xFF0A0A0A),
+                        ],
+                        stops: const [0.0, 0.5, 1.0],
+                      ),
+                    ),
+                    child: Consumer<ChatProvider>(
+                      builder: (context, chatProvider, child) {
+                        if (chatProvider.currentChat == null) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(32),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.15),
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.05),
+                                        ],
+                                      ),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.2),
+                                        width: 2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.1),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.chat_bubble_outline,
+                                      size: 64,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withOpacity(0.8),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Text(
+                                    'No chat selected',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white.withOpacity(0.9),
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Select a chat from the sidebar or create a new one',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white.withOpacity(0.5),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Theme.of(context).colorScheme.primary,
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.8),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.3),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () async {
+                                          final settingsProvider =
+                                              Provider.of<SettingsProvider>(
+                                                  context,
+                                                  listen: false);
+                                          await chatProvider.createNewChat(
+                                              defaultModel:
+                                                  settingsProvider.defaultModel);
+                                        },
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 24, vertical: 14),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.add,
+                                                  color: Colors.white, size: 20),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                'Start New Chat',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         }
@@ -688,6 +1083,98 @@ class _ChatScreenState extends State<ChatScreen> {
                           );
                         }
 
+                        // If only showing greeting, center it vertically
+                        if (hasCurrentChat && hasNoMessages && finalItemCount == 1) {
+                          return Center(
+                            child: TweenAnimationBuilder(
+                              duration: const Duration(milliseconds: 800),
+                              tween: Tween<double>(begin: 0.0, end: 1.0),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, double value, child) {
+                                return Opacity(
+                                  opacity: value,
+                                  child: Transform.translate(
+                                    offset: Offset(0, 30 * (1 - value)),
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(32.0),
+                                child: Container(
+                                  padding: const EdgeInsets.all(32),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.15),
+                                        Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.05),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withOpacity(0.2),
+                                      width: 1,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.1),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.auto_awesome,
+                                        size: 48,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.8),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        chatProvider.getGreeting(),
+                                        style: TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white.withOpacity(0.9),
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        chatProvider.getGreetingSubtitle(),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.white.withOpacity(0.5),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
                         return ListView.builder(
                           key: ValueKey(
                               'chat_${chatProvider.currentChat?.id ?? 'none'}_${chatProvider.messages.length}'),
@@ -696,19 +1183,6 @@ class _ChatScreenState extends State<ChatScreen> {
                               horizontal: 16, vertical: 8),
                           itemCount: finalItemCount,
                           itemBuilder: (context, index) {
-                            // Show greeting at the top for new chats (when no messages and chat exists)
-                            if (hasCurrentChat && hasNoMessages && index == 0) {
-                              return Center(
-                                child: Text(
-                                  'Ready when you are.',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w400,
-                                    color: Colors.white.withOpacity(0.7),
-                                  ),
-                                ),
-                              );
-                            }
 
                             final messageIndex =
                                 shouldShowGreeting ? index - 1 : index;

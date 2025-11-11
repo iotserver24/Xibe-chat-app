@@ -142,7 +142,7 @@ aws s3 sync .output/public/ s3://your-bucket-name
 
 ### For Deep Links to Work
 
-The website should be hosted at `xibechat.app` for HTTPS deep links to work properly.
+The website should be hosted at `chat.xibe.app` for HTTPS deep links to work properly.
 
 **DNS Configuration:**
 ```
@@ -152,7 +152,7 @@ Value: [Your host's IP]
 
 Type: CNAME
 Name: www
-Value: xibechat.app
+Value: chat.xibe.app
 ```
 
 **SSL Certificate:**
@@ -175,7 +175,7 @@ NUXT_PUBLIC_API_URL=https://api.xibechat.app
 
 ### Vercel
 1. Go to project settings
-2. Add domain: `xibechat.app`
+2. Add domain: `chat.xibe.app`
 3. Add DNS records as instructed
 4. Wait for SSL certificate
 
@@ -212,7 +212,7 @@ export default defineNuxtConfig({
       script: [
         {
           src: 'https://plausible.io/js/script.js',
-          'data-domain': 'xibechat.app',
+          'data-domain': 'chat.xibe.app',
           defer: true
         }
       ]

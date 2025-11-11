@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xibe Chat Deep Link Examples</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .example {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-left: 4px solid #3B82F6;
+            border-radius: 4px;
+        }
+        .example h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #3B82F6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 5px;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #2563EB;
+        }
+        .btn-secondary {
+            background: #6B7280;
+        }
+        .btn-secondary:hover {
+            background: #4B5563;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .code-block code {
+            background: transparent;
+            color: #d4d4d4;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Xibe Chat Deep Link Examples</h1>
+        <p class="subtitle">Use these examples to integrate Xibe Chat buttons into your website</p>
+
+        <div class="example">
+            <h3>1. Simple Button - Open New Chat with Message</h3>
+            <p>Click the button to open Xibe Chat with a pre-filled message:</p>
+            <a href="xibechat://new?message=Hello%20World" class="btn">
+                Open in Xibe Chat
+            </a>
+            <div class="code-block">
+                <code>&lt;a href="xibechat://new?message=Hello%20World"&gt;Open in Xibe Chat&lt;/a&gt;</code>
+            </div>
+        </div>
+
+        <div class="example">
+            <h3>2. Button with HTTPS Fallback</h3>
+            <p>This button works even if the custom scheme isn't registered:</p>
+            <a href="https://chat.xibe.app/app/new?message=Hello%20World" class="btn">
+                Open in Xibe Chat (HTTPS)
+            </a>
+            <div class="code-block">
+                <code>&lt;a href="https://chat.xibe.app/app/new?message=Hello%20World"&gt;Open in Xibe Chat&lt;/a&gt;</code>
+            </div>
+        </div>
+
+        <div class="example">
+            <h3>3. JavaScript Function (Recommended)</h3>
+            <p>This function tries the custom scheme first, then falls back to HTTPS:</p>
+            <button onclick="openXibeChat('Hello from the website!')" class="btn">
+                Open with Custom Message
+            </button>
+            <div class="code-block">
+                <code>
+function openXibeChat(message) {<br>
+&nbsp;&nbsp;const encoded = encodeURIComponent(message);<br>
+&nbsp;&nbsp;const customScheme = `xibechat://new?message=${encoded}`;<br>
+&nbsp;&nbsp;const httpsLink = `https://chat.xibe.app/app/new?message=${encoded}`;<br>
+&nbsp;&nbsp;window.location.href = customScheme;<br>
+&nbsp;&nbsp;setTimeout(() => {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (document.visibilityState === 'visible') {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;window.location.href = httpsLink;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}, 500);<br>
+}
+                </code>
+            </div>
+        </div>
+
+        <div class="example">
+            <h3>4. Dynamic Message from Input</h3>
+            <p>Enter a message and click the button:</p>
+            <input type="text" id="messageInput" placeholder="Enter your message..." 
+                   style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
+            <button onclick="openWithInput()" class="btn">
+                Send Message to Xibe Chat
+            </button>
+            <div class="code-block">
+                <code>
+function openWithInput() {<br>
+&nbsp;&nbsp;const message = document.getElementById('messageInput').value;<br>
+&nbsp;&nbsp;if (message) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;openXibeChat(message);<br>
+&nbsp;&nbsp;}<br>
+}
+                </code>
+            </div>
+        </div>
+
+        <div class="example">
+            <h3>5. Empty Chat (No Pre-filled Message)</h3>
+            <p>Open a new empty chat:</p>
+            <a href="xibechat://new" class="btn btn-secondary">
+                Start New Chat
+            </a>
+            <div class="code-block">
+                <code>&lt;a href="xibechat://new"&gt;Start New Chat&lt;/a&gt;</code>
+            </div>
+        </div>
+
+        <div class="example">
+            <h3>6. Alternative Query Parameter Names</h3>
+            <p>You can use <code>message</code>, <code>text</code>, or <code>prompt</code>:</p>
+            <a href="xibechat://new?text=Using%20text%20parameter" class="btn">
+                Using 'text' Parameter
+            </a>
+            <a href="xibechat://new?prompt=Using%20prompt%20parameter" class="btn">
+                Using 'prompt' Parameter
+            </a>
+            <div class="code-block">
+                <code>
+xibechat://new?message=Hello<br>
+xibechat://new?text=Hello<br>
+xibechat://new?prompt=Hello
+                </code>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openXibeChat(message) {
+            const encodedMessage = encodeURIComponent(message);
+            
+            // Try custom scheme first
+            const customScheme = `xibechat://new?message=${encodedMessage}`;
+            
+            // Fallback to HTTPS
+            const httpsLink = `https://chat.xibe.app/app/new?message=${encodedMessage}`;
+            
+            // Try to open custom scheme
+            window.location.href = customScheme;
+            
+            // Fallback after a short delay if app doesn't open
+            setTimeout(() => {
+                if (document.visibilityState === 'visible') {
+                    window.location.href = httpsLink;
+                }
+            }, 500);
+        }
+
+        function openWithInput() {
+            const message = document.getElementById('messageInput').value;
+            if (message) {
+                openXibeChat(message);
+            } else {
+                alert('Please enter a message first!');
+            }
+        }
+    </script>
+</body>
+</html>
+

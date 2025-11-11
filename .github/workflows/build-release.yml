@@ -311,6 +311,20 @@ jobs:
             CreateShortcut "`$SMPROGRAMS\XibeChat\Xibe Chat.lnk" "`$INSTDIR\xibe_chat.exe"
             CreateShortcut "`$DESKTOP\Xibe Chat.lnk" "`$INSTDIR\xibe_chat.exe"
             WriteRegStr HKCU "Software\XibeChat" "Install_Dir" "`$INSTDIR"
+            
+            # Register protocol handlers for deep links
+            WriteRegStr HKCR "xibechat" "" "URL:xibechat Protocol"
+            WriteRegStr HKCR "xibechat" "URL Protocol" ""
+            WriteRegStr HKCR "xibechat\shell" "" ""
+            WriteRegStr HKCR "xibechat\shell\open" "" ""
+            WriteRegStr HKCR "xibechat\shell\open\command" "" "`"`$INSTDIR\xibe_chat.exe`" `"%1`""
+            
+            # Register HTTPS protocol handler for xibechat.app domain
+            WriteRegStr HKCR "xibechat.app" "" "URL:xibechat.app Protocol"
+            WriteRegStr HKCR "xibechat.app" "URL Protocol" ""
+            WriteRegStr HKCR "xibechat.app\shell" "" ""
+            WriteRegStr HKCR "xibechat.app\shell\open" "" ""
+            WriteRegStr HKCR "xibechat.app\shell\open\command" "" "`"`$INSTDIR\xibe_chat.exe`" `"%1`""
           SectionEnd
           
           Section "Uninstall"
@@ -318,6 +332,10 @@ jobs:
             RMDir /r "`$SMPROGRAMS\XibeChat"
             Delete "`$DESKTOP\Xibe Chat.lnk"
             DeleteRegKey HKCU "Software\XibeChat"
+            
+            # Unregister protocol handlers
+            DeleteRegKey HKCR "xibechat"
+            DeleteRegKey HKCR "xibechat.app"
           SectionEnd
           "@
           $nsisScript | Out-File -FilePath "xibe-chat-installer.nsi" -Encoding UTF8
@@ -537,6 +555,24 @@ jobs:
           flutter pub run flutter_launcher_icons
           echo "✅ App icons generated"
 
+      - name: Configure macOS deep links
+        run: |
+          # Add deep link URL schemes to Info.plist
+          if [ -f "macos/Runner/Info.plist" ]; then
+            # Use PlistBuddy to add URL schemes if not already present
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" macos/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" macos/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" macos/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string xibechat" macos/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1 dict" macos/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLName string xibechat.app" macos/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLSchemes array" macos/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLSchemes:0 string https" macos/Runner/Info.plist 2>/dev/null || true
+            echo "✅ Configured macOS deep links"
+          else
+            echo "⚠️  macOS Info.plist not found, skipping deep link configuration"
+          fi
+
       - name: Build macOS app
         run: |
           # Flutter builds universal binaries by default for macOS (both Intel and Apple Silicon)
@@ -636,6 +672,24 @@ jobs:
           flutter pub run flutter_launcher_icons
           echo "✅ App icons generated"
 
+      - name: Register Linux protocol handler
+        run: |
+          # Register xibechat:// protocol handler for Linux
+          # This creates the mime type and desktop entry association
+          sudo mkdir -p /usr/share/mime/packages
+          cat > /tmp/xibe-chat-protocol.xml <<EOL
+          <?xml version="1.0" encoding="UTF-8"?>
+          <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+            <mime-type type="x-scheme-handler/xibechat">
+              <comment>Xibe Chat Protocol</comment>
+              <glob pattern="xibechat:*"/>
+            </mime-type>
+          </mime-info>
+          EOL
+          sudo cp /tmp/xibe-chat-protocol.xml /usr/share/mime/packages/xibe-chat-protocol.xml
+          sudo update-mime-database /usr/share/mime
+          echo "✅ Registered Linux protocol handler"
+
       - name: Build Linux Release (${{ matrix.arch }})
         run: |
           # Note: Flutter doesn't natively support cross-compilation for Linux
@@ -682,14 +736,15 @@ jobs:
           # Copy application files
           cp -r "$BUILD_PATH"/* AppDir/usr/bin/
           
-          # Create desktop file
+          # Create desktop file with deep link protocol support
           cat > AppDir/usr/share/applications/xibe-chat.desktop <<EOL
           [Desktop Entry]
           Name=Xibe Chat
-          Exec=xibe_chat
+          Exec=xibe_chat %u
           Icon=xibe-chat
           Type=Application
           Categories=Network;Chat;
+          MimeType=x-scheme-handler/xibechat;
           EOL
           
           # Copy icon if exists
@@ -767,14 +822,15 @@ jobs:
            A modern AI chat application built with Flutter
           EOL
           
-          # Create desktop file
+          # Create desktop file with deep link protocol support
           cat > deb-package/usr/share/applications/xibe-chat.desktop <<EOL
           [Desktop Entry]
           Name=Xibe Chat
-          Exec=/opt/xibe-chat/xibe_chat
+          Exec=/opt/xibe-chat/xibe_chat %u
           Icon=xibe-chat
           Type=Application
           Categories=Network;Chat;
+          MimeType=x-scheme-handler/xibechat;
           EOL
           
           # Copy icon
@@ -803,14 +859,15 @@ jobs:
           
           cp -r "$BUILD_PATH"/* rpmbuild/BUILD/xibe-chat-${{ inputs.version }}/opt/xibe-chat/
           
-          # Create desktop file
+          # Create desktop file with deep link protocol support
           cat > rpmbuild/BUILD/xibe-chat-${{ inputs.version }}/usr/share/applications/xibe-chat.desktop <<EOL
           [Desktop Entry]
           Name=Xibe Chat
-          Exec=/opt/xibe-chat/xibe_chat
+          Exec=/opt/xibe-chat/xibe_chat %u
           Icon=xibe-chat
           Type=Application
           Categories=Network;Chat;
+          MimeType=x-scheme-handler/xibechat;
           EOL
           
           # Copy icon
@@ -928,6 +985,24 @@ jobs:
           echo "🎨 Generating app icons..."
           flutter pub run flutter_launcher_icons
           echo "✅ App icons generated"
+
+      - name: Configure iOS deep links
+        run: |
+          # Add deep link URL schemes to Info.plist
+          if [ -f "ios/Runner/Info.plist" ]; then
+            # Use PlistBuddy to add URL schemes if not already present
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" ios/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" ios/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" ios/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string xibechat" ios/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1 dict" ios/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLName string xibechat.app" ios/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLSchemes array" ios/Runner/Info.plist 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLSchemes:0 string https" ios/Runner/Info.plist 2>/dev/null || true
+            echo "✅ Configured iOS deep links"
+          else
+            echo "⚠️  iOS Info.plist not found, skipping deep link configuration"
+          fi
 
       - name: Configure iOS project for unsigned build
         run: |

@@ -48,12 +48,40 @@
 </template>
 
 <script setup>
-const deepLinkUrl = 'xibechat://new';
+const route = useRoute();
+
+// Check for query parameters (message, text, or prompt)
+const messageParam = route.query.message || route.query.text || route.query.prompt;
+
+// Create deep link URL
+const deepLinkUrl = computed(() => {
+  if (messageParam) {
+    const encodedMessage = encodeURIComponent(messageParam);
+    return `xibechat://new?message=${encodedMessage}`;
+  }
+  return 'xibechat://new';
+});
+
+// HTTPS fallback URL
+const httpsLinkUrl = computed(() => {
+  if (messageParam) {
+    const encodedMessage = encodeURIComponent(messageParam);
+    return `https://chat.xibe.app/app/new?message=${encodedMessage}`;
+  }
+  return 'https://chat.xibe.app/app/new';
+});
 
 // Auto-redirect on mount
 onMounted(() => {
-  // Try to open the deep link
-  window.location.href = deepLinkUrl;
+  // Try to open the custom scheme deep link
+  window.location.href = deepLinkUrl.value;
+  
+  // Fallback to HTTPS after a delay if app doesn't open
+  setTimeout(() => {
+    if (document.visibilityState === 'visible') {
+      window.location.href = httpsLinkUrl.value;
+    }
+  }, 1000);
 });
 
 useHead({

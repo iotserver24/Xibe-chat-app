@@ -390,8 +390,28 @@ class _ChatInputState extends State<ChatInput> {
         horizontal: isWideScreen ? 32 : 20,
         vertical: isWideScreen ? 24 : 20,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.black,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            const Color(0xFF0A0A0A),
+            const Color(0xFF0A0A0A).withOpacity(0.98),
+          ],
+        ),
+        border: Border(
+          top: BorderSide(
+            color: Colors.white.withOpacity(0.08),
+            width: 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: SafeArea(
         child: Column(
@@ -598,18 +618,36 @@ class _ChatInputState extends State<ChatInput> {
                     onTap: widget.isLoading ? null : _showAttachmentOptions,
                     borderRadius: BorderRadius.circular(22),
                     child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF0A0A0A),
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(0.1),
+                            Colors.white.withOpacity(0.05),
+                          ],
+                        ),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Icon(
-                        Icons.add,
+                        Icons.add_rounded,
                         color: widget.isLoading
                             ? Colors.grey.withOpacity(0.5)
                             : Colors.white,
-                        size: 20,
+                        size: 22,
                       ),
                     ),
                   ),
@@ -689,7 +727,7 @@ class _ChatInputState extends State<ChatInput> {
                           ),
                         ),
                         filled: true,
-                        fillColor: const Color(0xFF0A0A0A),
+                        fillColor: Colors.white.withOpacity(0.08),
                         contentPadding: EdgeInsets.symmetric(
                           horizontal: isWideScreen ? 24 : 20,
                           vertical: isWideScreen ? 18 : 16,
@@ -710,7 +748,7 @@ class _ChatInputState extends State<ChatInput> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
@@ -718,16 +756,52 @@ class _ChatInputState extends State<ChatInput> {
                             !widget.isLoading
                         ? _sendMessage
                         : null,
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 40,
-                      height: 40,
+                    borderRadius: BorderRadius.circular(22),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
+                        gradient: (_hasText || _selectedImage != null) &&
+                                !widget.isLoading
+                            ? LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  theme.colorScheme.primary,
+                                  theme.colorScheme.primary.withOpacity(0.8),
+                                ],
+                              )
+                            : null,
                         color: (_hasText || _selectedImage != null) &&
                                 !widget.isLoading
-                            ? theme.colorScheme.primary
-                            : const Color(0xFF0A0A0A),
+                            ? null
+                            : Colors.white.withOpacity(0.08),
                         shape: BoxShape.circle,
+                        border: (_hasText || _selectedImage != null) &&
+                                !widget.isLoading
+                            ? null
+                            : Border.all(
+                                color: Colors.white.withOpacity(0.1),
+                                width: 1,
+                              ),
+                        boxShadow: (_hasText || _selectedImage != null) &&
+                                !widget.isLoading
+                            ? [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.4),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                       ),
                       child: Icon(
                         widget.isLoading
@@ -737,7 +811,7 @@ class _ChatInputState extends State<ChatInput> {
                                 !widget.isLoading
                             ? Colors.white
                             : Colors.white.withOpacity(0.5),
-                        size: 18,
+                        size: 20,
                       ),
                     ),
                   ),

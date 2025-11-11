@@ -212,3 +212,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 [⭐ Star on GitHub](https://github.com/iotserver24/xibe-chat-app) • [🐛 Report Bug](https://github.com/iotserver24/xibe-chat-app/issues) • [💡 Request Feature](https://github.com/iotserver24/xibe-chat-app/discussions)
 
 </div>
+ taskkill /F /IM xibe_chat.exe 2>$null; Start-Sleep -Seconds 2; flutter run -d windows

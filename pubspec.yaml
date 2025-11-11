@@ -73,3 +73,12 @@ msix_config:
   # Microsoft Store will sign the package with their own certificate
   store: true
   architecture: x64
+  # Deep link protocol handlers
+  protocols:
+    - name: xibechat
+      display_name: Xibe Chat Protocol
+    - name: https
+      display_name: HTTPS Protocol
+      target_domains:
+        - chat.xibe.app
+        - xibechat.app  # Legacy support

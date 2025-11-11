@@ -28,11 +28,11 @@ export default defineNuxtConfig({
         
         // Open Graph / Facebook
         { property: 'og:type', content: 'website' },
-        { property: 'og:url', content: 'https://xibechat.app' },
+        { property: 'og:url', content: 'https://chat.xibe.app' },
         { property: 'og:site_name', content: 'Xibe Chat' },
         { property: 'og:title', content: 'Xibe Chat - Free AI Chat Application with Multi-Model Support' },
         { property: 'og:description', content: 'Free and open-source AI chat application supporting Gemini, OpenAI, Claude, DeepSeek and more. Cross-platform, privacy-focused, and feature-rich. Download for Windows, macOS, Linux, Android & iOS.' },
-        { property: 'og:image', content: 'https://xibechat.app/og-image.png' },
+        { property: 'og:image', content: 'https://chat.xibe.app/og-image.png' },
         { property: 'og:image:width', content: '1200' },
         { property: 'og:image:height', content: '630' },
         { property: 'og:image:alt', content: 'Xibe Chat - AI Chat Application' },
@@ -40,10 +40,10 @@ export default defineNuxtConfig({
         
         // Twitter
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:url', content: 'https://xibechat.app' },
+        { name: 'twitter:url', content: 'https://chat.xibe.app' },
         { name: 'twitter:title', content: 'Xibe Chat - Free AI Chat Application | Multi-Model AI Assistant' },
         { name: 'twitter:description', content: 'Free and open-source AI chat with Gemini, OpenAI, Claude, DeepSeek and more. Cross-platform support for all devices.' },
-        { name: 'twitter:image', content: 'https://xibechat.app/og-image.png' },
+        { name: 'twitter:image', content: 'https://chat.xibe.app/og-image.png' },
         { name: 'twitter:image:alt', content: 'Xibe Chat - AI Chat Application' },
         { name: 'twitter:creator', content: '@iotserver24' },
         
@@ -59,7 +59,7 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/logo.png' },
         { rel: 'apple-touch-icon', href: '/logo.png' },
-        { rel: 'canonical', href: 'https://xibechat.app' },
+        { rel: 'canonical', href: 'https://chat.xibe.app' },
       ],
     },
   },
