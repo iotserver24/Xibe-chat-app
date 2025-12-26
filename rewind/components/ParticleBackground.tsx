@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 const PARTICLE_COUNT = 30;
@@ -16,18 +16,17 @@ interface Particle {
 }
 
 export function ParticleBackground() {
-  const particles = useRef<Particle[]>([]);
-
-  useEffect(() => {
-    particles.current = Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
+  // Use useMemo with lazy initialization to generate particles once
+  const particles = useMemo<Particle[]>(() => 
+    Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       size: Math.random() * 4 + 2,
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
       duration: Math.random() * 15 + 10,
       delay: Math.random() * 10,
-    }));
-  }, []);
+    }))
+  , []);
 
   return (
     <div className="particles-container">
@@ -88,7 +87,7 @@ export function ParticleBackground() {
       />
 
       {/* Floating particles */}
-      {particles.current.map((particle) => (
+      {particles.map((particle) => (
         <motion.div
           key={particle.id}
           className="absolute rounded-full"

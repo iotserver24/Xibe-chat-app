@@ -61,8 +61,8 @@ export default function RewindPage() {
     return null;
   }
 
-  // Show loading screen while fetching data
-  if (loadingState === 'loading') {
+  // Show loading screen while fetching data or in idle state (before query starts)
+  if (loadingState === 'loading' || loadingState === 'idle') {
     return <LoadingScreen messages={LOADING_MESSAGES} />;
   }
 
@@ -89,5 +89,6 @@ export default function RewindPage() {
     );
   }
 
-  return null;
+  // Fallback to loading screen for any unhandled state
+  return <LoadingScreen messages={LOADING_MESSAGES} />;
 }

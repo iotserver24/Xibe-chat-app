@@ -271,13 +271,15 @@ export function useRevealAnimation(
   useEffect(() => {
     if (!elementRef.current) return;
 
-    gsap.set(elementRef.current, {
+    const element = elementRef.current;
+    
+    gsap.set(element, {
       y: fromY,
       scale: fromScale,
       opacity: fromOpacity,
     });
 
-    gsap.to(elementRef.current, {
+    const tween = gsap.to(element, {
       y: 0,
       scale: 1,
       opacity: 1,
@@ -286,6 +288,10 @@ export function useRevealAnimation(
       ease: 'power3.out',
       onComplete: () => setIsRevealed(true),
     });
+
+    return () => {
+      tween.kill();
+    };
   }, [elementRef, delay, duration, fromY, fromScale, fromOpacity]);
 
   return isRevealed;
@@ -320,11 +326,14 @@ export function useCircularProgress(
   return progress;
 }
 
-// Cleanup all GSAP animations
-export function useGSAPCleanup() {
+// Hook to cleanup GSAP animations for a specific element
+// Use this instead of killing all animations globally
+export function useGSAPCleanup(elementRef: React.RefObject<HTMLElement>) {
   useEffect(() => {
     return () => {
-      gsap.killTweensOf('*');
+      if (elementRef.current) {
+        gsap.killTweensOf(elementRef.current);
+      }
     };
-  }, []);
+  }, [elementRef]);
 }

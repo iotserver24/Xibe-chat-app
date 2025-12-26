@@ -21,22 +21,24 @@ export function PersonalitySlide({ stats, isActive }: SlideProps) {
 
     const text = personality.description;
     let index = 0;
+    let intervalId: NodeJS.Timeout | null = null;
     setDisplayedDescription('');
 
     const timer = setTimeout(() => {
-      const interval = setInterval(() => {
+      intervalId = setInterval(() => {
         if (index < text.length) {
           setDisplayedDescription(text.slice(0, index + 1));
           index++;
         } else {
-          clearInterval(interval);
+          if (intervalId) clearInterval(intervalId);
         }
       }, 30);
-
-      return () => clearInterval(interval);
     }, 1000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isActive, personality.description]);
 
   return (

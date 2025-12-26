@@ -16,18 +16,24 @@ function DonutChart({ subPercent, isActive }: { subPercent: number; isActive: bo
   useEffect(() => {
     if (!isActive) return;
     
+    let tween: gsap.core.Tween | null = null;
+    const animTarget = { value: 0 };
+    
     const timer = setTimeout(() => {
-      gsap.to({ value: 0 }, {
+      tween = gsap.to(animTarget, {
         value: subPercent,
         duration: 1.5,
         ease: 'power2.out',
         onUpdate: function() {
-          setAnimatedPercent(this.targets()[0].value);
+          setAnimatedPercent(animTarget.value);
         },
       });
     }, 500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (tween) tween.kill();
+    };
   }, [isActive, subPercent]);
 
   return (
@@ -77,7 +83,7 @@ const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'S
 // Bar chart for watch time by day
 function DayChart({ data, isActive }: { data: { [key: string]: number }; isActive: boolean }) {
   const [heights, setHeights] = useState<{ [key: string]: number }>({});
-  const maxValue = Math.max(...Object.values(data));
+  const maxValue = Math.max(...Object.values(data), 1); // Ensure maxValue is at least 1
 
   useEffect(() => {
     if (!isActive) return;
@@ -86,18 +92,29 @@ function DayChart({ data, isActive }: { data: { [key: string]: number }; isActiv
     DAYS_OF_WEEK.forEach(day => { initialHeights[day] = 0; });
     setHeights(initialHeights);
 
+    const timeoutIds: NodeJS.Timeout[] = [];
+    const tweens: gsap.core.Tween[] = [];
+
     DAYS_OF_WEEK.forEach((day, index) => {
-      setTimeout(() => {
-        gsap.to({ value: 0 }, {
+      const animTarget = { value: 0 };
+      const timeoutId = setTimeout(() => {
+        const tween = gsap.to(animTarget, {
           value: (data[day] / maxValue) * 100,
           duration: 1,
           ease: 'power2.out',
           onUpdate: function() {
-            setHeights(prev => ({ ...prev, [day]: this.targets()[0].value }));
+            setHeights(prev => ({ ...prev, [day]: animTarget.value }));
           },
         });
+        tweens.push(tween);
       }, index * 100);
+      timeoutIds.push(timeoutId);
     });
+
+    return () => {
+      timeoutIds.forEach(id => clearTimeout(id));
+      tweens.forEach(tween => tween.kill());
+    };
   }, [isActive, data, maxValue]);
 
   return (
@@ -196,8 +213,9 @@ export function HabitsSlide({ stats, isActive }: SlideProps) {
             <DayChart data={stats.watchTimeByDay} isActive={isActive} />
 
             <p className="text-center text-white/50 text-sm mt-4">
-              {Object.entries(stats.watchTimeByDay)
-                .sort((a, b) => b[1] - a[1])[0][0]} is your binge day! 📺
+              {Object.keys(stats.watchTimeByDay).length > 0 
+                ? `${Object.entries(stats.watchTimeByDay).sort((a, b) => b[1] - a[1])[0][0]} is your binge day! 📺`
+                : 'Track your watching habits! 📺'}
             </p>
           </motion.div>
 

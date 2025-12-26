@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { SlideProps } from '@/types';
@@ -12,6 +13,7 @@ interface AIImageSlideProps extends SlideProps {
 }
 
 export function AIImageSlide({ stats, isActive, aiImageUrl, isLoading }: AIImageSlideProps) {
+  const [imageError, setImageError] = useState(false);
   return (
     <div className="slide-wrapper">
       <div className="content-container text-center">
@@ -73,7 +75,7 @@ export function AIImageSlide({ stats, isActive, aiImageUrl, isLoading }: AIImage
                 <p className="text-white/60 mt-4">Generating your portrait...</p>
                 <p className="text-white/40 text-sm mt-2">This may take a moment</p>
               </div>
-            ) : aiImageUrl ? (
+            ) : aiImageUrl && !imageError ? (
               <motion.div
                 variants={imageRevealVariants}
                 initial="hidden"
@@ -87,6 +89,7 @@ export function AIImageSlide({ stats, isActive, aiImageUrl, isLoading }: AIImage
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 448px"
                   priority
+                  onError={() => setImageError(true)}
                 />
                 
                 {/* Shimmer overlay */}

@@ -13,9 +13,14 @@ export function LoadingScreen({ messages }: LoadingScreenProps) {
   const [messageIndex, setMessageIndex] = useState(0);
   const [progress, setProgress] = useState(0);
 
+  // Early return if messages array is empty
+  const safeMessages = messages.length > 0 ? messages : [{ emoji: '🎌', text: 'Loading...' }];
+
   useEffect(() => {
+    if (safeMessages.length === 0) return;
+
     const messageInterval = setInterval(() => {
-      setMessageIndex((prev) => (prev + 1) % messages.length);
+      setMessageIndex((prev) => (prev + 1) % safeMessages.length);
     }, 2000);
 
     const progressInterval = setInterval(() => {
@@ -29,7 +34,7 @@ export function LoadingScreen({ messages }: LoadingScreenProps) {
       clearInterval(messageInterval);
       clearInterval(progressInterval);
     };
-  }, [messages.length]);
+  }, [safeMessages.length]);
 
   return (
     <div className="rewind-container flex items-center justify-center animated-gradient-bg">
@@ -93,7 +98,7 @@ export function LoadingScreen({ messages }: LoadingScreenProps) {
               transition={{ duration: 0.3 }}
               className="text-white/70"
             >
-              {messages[messageIndex].emoji} {messages[messageIndex].text}
+              {safeMessages[messageIndex]?.emoji} {safeMessages[messageIndex]?.text}
             </motion.p>
           </AnimatePresence>
         </div>
@@ -113,7 +118,7 @@ export function LoadingScreen({ messages }: LoadingScreenProps) {
             animate={{ opacity: 1 }}
             className="text-sm text-white/50"
           >
-            {Math.round(progress)}%
+            {Math.round(Math.min(progress, 95))}%
           </motion.p>
         </div>
 

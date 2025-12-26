@@ -60,16 +60,17 @@ export function LoginForm() {
       console.error('Email sign in error:', error);
       
       // Handle specific error codes
+      // Use generic messages for auth errors to prevent user enumeration
       let message: string;
       switch (err.code) {
         case 'auth/invalid-email':
           message = 'Invalid email address';
           break;
         case 'auth/user-not-found':
-          message = 'No account found with this email';
-          break;
         case 'auth/wrong-password':
-          message = 'Incorrect password';
+        case 'auth/invalid-credential':
+          // Generic message to prevent user enumeration attacks
+          message = 'Invalid email or password';
           break;
         case 'auth/email-already-in-use':
           message = 'Email already in use';

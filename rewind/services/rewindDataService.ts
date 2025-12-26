@@ -364,8 +364,8 @@ export class RewindDataService {
     animeList: AnimeEntry[]
   ): { anime: string; episodes: number; duration: number } {
     if (sessions.length === 0) {
-      // Fallback to top anime
-      const topAnime = animeList.sort((a, b) => b.episodesWatched - a.episodesWatched)[0];
+      // Fallback to top anime - use slice() to avoid mutating original array
+      const topAnime = [...animeList].sort((a, b) => b.episodesWatched - a.episodesWatched)[0];
       if (topAnime) {
         return {
           anime: topAnime.title,

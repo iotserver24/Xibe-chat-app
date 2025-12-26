@@ -23,15 +23,15 @@ export function SlideProgress({ progress, currentSlide, totalSlides }: SlideProg
           
           {/* Glow effect */}
           <motion.div
-            className="absolute top-0 h-full rounded-full bg-primary-500 opacity-50 blur-sm"
-            style={{ width: `${progress}%` }}
+            className="absolute top-0 h-full rounded-full bg-primary-500 blur-sm"
+            initial={{ width: 0, opacity: 0.3 }}
             animate={{
+              width: `${progress}%`,
               opacity: [0.3, 0.6, 0.3],
             }}
             transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: 'easeInOut',
+              width: { duration: 0.5, ease: 'easeOut' },
+              opacity: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
             }}
           />
         </div>

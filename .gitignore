@@ -90,6 +90,6 @@ rewind/out/
 rewind/build/
 rewind/.env
 rewind/.env.*
-rewind/!.env.example
+!rewind/.env.example
 rewind/package-lock.json
 

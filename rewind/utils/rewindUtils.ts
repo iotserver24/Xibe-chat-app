@@ -52,7 +52,9 @@ export function formatHourTo12(hour: number): string {
 // Get day name from index
 export function getDayName(dayIndex: number): string {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  return days[dayIndex];
+  // Ensure index is within bounds
+  const safeIndex = Math.max(0, Math.min(6, Math.floor(dayIndex)));
+  return days[safeIndex];
 }
 
 // Get short day name

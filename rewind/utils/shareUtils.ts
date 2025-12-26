@@ -112,7 +112,7 @@ export function generateWhatsAppShare(stats: RewindStats, shareUrl: string): str
 export function generateTelegramShare(stats: RewindStats, shareUrl: string): string {
   const text = encodeURIComponent(
     `🎌 My AniSurge Rewind 2025\n` +
-    `📺 ${formatNumber(stats.totalEpisodes)} episodes • ⏱️ ${stats.totalWatchTimeHours}h\n` +
+    `📺 ${formatNumber(stats.totalEpisodes)} episodes • ⏱️ ${formatHours(stats.totalWatchTimeHours)}\n` +
     `✨ ${stats.personality.title}`
   );
   

@@ -31,7 +31,7 @@ export class AIService {
     params.append('width', width.toString());
     params.append('height', height.toString());
     params.append('model', model);
-    if (seed) params.append('seed', seed.toString());
+    if (seed !== undefined) params.append('seed', seed.toString());
     if (nologo) params.append('nologo', 'true');
     
     return `${url}?${params.toString()}`;

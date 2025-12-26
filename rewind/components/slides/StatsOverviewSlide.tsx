@@ -165,7 +165,7 @@ export function StatsOverviewSlide({ stats, user, isActive }: SlideProps) {
           <div className="text-sm text-white/50">
             That&apos;s like watching a movie every{' '}
             <span className="text-primary-400">
-              {Math.max(1, Math.round(365 / stats.uniqueAnimeWatched))} days
+              {stats.uniqueAnimeWatched > 0 ? Math.max(1, Math.round(365 / stats.uniqueAnimeWatched)) : 365} days
             </span>
           </div>
         </motion.div>

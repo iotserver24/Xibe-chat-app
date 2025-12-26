@@ -14,10 +14,13 @@ export default function HomePage() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
-      setLoading(false);
-      
       if (firebaseUser) {
+        // Redirect authenticated users without setting loading to false
+        // This prevents the login UI from flashing
         router.push('/rewind');
+      } else {
+        // Only show login UI when we know user is not authenticated
+        setLoading(false);
       }
     });
 

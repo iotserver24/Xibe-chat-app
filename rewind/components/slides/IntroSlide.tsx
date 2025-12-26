@@ -18,6 +18,9 @@ export function IntroSlide({ stats, user, isActive }: SlideProps) {
     if (isActive) {
       const timer = setTimeout(() => setShowContent(true), 500);
       return () => clearTimeout(timer);
+    } else {
+      // Reset state when slide becomes inactive to replay animations
+      setShowContent(false);
     }
   }, [isActive]);
 
