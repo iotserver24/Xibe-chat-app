@@ -10,12 +10,10 @@ import { ParticleBackground } from '@/components/ParticleBackground';
 
 export default function HomePage() {
   const router = useRouter();
-  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       setLoading(false);
       
       if (firebaseUser) {

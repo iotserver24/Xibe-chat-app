@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { SlideProps } from '@/types';
-import { formatNumber, formatHours, getRankTitle, getPercentile } from '@/utils/rewindUtils';
+import { formatNumber, getRankTitle, getPercentile } from '@/utils/rewindUtils';
 import { staggerContainerVariants, staggerItemVariants, fadeInUpVariants } from '@/utils/animations';
 import { Play, Clock, Star, Calendar, Trophy } from 'lucide-react';
 

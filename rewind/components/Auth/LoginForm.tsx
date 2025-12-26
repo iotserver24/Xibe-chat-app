@@ -60,7 +60,7 @@ export function LoginForm() {
       console.error('Email sign in error:', error);
       
       // Handle specific error codes
-      let message = 'Authentication failed';
+      let message: string;
       switch (err.code) {
         case 'auth/invalid-email':
           message = 'Invalid email address';

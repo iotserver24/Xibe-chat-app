@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { SlideProps } from '@/types';
 import { formatWatchTime, getFunFact } from '@/utils/rewindUtils';
 import { fadeInUpVariants, staggerContainerVariants, staggerItemVariants, scaleUpVariants } from '@/utils/animations';
-import { Sparkles, Clock, Zap } from 'lucide-react';
+import { Sparkles, Zap } from 'lucide-react';
 
 export function PersonalitySlide({ stats, isActive }: SlideProps) {
   const [displayedDescription, setDisplayedDescription] = useState('');

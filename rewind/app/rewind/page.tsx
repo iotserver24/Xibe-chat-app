@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/services/firebaseConfig';
-import { User, LoadingState, LOADING_MESSAGES } from '@/types';
+import { User, LOADING_MESSAGES } from '@/types';
 import { useRewindData } from '@/hooks/useRewindData';
 import { useSlideNavigation } from '@/hooks/useSlideNavigation';
 import { RewindContainer } from '@/components/RewindContainer';

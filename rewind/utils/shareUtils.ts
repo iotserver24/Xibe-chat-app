@@ -1,5 +1,5 @@
 import { RewindStats, ShareData } from '@/types';
-import { formatNumber, formatHours, generateTwitterText, generateInstagramCaption } from './rewindUtils';
+import { formatNumber, formatHours, generateTwitterText } from './rewindUtils';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://anisurge.app';
 

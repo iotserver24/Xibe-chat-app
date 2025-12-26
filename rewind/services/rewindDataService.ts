@@ -5,9 +5,7 @@ import {
   getDocs, 
   doc, 
   getDoc,
-  orderBy,
-  limit,
-  Timestamp 
+  orderBy
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import { 

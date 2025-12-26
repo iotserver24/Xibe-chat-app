@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/services/firebaseConfig';
 import { SlideProps } from '@/types';
-import { formatNumber, formatHours } from '@/utils/rewindUtils';
+import { formatNumber } from '@/utils/rewindUtils';
 import { fadeInUpVariants, staggerContainerVariants, staggerItemVariants, buttonHoverVariants } from '@/utils/animations';
 import { ShareModal } from '@/components/Share/ShareModal';
 import { CardDownloader } from '@/components/Share/CardDownloader';
@@ -15,11 +15,7 @@ import {
   Share2, 
   Download, 
   Image as ImageIcon, 
-  LogOut, 
-  Twitter, 
-  Copy, 
-  CheckCircle,
-  Sparkles 
+  LogOut
 } from 'lucide-react';
 
 interface ShareCardSlideProps extends SlideProps {
@@ -41,11 +37,6 @@ export function ShareCardSlide({ stats, user, isActive, aiImageUrl }: ShareCardS
       console.error('Logout error:', error);
       toast.error('Failed to sign out');
     }
-  };
-
-  const handleDownload = () => {
-    setIsDownloading(true);
-    // CardDownloader will handle the actual download
   };
 
   return (

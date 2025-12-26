@@ -6,8 +6,7 @@ import { SlideProps } from '@/types';
 import { formatDate, getJourneyLength } from '@/utils/rewindUtils';
 import { 
   letterContainerVariants, 
-  letterVariants, 
-  fadeInUpVariants,
+  letterVariants,
   staggerContainerVariants,
   staggerItemVariants 
 } from '@/utils/animations';
