@@ -1,0 +1,22 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0b"/>
+      <stop offset="50%" style="stop-color:#1a0a2e"/>
+      <stop offset="100%" style="stop-color:#0a1a2e"/>
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#d946ef"/>
+      <stop offset="50%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#bg)"/>
+  <circle cx="200" cy="150" r="150" fill="#d946ef" opacity="0.1"/>
+  <circle cx="1000" cy="500" r="200" fill="#ec4899" opacity="0.1"/>
+  <text x="600" y="280" font-family="sans-serif" font-size="120" font-weight="bold" fill="url(#textGrad)" text-anchor="middle">REWIND</text>
+  <text x="600" y="400" font-family="sans-serif" font-size="100" font-weight="bold" fill="white" text-anchor="middle">2025</text>
+  <text x="600" y="500" font-family="sans-serif" font-size="32" fill="white" opacity="0.6" text-anchor="middle">Your Anime Year in Review</text>
+  <text x="150" y="80" font-size="48">🎌</text>
+  <text x="180" y="82" font-family="sans-serif" font-size="28" font-weight="bold" fill="url(#textGrad)">AniSurge</text>
+</svg>

@@ -83,3 +83,13 @@ site/.env.*
 site/!.env.example
 site/package-lock.json
 
+# Rewind Website (Next.js in /rewind)
+rewind/node_modules/
+rewind/.next/
+rewind/out/
+rewind/build/
+rewind/.env
+rewind/.env.*
+rewind/!.env.example
+rewind/package-lock.json
+
